@@ -49,35 +49,6 @@ CORE_SOURCES := $(CORE_DIR)/cart.cpp \
 	$(CORE_DIR)/susie.cpp \
 	$(CORE_DIR)/system.cpp
 TARGET_NAME := mednafen_lynx_libretro
-else ifeq ($(core), pce_fast)
-   core = pce_fast
-   PTHREAD_FLAGS = -pthread
-   NEED_BPP = 16
-	WANT_NEW_API = 1
-   NEED_BLIP = 1
-   NEED_CD = 1
-	NEED_STEREO_SOUND = 1
-	NEED_SCSI_CD = 1
-	NEED_THREADING = 1
-	NEED_TREMOR = 1
-   NEED_CRC32 = 1
-   CORE_DEFINE := -DWANT_PCE_FAST_EMU
-   CORE_DIR := $(MEDNAFEN_DIR)/pce_fast-09333
-
-CORE_SOURCES := $(CORE_DIR)/huc.cpp \
-	$(CORE_DIR)/huc6280.cpp \
-	$(CORE_DIR)/input.cpp \
-	$(CORE_DIR)/pce.cpp \
-	$(CORE_DIR)/pcecd.cpp \
-	$(CORE_DIR)/pcecd_drive.cpp \
-	$(CORE_DIR)/psg.cpp \
-	$(CORE_DIR)/vdc.cpp
-TARGET_NAME := mednafen_pce_fast_libretro
-
-HW_CPU_SOURCES := $(MEDNAFEN_DIR)/hw_cpu/huc6280/cpu_huc6280.cpp
-HW_MISC_SOURCES := $(MEDNAFEN_DIR)/hw_misc/arcade_card/arcade_card.cpp
-HW_VIDEO_SOURCES := $(MEDNAFEN_DIR)/hw_video/huc6270/vdc_video.cpp
-OKIADPCM_SOURCES := $(MEDNAFEN_DIR)/okiadpcm.cpp
 else ifeq ($(core), wswan)
    core = wswan
    NEED_BPP = 32

@@ -72,21 +72,6 @@ static Deinterlacer deint;
 #define FB_HEIGHT 102
 static bool is_pal = false;
 
-#elif defined(WANT_PCE_FAST_EMU)
-#include "mednafen/pce_fast-09333/pcecd.h"
-#define MEDNAFEN_CORE_NAME_MODULE "pce_fast"
-#define MEDNAFEN_CORE_NAME "Mednafen PCE Fast"
-#define MEDNAFEN_CORE_VERSION "v0.9.33.3"
-#define MEDNAFEN_CORE_EXTENSIONS "pce|sgx|cue|ccd"
-#define MEDNAFEN_CORE_TIMING_FPS 59.82
-#define MEDNAFEN_CORE_GEOMETRY_BASE_W (game->nominal_width)
-#define MEDNAFEN_CORE_GEOMETRY_BASE_H (game->nominal_height)
-#define MEDNAFEN_CORE_GEOMETRY_MAX_W 512
-#define MEDNAFEN_CORE_GEOMETRY_MAX_H 242
-#define MEDNAFEN_CORE_GEOMETRY_ASPECT_RATIO (4.0 / 3.0)
-#define FB_WIDTH 512
-#define FB_HEIGHT 242
-
 #elif defined(WANT_WSWAN_EMU)
 #define MEDNAFEN_CORE_NAME_MODULE "wswan"
 #define MEDNAFEN_CORE_NAME "Mednafen WonderSwan"
@@ -278,81 +263,7 @@ static void check_variables(void)
 {
    struct retro_variable var = {0};
 
-#if defined(WANT_PCE_FAST_EMU)
-   var.key = "pce_nospritelimit";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
-   {
-      if (strcmp(var.value, "disabled") == 0)
-         setting_pce_fast_nospritelimit = 0;
-      else if (strcmp(var.value, "enabled") == 0)
-         setting_pce_fast_nospritelimit = 1;
-   }
-
-   var.key = "pce_keepaspect";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
-   {
-      if (strcmp(var.value, "disabled") == 0)
-      {
-         setting_pce_keepaspect = 0;
-         game->fb_width = 512;
-         game->nominal_width = 341;
-         game->lcm_width = 341;
-      }
-      else if (strcmp(var.value, "enabled") == 0)
-      {
-         setting_pce_keepaspect = 1;
-         game->fb_width = 682;
-         game->nominal_width = 288;
-         game->lcm_width = 1024;
-      }
-   }
-
-   bool do_cdsettings = false;
-   var.key = "pce_cddavolume";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
-   {
-      do_cdsettings = true;
-      setting_pce_fast_cddavolume = atoi(var.value);
-   }
-
-   var.key = "pce_adpcmvolume";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
-   {
-      do_cdsettings = true;
-      setting_pce_fast_adpcmvolume = atoi(var.value);
-   }
-
-   var.key = "pce_cdpsgvolume";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
-   {
-      do_cdsettings = true;
-      setting_pce_fast_cdpsgvolume = atoi(var.value);
-   }
-
-   var.key = "pce_cdspeed";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
-   {
-      do_cdsettings = true;
-      setting_pce_fast_cdspeed = atoi(var.value);
-   }
-
-   if (do_cdsettings)
-   {
-      PCE_Fast::PCECD_Settings settings = {0};
-      settings.CDDA_Volume = (double)setting_pce_fast_cddavolume / 100;
-      settings.CD_Speed = setting_pce_fast_cdspeed;
-      settings.ADPCM_Volume = (double)setting_pce_fast_adpcmvolume / 100;
-
-      if (PCECD_SetSettings(&settings) && log_cb)
-         log_cb(RETRO_LOG_INFO, "PCE CD Audio settings changed.\n");
-   }
-#elif defined(WANT_NGP_EMU)
+#if defined(WANT_NGP_EMU)
    var.key = "ngp_language";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
@@ -417,13 +328,7 @@ static void check_variables(void)
 #endif
 }
 
-#if defined(WANT_PCE_FAST_EMU)
-
-#define MAX_PLAYERS 5
-#define MAX_BUTTONS 13
-static uint8_t input_buf[MAX_PLAYERS][2] = {0};
-
-#elif defined(WANT_LYNX_EMU)
+#if defined(WANT_LYNX_EMU)
 
 #define MAX_PLAYERS 1
 #define MAX_BUTTONS 9
@@ -480,11 +385,7 @@ static void hookup_ports(bool force)
    if (initial_ports_hookup && !force)
       return;
 
-#if defined(WANT_PCE_FAST_EMU)
-   // Possible endian bug ...
-   for (unsigned i = 0; i < MAX_PLAYERS; i++)
-      currgame->SetInput(i, "gamepad", &input_buf[i][0]);
-#elif defined(WANT_LYNX_EMU)
+#if defined(WANT_LYNX_EMU)
    currgame->SetInput(0, "gamepad", &input_buf);
 #elif defined(WANT_WSWAN_EMU)
    currgame->SetInput(0, "gamepad", &input_buf);
@@ -550,7 +451,7 @@ bool retro_load_game(const struct retro_game_info *info)
 	deint.ClearState();
 #endif
 
-#if !defined(WANT_PCE_FAST_EMU) || !defined(WANT_PCFX_EMU)
+#if !defined(WANT_PCFX_EMU)
    hookup_ports(true);
 #endif
 
@@ -585,34 +486,6 @@ static void update_input(void)
       RETRO_DEVICE_ID_JOYPAD_UP,
       RETRO_DEVICE_ID_JOYPAD_DOWN,
       RETRO_DEVICE_ID_JOYPAD_START,
-   };
-
-   for (unsigned j = 0; j < MAX_PLAYERS; j++)
-   {
-      uint16_t input_state = 0;
-      for (unsigned i = 0; i < MAX_BUTTONS; i++)
-         input_state |= input_state_cb(j, RETRO_DEVICE_JOYPAD, 0, map[i]) ? (1 << i) : 0;
-
-      // Input data must be little endian.
-      input_buf[j][0] = (input_state >> 0) & 0xff;
-      input_buf[j][1] = (input_state >> 8) & 0xff;
-   }
-#elif defined(WANT_PCE_FAST_EMU)
-
-   static unsigned map[] = {
-      RETRO_DEVICE_ID_JOYPAD_A,
-      RETRO_DEVICE_ID_JOYPAD_B,
-      RETRO_DEVICE_ID_JOYPAD_SELECT,
-      RETRO_DEVICE_ID_JOYPAD_START,
-      RETRO_DEVICE_ID_JOYPAD_UP,
-      RETRO_DEVICE_ID_JOYPAD_RIGHT,
-      RETRO_DEVICE_ID_JOYPAD_DOWN,
-      RETRO_DEVICE_ID_JOYPAD_LEFT,
-      RETRO_DEVICE_ID_JOYPAD_Y,
-      RETRO_DEVICE_ID_JOYPAD_X,
-      RETRO_DEVICE_ID_JOYPAD_L,
-      RETRO_DEVICE_ID_JOYPAD_R,
-      RETRO_DEVICE_ID_JOYPAD_L2
    };
 
    for (unsigned j = 0; j < MAX_PLAYERS; j++)
@@ -974,19 +847,7 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
    if (!currgame)
       return;
 
-#if defined(WANT_PCE_FAST_EMU)
-   switch(device)
-   {
-      case RETRO_DEVICE_JOYPAD:
-         if (currgame->SetInput)
-            currgame->SetInput(in_port, "gamepad", &input_buf[in_port][0]);
-         break;
-      case RETRO_DEVICE_MOUSE:
-         if (currgame->SetInput)
-            currgame->SetInput(in_port, "mouse", &input_buf[in_port][0]);
-         break;
-   }
-#elif defined(WANT_PCFX_EMU)
+#if defined(WANT_PCFX_EMU)
    switch(device)
    {
       case RETRO_DEVICE_JOYPAD:
@@ -1005,31 +866,7 @@ void retro_set_environment(retro_environment_t cb)
 {
    environ_cb = cb;
 
-#if defined(WANT_PCE_FAST_EMU)
-   static const struct retro_variable vars[] = {
-      { "pce_nospritelimit", "No Sprite Limit; disabled|enabled" },
-      { "pce_keepaspect", "Keep Aspect; enabled|disabled" },
-      { "pce_cddavolume", "(CD) CDDA Volume; 0|10|20|30|40|50|60|70|80|90|100" },
-      { "pce_adpcmvolume", "(CD) ADPCM Volume; 0|10|20|30|40|50|60|70|80|90|100" },
-      { "pce_cdpsgvolume", "(CD) CD PSG Volume; 0|10|20|30|40|50|60|70|80|90|100" },
-      { "pce_cdspeed", "(CD) CD Speed; 1|2|4|8" },
-      { NULL, NULL },
-   };
-
-   static const struct retro_controller_description pads[] = {
-      { "PCE Joypad", RETRO_DEVICE_JOYPAD },
-      { "Mouse", RETRO_DEVICE_MOUSE },
-   };
-
-   static const struct retro_controller_info ports[] = {
-      { pads, 2 },
-      { pads, 2 },
-      { 0 },
-   };
-
-   cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
-   environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
-#elif defined(WANT_PCFX_EMU)
+#if defined(WANT_PCFX_EMU)
    static const struct retro_controller_description pads[] = {
       { "PCFX Joypad", RETRO_DEVICE_JOYPAD },
       { "Mouse", RETRO_DEVICE_MOUSE },

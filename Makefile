@@ -25,49 +25,7 @@ endif
 # CD for CD-based systems in order to prevent file access delays/hiccups
 CACHE_CD = 0
 
-ifeq ($(core), pce_fast)
-   core = pce_fast
-ifneq ($(platform), osx)
-   PTHREAD_FLAGS = -pthread
-endif
-   HAVE_HES = 0
-   NEED_BPP = 32
-   NEED_TREMOR = 1
-   NEED_BLIP = 1
-   NEED_CD = 1
-   NEED_STEREO_SOUND = 1
-   NEED_SCSI_CD = 1
-   NEED_THREADING = 1
-   NEED_CRC32 = 1
-	WANT_NEW_API = 1
-   CORE_DEFINE := -DWANT_PCE_FAST_EMU
-   CORE_DIR := $(MEDNAFEN_DIR)/pce_fast-09333
-
-CORE_SOURCES := \
-   $(CORE_DIR)/huc.cpp \
-	$(CORE_DIR)/huc6280.cpp \
-	$(CORE_DIR)/input.cpp \
-	$(CORE_DIR)/pce.cpp \
-	$(CORE_DIR)/pcecd.cpp \
-	$(CORE_DIR)/pcecd_drive.cpp \
-	$(CORE_DIR)/psg.cpp \
-	$(CORE_DIR)/vdc.cpp
-
-ifeq ($(HAVE_HES),1)
-CORE_SOURCES += $(CORE_DIR)/hes.cpp
-endif
-TARGET_NAME := mednafen_pce_fast_libretro
-
-arch = intel
-ifeq ($(shell uname -p),powerpc)
-arch = ppc
-endif
-
-HW_CPU_SOURCES += $(MEDNAFEN_DIR)/hw_cpu/huc6280/cpu_huc6280.cpp
-HW_MISC_SOURCES += $(MEDNAFEN_DIR)/hw_misc/arcade_card/arcade_card.cpp
-HW_VIDEO_SOURCES += $(MEDNAFEN_DIR)/hw_video/huc6270/vdc_video.cpp
-OKIADPCM_SOURCES += $(MEDNAFEN_DIR)/okiadpcm.cpp
-else ifeq ($(core), lynx)
+ifeq ($(core), lynx)
    core = lynx
    NEED_BPP = 32
    NEED_BLIP = 1

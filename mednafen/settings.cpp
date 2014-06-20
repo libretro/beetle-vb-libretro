@@ -21,14 +21,7 @@
 #include <string>
 #include "settings.h"
 
-#if defined(WANT_PCE_FAST_EMU)
-int setting_pce_fast_nospritelimit = 0;
-int setting_pce_fast_cddavolume = 100;
-int setting_pce_fast_adpcmvolume = 100;
-int setting_pce_fast_cdpsgvolume = 100;
-uint32_t setting_pce_fast_cdspeed = 1;
-uint32_t setting_pce_keepaspect = 1;
-#elif defined(WANT_NGP_EMU)
+#if defined(WANT_NGP_EMU)
 uint32_t setting_ngp_language = 0;
 #elif defined(WANT_GBA_EMU)
 uint32_t setting_gba_hle = 1;
@@ -64,21 +57,6 @@ uint64 MDFN_GetSettingUI(const char *name)
       return 1024; /* TODO - make configurable */
    if (!strcmp("pcfx.resamp_quality", name))
       return 3; /* TODO - make configurable */
-#elif defined(WANT_PCE_FAST_EMU)
-   if (!strcmp("pce_fast.cddavolume", name))
-      return setting_pce_fast_cddavolume;
-   if (!strcmp("pce_fast.adpcmvolume", name))
-      return setting_pce_fast_adpcmvolume;
-   if (!strcmp("pce_fast.cdpsgvolume", name))
-      return setting_pce_fast_cdpsgvolume;
-   if (!strcmp("pce_fast.cdspeed", name))
-      return setting_pce_fast_cdspeed;
-   if (!strcmp("pce_fast.ocmultiplier", name)) /* make configurable */
-      return 1;
-   if (!strcmp("pce_fast.slstart", name))
-      return 4;
-   if (!strcmp("pce_fast.slend", name))
-      return 235;
 #elif defined(WANT_WSWAN_EMU)
    if (!strcmp("wswan.ocmultiplier", name))
       return 1;
@@ -170,23 +148,6 @@ bool MDFN_GetSettingB(const char *name)
       return 0;
    if (!strcmp("snes.input.port2.multitap", name))
       return 0;
-#elif defined(WANT_PCE_FAST_EMU)
-   if (!strcmp("pce_fast.input.multitap", name))
-      return 1;
-   if (!strcmp("pce_fast.arcadecard", name))
-      return 1;
-   if (!strcmp("pce_fast.forcesgx", name))
-      return 0;
-   if (!strcmp("pce_fast.nospritelimit", name))
-      return setting_pce_fast_nospritelimit;
-   if (!strcmp("pce_fast.forcemono", name))
-      return 0;
-   if (!strcmp("pce_fast.disable_softreset", name))
-      return 0;
-   if (!strcmp("pce_fast.adpcmlp", name))
-      return 0;
-   if (!strcmp("pce_fast.correct_aspect", name))
-      return setting_pce_keepaspect;
 #elif defined(WANT_NGP_EMU)
    if (!strcmp("ngp.language", name))
       return setting_ngp_language;
@@ -218,9 +179,6 @@ std::string MDFN_GetSettingS(const char *name)
 #if defined(WANT_GBA_EMU)
    if (!strcmp("gba.bios", name))
       return setting_gba_hle ? std::string("") : std::string("gba_bios.bin");
-#elif defined(WANT_PCE_FAST_EMU)
-   if (!strcmp("pce_fast.cdbios", name))
-      return std::string("syscard3.pce");
 #elif defined(WANT_PCFX_EMU)
    if (!strcmp("pcfx.bios", name))
       return std::string("pcfx.bios");
