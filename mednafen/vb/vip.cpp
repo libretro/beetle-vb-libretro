@@ -138,7 +138,7 @@ static void MakeColorLUT(const MDFN_PixelFormat &format)
    ColorLUTNoGC[lr][i][1] = pow(g_prime, 2.2 / 1.0);
    ColorLUTNoGC[lr][i][2] = pow(b_prime, 2.2 / 1.0);
 
-   ColorLUT[lr][i] = format.MakeColor((int)(r_prime * 255), (int)(g_prime * 255), (int)(b_prime * 255), 0);
+   ColorLUT[lr][i] = MAKECOLOR((int)(r_prime * 255), (int)(g_prime * 255), (int)(b_prime * 255), 0);
   }
  }
 
@@ -165,7 +165,7 @@ static void MakeColorLUT(const MDFN_PixelFormat &format)
    g_prime = pow(g, 1.0 / 2.2);
    b_prime = pow(b, 1.0 / 2.2);
 
-   AnaSlowColorLUT[l_b][r_b] = format.MakeColor((int)(r_prime * 255), (int)(g_prime * 255), (int)(b_prime * 255), 0);
+   AnaSlowColorLUT[l_b][r_b] = MAKECOLOR(((int)(r_prime * 255)), ((int)(g_prime * 255)), ((int)(b_prime * 255)), 0);
   }
  }
 }
