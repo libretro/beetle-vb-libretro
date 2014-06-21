@@ -47,7 +47,6 @@
     <ClCompile Include="..\..\..\mednafen\vb\vb.cpp" />
     <ClCompile Include="..\..\..\mednafen\vb\vip.cpp" />
     <ClCompile Include="..\..\..\mednafen\vb\vsu.cpp" />
-    <ClCompile Include="..\..\..\mednafen\video\Deinterlacer.cpp" />
     <ClCompile Include="..\..\..\mednafen\video\surface.cpp" />
     <ClCompile Include="..\..\..\scrc32.cpp" />
     <ClCompile Include="..\..\..\stubs.cpp" />
