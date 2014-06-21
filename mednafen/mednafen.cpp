@@ -31,11 +31,6 @@
 #include	"file.h"
 #include	"FileWrapper.h"
 
-#ifdef NEED_CD
-#include	"cdrom/cdromif.h"
-#include	"cdrom/CDUtility.h"
-#endif
-
 #include	"mempatcher.h"
 #include	"md5.h"
 #include	"clamp.h"
@@ -68,171 +63,11 @@ void MDFN_ResetMessages(void)
 }
 
 
-#ifdef NEED_CD
-static void ReadM3U(std::vector<std::string> &file_list, std::string path, unsigned depth = 0)
-{
- std::vector<std::string> ret;
- FileWrapper m3u_file(path.c_str(), FileWrapper::MODE_READ, _("M3U CD Set"));
- std::string dir_path;
- char linebuf[2048];
-
- MDFN_GetFilePathComponents(path, &dir_path);
-
- while(m3u_file.get_line(linebuf, sizeof(linebuf)))
- {
-  std::string efp;
-
-  if(linebuf[0] == '#') continue;
-  MDFN_rtrim(linebuf);
-  if(linebuf[0] == 0) continue;
-
-  efp = MDFN_EvalFIP(dir_path, std::string(linebuf));
-
-  if(efp.size() >= 4 && efp.substr(efp.size() - 4) == ".m3u")
-  {
-   if(efp == path)
-    throw(MDFN_Error(0, _("M3U at \"%s\" references self."), efp.c_str()));
-
-   if(depth == 99)
-    throw(MDFN_Error(0, _("M3U load recursion too deep!")));
-
-   ReadM3U(file_list, efp, depth++);
-  }
-  else
-   file_list.push_back(efp);
- }
-}
-
-#ifdef NEED_CD
- static std::vector<CDIF *> CDInterfaces;	// FIXME: Cleanup on error out.
-#endif
-// TODO: LoadCommon()
-
-MDFNGI *MDFNI_LoadCD(const char *force_module, const char *devicename)
-{
- uint8 LayoutMD5[16];
-
- MDFN_printf(_("Loading %s...\n\n"), devicename ? devicename : _("PHYSICAL CD"));
-
- try
- {
-  if(devicename && strlen(devicename) > 4 && !strcasecmp(devicename + strlen(devicename) - 4, ".m3u"))
-  {
-   std::vector<std::string> file_list;
-
-   ReadM3U(file_list, devicename);
-
-   for(unsigned i = 0; i < file_list.size(); i++)
-   {
-    CDInterfaces.push_back(CDIF_Open(file_list[i].c_str(), false, false /* cdimage_memcache */));
-   }
-  }
-  else
-  {
-   CDInterfaces.push_back(CDIF_Open(devicename, false, false /* cdimage_memcache */));
-  }
- }
- catch(std::exception &e)
- {
-  MDFND_PrintError(e.what());
-  MDFN_PrintError(_("Error opening CD."));
-  return(0);
- }
-
- //
- // Print out a track list for all discs.
- //
- MDFN_indent(1);
- for(unsigned i = 0; i < CDInterfaces.size(); i++)
- {
-  CDUtility::TOC toc;
-
-  CDInterfaces[i]->ReadTOC(&toc);
-
-  MDFN_printf(_("CD %d Layout:\n"), i + 1);
-  MDFN_indent(1);
-
-  for(int32 track = toc.first_track; track <= toc.last_track; track++)
-  {
-   MDFN_printf(_("Track %2d, LBA: %6d  %s\n"), track, toc.tracks[track].lba, (toc.tracks[track].control & 0x4) ? "DATA" : "AUDIO");
-  }
-
-  MDFN_printf("Leadout: %6d\n", toc.tracks[100].lba);
-  MDFN_indent(-1);
-  MDFN_printf("\n");
- }
- MDFN_indent(-1);
-
- // Calculate layout MD5.  The system emulation LoadCD() code is free to ignore this value and calculate
- // its own, or to use it to look up a game in its database.
- {
-  md5_context layout_md5;
-
-  layout_md5.starts();
-
-  for(unsigned i = 0; i < CDInterfaces.size(); i++)
-  {
-   CD_TOC toc;
-
-   CDInterfaces[i]->ReadTOC(&toc);
-
-   layout_md5.update_u32_as_lsb(toc.first_track);
-   layout_md5.update_u32_as_lsb(toc.last_track);
-   layout_md5.update_u32_as_lsb(toc.tracks[100].lba);
-
-   for(uint32 track = toc.first_track; track <= toc.last_track; track++)
-   {
-    layout_md5.update_u32_as_lsb(toc.tracks[track].lba);
-    layout_md5.update_u32_as_lsb(toc.tracks[track].control & 0x4);
-   }
-  }
-
-  layout_md5.finish(LayoutMD5);
- }
-
- // This if statement will be true if force_module references a system without CDROM support.
- if(!MDFNGameInfo->LoadCD)
- {
-    MDFN_PrintError(_("Specified system \"%s\" doesn't support CDs!"), force_module);
-    return(0);
- }
-
- MDFN_printf(_("Using module: %s(%s)\n\n"), MDFNGameInfo->shortname, MDFNGameInfo->fullname);
-
- // TODO: include module name in hash
- memcpy(MDFNGameInfo->MD5, LayoutMD5, 16);
-
- if(!(MDFNGameInfo->LoadCD(&CDInterfaces)))
- {
-  for(unsigned i = 0; i < CDInterfaces.size(); i++)
-   delete CDInterfaces[i];
-  CDInterfaces.clear();
-
-  MDFNGameInfo = NULL;
-  return(0);
- }
-
- //MDFNI_SetLayerEnableMask(~0ULL);
-
- MDFN_ResetMessages();   // Save state, status messages, etc.
-
- MDFN_LoadGameCheats(NULL);
- MDFNMP_InstallReadPatches();
-
- return(MDFNGameInfo);
-}
-#endif
-
 MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
 {
    MDFNFILE GameFile;
 	std::vector<FileExtensionSpecStruct> valid_iae;
    MDFNGameInfo = &EmulatedVB;
-
-#ifdef NEED_CD
-	if(strlen(name) > 4 && (!strcasecmp(name + strlen(name) - 4, ".cue") || !strcasecmp(name + strlen(name) - 4, ".ccd") || !strcasecmp(name + strlen(name) - 4, ".toc") || !strcasecmp(name + strlen(name) - 4, ".m3u")))
-	 return(MDFNI_LoadCD(force_module, name));
-#endif
 
 	MDFN_printf(_("Loading %s...\n"),name);
 
@@ -313,21 +148,10 @@ void MDFNI_CloseGame(void)
    MDFNMP_Kill();
 
    MDFNGameInfo = NULL;
-
-#ifdef NEED_CD
-   for(unsigned i = 0; i < CDInterfaces.size(); i++)
-      delete CDInterfaces[i];
-   CDInterfaces.clear();
-#endif
 }
 
 bool MDFNI_InitializeModule(void)
 {
-
-#ifdef NEED_CD
- CDUtility::CDUtility_Init();
-#endif
-
  return(1);
 }
 
