@@ -107,9 +107,6 @@
     <ClCompile Include="..\..\..\mednafen\trio\trio.c">
       <Filter>Source Files\mednafen\trio</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\mednafen\sound\Stereo_Buffer.cpp">
-      <Filter>Source Files\mednafen\sound</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\mednafen\hw_cpu\v810\fpu-new\softfloat.c">
       <Filter>Source Files\mednafen\hw_cpu\v810\fpu-new</Filter>
     </ClCompile>
