@@ -267,7 +267,7 @@ static void check_variables(void)
 #if defined(WANT_NGP_EMU)
    var.key = "ngp_language";
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (strcmp(var.value, "japanese") == 0)
          setting_ngp_language = 0;
@@ -278,7 +278,7 @@ static void check_variables(void)
 #elif defined (WANT_GBA_EMU)
    var.key = "gba_hle";
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (strcmp(var.value, "enabled") == 0)
          setting_gba_hle = 1;
@@ -288,7 +288,7 @@ static void check_variables(void)
 #elif defined (WANT_VB_EMU)   
     var.key = "vb_color_mode";
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (strcmp(var.value, "black & red") == 0)
 	  {
@@ -305,7 +305,7 @@ static void check_variables(void)
    
     var.key = "vb_anaglyph_preset";
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
    
    
