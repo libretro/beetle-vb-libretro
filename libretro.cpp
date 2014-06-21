@@ -278,8 +278,6 @@ void retro_unload_game()
 
 static void update_input(void)
 {
-   MDFNGI *currgame = (MDFNGI*)game;
-
    input_buf[0] = 0;
    static unsigned map[] = {
       RETRO_DEVICE_ID_JOYPAD_A,
