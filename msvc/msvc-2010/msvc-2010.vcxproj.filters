@@ -116,9 +116,6 @@
     <ClCompile Include="..\..\..\mednafen\vb\timer.cpp">
       <Filter>Source Files\mednafen\vb</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\mednafen\vb\vb.cpp">
-      <Filter>Source Files\mednafen\vb</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\mednafen\vb\vip.cpp">
       <Filter>Source Files\mednafen\vb</Filter>
     </ClCompile>

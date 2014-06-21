@@ -307,9 +307,6 @@
 						RelativePath="..\..\..\mednafen\vb\timer.cpp">
 					</File>
 					<File
-						RelativePath="..\..\..\mednafen\vb\vb.cpp">
-					</File>
-					<File
 						RelativePath="..\..\..\mednafen\vb\vip.cpp">
 					</File>
 					<File

@@ -41,7 +41,6 @@ CORE_DIR := $(MEDNAFEN_DIR)/vb
 
 CORE_SOURCES := $(CORE_DIR)/input.cpp \
 	$(CORE_DIR)/timer.cpp \
-	$(CORE_DIR)/vb.cpp \
 	$(CORE_DIR)/vip.cpp \
 	$(CORE_DIR)/vsu.cpp
 

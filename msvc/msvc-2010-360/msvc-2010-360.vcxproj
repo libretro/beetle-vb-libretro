@@ -72,7 +72,6 @@
     </ClCompile>
     <ClCompile Include="..\..\..\mednafen\vb\input.cpp" />
     <ClCompile Include="..\..\..\mednafen\vb\timer.cpp" />
-    <ClCompile Include="..\..\..\mednafen\vb\vb.cpp" />
     <ClCompile Include="..\..\..\mednafen\vb\vip.cpp" />
     <ClCompile Include="..\..\..\mednafen\vb\vsu.cpp" />
     <ClCompile Include="..\..\..\mednafen\video\surface.cpp" />
