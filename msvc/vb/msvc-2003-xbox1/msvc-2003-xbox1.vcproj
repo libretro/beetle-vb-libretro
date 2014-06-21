@@ -304,19 +304,19 @@
 					Name="vb"
 					Filter="">
 					<File
-						RelativePath="..\..\..\mednafen\vb-09333\input.cpp">
+						RelativePath="..\..\..\mednafen\vb\input.cpp">
 					</File>
 					<File
-						RelativePath="..\..\..\mednafen\vb-09333\timer.cpp">
+						RelativePath="..\..\..\mednafen\vb\timer.cpp">
 					</File>
 					<File
-						RelativePath="..\..\..\mednafen\vb-09333\vb.cpp">
+						RelativePath="..\..\..\mednafen\vb\vb.cpp">
 					</File>
 					<File
-						RelativePath="..\..\..\mednafen\vb-09333\vip.cpp">
+						RelativePath="..\..\..\mednafen\vb\vip.cpp">
 					</File>
 					<File
-						RelativePath="..\..\..\mednafen\vb-09333\vsu.cpp">
+						RelativePath="..\..\..\mednafen\vb\vsu.cpp">
 					</File>
 				</Filter>
 				<Filter

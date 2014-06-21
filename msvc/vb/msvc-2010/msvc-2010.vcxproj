@@ -47,11 +47,11 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\..\..\mednafen\vb-09333\input.cpp" />
-    <ClCompile Include="..\..\..\mednafen\vb-09333\timer.cpp" />
-    <ClCompile Include="..\..\..\mednafen\vb-09333\vb.cpp" />
-    <ClCompile Include="..\..\..\mednafen\vb-09333\vip.cpp" />
-    <ClCompile Include="..\..\..\mednafen\vb-09333\vsu.cpp" />
+    <ClCompile Include="..\..\..\mednafen\vb\input.cpp" />
+    <ClCompile Include="..\..\..\mednafen\vb\timer.cpp" />
+    <ClCompile Include="..\..\..\mednafen\vb\vb.cpp" />
+    <ClCompile Include="..\..\..\mednafen\vb\vip.cpp" />
+    <ClCompile Include="..\..\..\mednafen\vb\vsu.cpp" />
     <ClCompile Include="..\..\..\mednafen\video\Deinterlacer.cpp" />
     <ClCompile Include="..\..\..\mednafen\video\surface.cpp" />
     <ClCompile Include="..\..\..\scrc32.cpp" />

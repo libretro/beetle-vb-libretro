@@ -142,7 +142,7 @@ else ifeq ($(core), vb)
 	WANT_NEW_API = 1
    NEED_STEREO_SOUND = 1
    CORE_DEFINE := -DWANT_VB_EMU
-   CORE_DIR := $(MEDNAFEN_DIR)/vb-09333
+   CORE_DIR := $(MEDNAFEN_DIR)/vb
 
 CORE_SOURCES := $(CORE_DIR)/input.cpp \
 	$(CORE_DIR)/timer.cpp \
