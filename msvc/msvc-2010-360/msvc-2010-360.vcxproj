@@ -28,7 +28,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\libretro.cpp" />
-    <ClCompile Include="..\..\..\mednafen\cputest\cputest.c" />
     <ClCompile Include="..\..\..\mednafen\endian.cpp" />
     <ClCompile Include="..\..\..\mednafen\error.cpp" />
     <ClCompile Include="..\..\..\mednafen\file.cpp" />

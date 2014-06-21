@@ -33,9 +33,6 @@
     <Filter Include="Source Files\mednafen\hw_cpu\v810\fpu-new">
       <UniqueIdentifier>{3e634eaf-5bc6-4067-b223-18448d4686c8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\mednafen\cputest">
-      <UniqueIdentifier>{d6b5ad30-82b7-4bd6-8c63-7af9e1ea40d3}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\mednafen\Stream.cpp">
@@ -115,9 +112,6 @@
     </ClCompile>
     <ClCompile Include="..\..\..\mednafen\hw_cpu\v810\v810_cpu.cpp">
       <Filter>Source Files\mednafen\hw_cpu\v810</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\mednafen\cputest\cputest.c">
-      <Filter>Source Files\mednafen\cputest</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\mednafen\vb\input.cpp">
       <Filter>Source Files\mednafen\vb</Filter>
