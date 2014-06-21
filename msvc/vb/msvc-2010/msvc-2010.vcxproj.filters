@@ -119,9 +119,6 @@
     <ClCompile Include="..\..\..\mednafen\hw_cpu\v810\v810_cpu.cpp">
       <Filter>Source Files\mednafen\hw_cpu\v810</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\mednafen\player.cpp">
-      <Filter>Source Files\mednafen</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\mednafen\vb-09333\input.cpp">
       <Filter>Source Files\mednafen\vb</Filter>
     </ClCompile>

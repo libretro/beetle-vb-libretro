@@ -131,8 +131,5 @@
     <ClCompile Include="..\..\..\mednafen\wswan-09333\wswan-memory.cpp">
       <Filter>Source Files\mednafen\wswan</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\mednafen\player.cpp">
-      <Filter>Source Files\mednafen</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

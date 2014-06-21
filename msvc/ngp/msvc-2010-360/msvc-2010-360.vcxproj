@@ -69,7 +69,6 @@
     <ClCompile Include="..\..\..\mednafen\ngp-09333\TLCS-900h\TLCS900h_registers.cpp" />
     <ClCompile Include="..\..\..\mednafen\ngp-09333\Z80_interface.cpp" />
     <ClCompile Include="..\..\..\mednafen\okiadpcm.cpp" />
-    <ClCompile Include="..\..\..\mednafen\player.cpp" />
     <ClCompile Include="..\..\..\mednafen\settings.cpp" />
     <ClCompile Include="..\..\..\mednafen\sound\Blip_Buffer.cpp" />
     <ClCompile Include="..\..\..\mednafen\sound\Stereo_Buffer.cpp" />

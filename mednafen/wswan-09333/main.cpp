@@ -21,7 +21,6 @@
 #include "wswan.h"
 #include "../md5.h"
 #include "../mempatcher.h"
-#include "../player.h"
 
 #include <fcntl.h>
 #include <sys/types.h>
@@ -46,7 +45,6 @@ uint32		rom_size;
 uint16 WSButtonStatus;
 
 
-static bool IsWSR;
 static uint8 WSRCurrentSong;
 
 static void Reset(void)
@@ -69,11 +67,6 @@ static void Reset(void)
 
 	v30mz_set_reg(NEC_SS,0);
 	v30mz_set_reg(NEC_SP,0x2000);
-
-	if(IsWSR)
-	{
-	 v30mz_set_reg(NEC_AW, WSRCurrentSong);
-	}
 }
 
 static uint8 *chee;
@@ -107,47 +100,6 @@ static void Emulate(EmulateSpecStruct *espec)
 
  espec->MasterCycles = v30mz_timestamp;
  v30mz_timestamp = 0;
-
- if(IsWSR)
- {
-  bool needreload = FALSE;
-  static uint16 last;
-
-  Player_Draw(espec->surface, &espec->DisplayRect, WSRCurrentSong, espec->SoundBuf, espec->SoundBufSize);
-
-  if((WSButtonStatus & 0x02) && !(last & 0x02))
-  {
-   WSRCurrentSong++;
-   needreload = 1;
-  }
-
-  if((WSButtonStatus & 0x08) && !(last & 0x08))
-  {
-   WSRCurrentSong--;
-   needreload = 1;
-  }
-
-  if((WSButtonStatus & 0x100) && !(last & 0x100))
-   needreload = 1;
-
-  if((WSButtonStatus & 0x01) && !(last & 0x01))
-  {
-   WSRCurrentSong += 10;
-   needreload = 1;
-  }
-
-  if((WSButtonStatus & 0x04) && !(last & 0x04))
-  {
-   WSRCurrentSong -= 10;
-   needreload = 1;
-  }
-
-
-  last = WSButtonStatus;
-
-  if(needreload)
-   Reset();
- }
 }
 
 typedef struct
@@ -216,18 +168,6 @@ static int Load(const char *name, MDFNFILE *fp)
   MDFN_PrintError(_("%s ROM image is too small."), MDFNGameInfo->fullname);
   return(0);
  }
-
- if(!memcmp(GET_FDATA_PTR(fp) + GET_FSIZE_PTR(fp) - 0x20, "WSRF", 4))
- {
-  const uint8 *wsr_footer = GET_FDATA_PTR(fp) + GET_FSIZE_PTR(fp) - 0x20;
-
-  IsWSR = TRUE;
-  WSRCurrentSong = wsr_footer[0x5];
-
-  Player_Init(256, "", "", "");
- }
- else
-  IsWSR = false;
 
  real_rom_size = (GET_FSIZE_PTR(fp) + 0xFFFF) & ~0xFFFF;
  rom_size = round_up_pow2(real_rom_size); //fp->size);
@@ -307,7 +247,6 @@ static int Load(const char *name, MDFNFILE *fp)
   wsCartROM[0xfffec]=0x20;
  }
 
- if(!IsWSR)
  {
   if(header[6] & 0x1)
    MDFNGameInfo->rotated = MDFN_ROTATE90;
@@ -320,7 +259,7 @@ static int Load(const char *name, MDFNFILE *fp)
  #endif
 
  v30mz_init(WSwan_readmem20, WSwan_writemem20, WSwan_readport, WSwan_writeport);
- WSwan_MemoryInit(MDFN_GetSettingB("wswan.language"), wsc, SRAMSize, IsWSR); // EEPROM and SRAM are loaded in this func.
+ WSwan_MemoryInit(MDFN_GetSettingB("wswan.language"), wsc, SRAMSize, false); // EEPROM and SRAM are loaded in this func.
  WSwan_GfxInit();
  MDFNGameInfo->fps = (uint32)((uint64)3072000 * 65536 * 256 / (159*256));
  MDFNGameInfo->GameSetMD5Valid = FALSE;

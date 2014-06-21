@@ -71,7 +71,6 @@
     <ClCompile Include="..\..\..\mednafen\pcfx-09333\rainbow.cpp" />
     <ClCompile Include="..\..\..\mednafen\pcfx-09333\soundbox.cpp" />
     <ClCompile Include="..\..\..\mednafen\pcfx-09333\timer.cpp" />
-    <ClCompile Include="..\..\..\mednafen\player.cpp" />
     <ClCompile Include="..\..\..\mednafen\settings.cpp" />
     <ClCompile Include="..\..\..\mednafen\sound\Blip_Buffer.cpp" />
     <ClCompile Include="..\..\..\mednafen\sound\OwlResampler.cpp" />
