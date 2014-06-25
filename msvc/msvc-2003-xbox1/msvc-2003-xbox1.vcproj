@@ -194,123 +194,147 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath="..\..\..\libretro.cpp">
+				RelativePath="..\..\libretro.cpp">
 			</File>
 			<File
-				RelativePath="..\..\..\scrc32.cpp">
-			</File>
-			<File
-				RelativePath="..\..\..\stubs.cpp">
+				RelativePath="..\..\scrc32.cpp">
 			</File>
 			<Filter
 				Name="mednafen"
 				Filter="">
 				<File
-					RelativePath="..\..\..\mednafen\endian.cpp">
+					RelativePath="..\..\mednafen\endian.cpp">
 				</File>
 				<File
-					RelativePath="..\..\..\mednafen\error.cpp">
+					RelativePath="..\..\mednafen\error.cpp">
 				</File>
 				<File
-					RelativePath="..\..\..\mednafen\file.cpp">
+					RelativePath="..\..\mednafen\file.cpp">
 				</File>
 				<File
-					RelativePath="..\..\..\mednafen\FileStream.cpp">
+					RelativePath="..\..\mednafen\FileStream.cpp">
 				</File>
 				<File
-					RelativePath="..\..\..\mednafen\FileWrapper.cpp">
+					RelativePath="..\..\mednafen\FileWrapper.cpp">
 				</File>
 				<File
-					RelativePath="..\..\..\mednafen\general.cpp">
+					RelativePath="..\..\mednafen\general.cpp">
 				</File>
 				<File
-					RelativePath="..\..\..\mednafen\math_ops.cpp">
+					RelativePath="..\..\mednafen\math_ops.cpp">
 				</File>
 				<File
-					RelativePath="..\..\..\mednafen\md5.cpp">
+					RelativePath="..\..\mednafen\md5.cpp">
 				</File>
 				<File
-					RelativePath="..\..\..\mednafen\mednafen.cpp">
+					RelativePath="..\..\mednafen\mednafen.cpp">
 				</File>
 				<File
-					RelativePath="..\..\..\mednafen\MemoryStream.cpp">
+					RelativePath="..\..\mednafen\MemoryStream.cpp">
 				</File>
 				<File
-					RelativePath="..\..\..\mednafen\mempatcher.cpp">
+					RelativePath="..\..\mednafen\mempatcher.cpp">
 				</File>
 				<File
-					RelativePath="..\..\..\mednafen\okiadpcm.cpp">
+					RelativePath="..\..\mednafen\settings.cpp">
 				</File>
 				<File
-					RelativePath="..\..\..\mednafen\settings.cpp">
+					RelativePath="..\..\mednafen\state.cpp">
 				</File>
 				<File
-					RelativePath="..\..\..\mednafen\state.cpp">
-				</File>
-				<File
-					RelativePath="..\..\..\mednafen\Stream.cpp">
+					RelativePath="..\..\mednafen\Stream.cpp">
 				</File>
 				<Filter
 					Name="trio"
 					Filter="">
 					<File
-						RelativePath="..\..\..\mednafen\trio\trio.c">
+						RelativePath="..\..\mednafen\trio\trio.c">
 						<FileConfiguration
 							Name="Debug|Xbox">
 							<Tool
 								Name="VCCLCompilerTool"
-								CompileAs="1"/>
+								CompileAs="2"/>
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Profile|Xbox">
 							<Tool
 								Name="VCCLCompilerTool"
-								CompileAs="1"/>
+								CompileAs="2"/>
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Profile_FastCap|Xbox">
 							<Tool
 								Name="VCCLCompilerTool"
-								CompileAs="1"/>
+								CompileAs="2"/>
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Xbox">
 							<Tool
 								Name="VCCLCompilerTool"
-								CompileAs="1"/>
+								CompileAs="2"/>
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Release_LTCG|Xbox">
 							<Tool
 								Name="VCCLCompilerTool"
-								CompileAs="1"/>
+								CompileAs="2"/>
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\..\..\mednafen\trio\triostr.c">
+						RelativePath="..\..\mednafen\trio\triostr.c">
+						<FileConfiguration
+							Name="Debug|Xbox">
+							<Tool
+								Name="VCCLCompilerTool"
+								CompileAs="2"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Profile|Xbox">
+							<Tool
+								Name="VCCLCompilerTool"
+								CompileAs="2"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Profile_FastCap|Xbox">
+							<Tool
+								Name="VCCLCompilerTool"
+								CompileAs="2"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Xbox">
+							<Tool
+								Name="VCCLCompilerTool"
+								CompileAs="2"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release_LTCG|Xbox">
+							<Tool
+								Name="VCCLCompilerTool"
+								CompileAs="2"/>
+						</FileConfiguration>
 					</File>
 				</Filter>
 				<Filter
 					Name="sound"
 					Filter="">
 					<File
-						RelativePath="..\..\..\mednafen\sound\Blip_Buffer.cpp">
+						RelativePath="..\..\mednafen\sound\Blip_Buffer.cpp">
 					</File>
 				</Filter>
 				<Filter
 					Name="vb"
 					Filter="">
 					<File
-						RelativePath="..\..\..\mednafen\vb\input.cpp">
+						RelativePath="..\..\mednafen\vb\input.cpp">
 					</File>
 					<File
-						RelativePath="..\..\..\mednafen\vb\timer.cpp">
+						RelativePath="..\..\mednafen\vb\timer.cpp">
 					</File>
 					<File
-						RelativePath="..\..\..\mednafen\vb\vip.cpp">
+						RelativePath="..\..\mednafen\vb\vip.cpp">
 					</File>
 					<File
-						RelativePath="..\..\..\mednafen\vb\vsu.cpp">
+						RelativePath="..\..\mednafen\vb\vsu.cpp">
 					</File>
 				</Filter>
 				<Filter
@@ -320,16 +344,16 @@
 						Name="v810"
 						Filter="">
 						<File
-							RelativePath="..\..\..\mednafen\hw_cpu\v810\v810_cpu.cpp">
+							RelativePath="..\..\mednafen\hw_cpu\v810\v810_cpu.cpp">
 						</File>
 						<File
-							RelativePath="..\..\..\mednafen\hw_cpu\v810\v810_cpuD.cpp">
+							RelativePath="..\..\mednafen\hw_cpu\v810\v810_cpuD.cpp">
 						</File>
 						<Filter
 							Name="fpu-new"
 							Filter="">
 							<File
-								RelativePath="..\..\..\mednafen\hw_cpu\v810\fpu-new\softfloat.c">
+								RelativePath="..\..\mednafen\hw_cpu\v810\fpu-new\softfloat.c">
 								<FileConfiguration
 									Name="Debug|Xbox">
 									<Tool
@@ -368,7 +392,7 @@
 					Name="video"
 					Filter="">
 					<File
-						RelativePath="..\..\..\mednafen\video\surface.cpp">
+						RelativePath="..\..\mednafen\video\surface.cpp">
 					</File>
 				</Filter>
 			</Filter>

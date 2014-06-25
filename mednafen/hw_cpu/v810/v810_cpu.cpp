@@ -41,8 +41,8 @@ found freely through public domain sources.
 //////////////////////////////////////////////////////////
 // CPU routines
 
-#include "mednafen/mednafen.h"
-#include <mednafen/masmem.h>
+#include "../../mednafen.h"
+#include "../../masmem.h"
 
 //#include "pcfx.h"
 //#include "debug.h"

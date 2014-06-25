@@ -20,7 +20,7 @@
 #include "mednafen.h"
 #include "Stream.h"
 
-#include <trio/trio.h>
+#include "include/trio/trio.h"
 
 Stream::Stream()
 {

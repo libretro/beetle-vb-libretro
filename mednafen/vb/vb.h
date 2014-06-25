@@ -1,10 +1,10 @@
 #ifndef __VB_VB_H
 #define __VB_VB_H
 
-#include <mednafen/mednafen.h>
-#include <mednafen/hw_cpu/v810/v810_cpu.h>
-#include <mednafen/masmem.h>
-#include <trio/trio.h>
+#include "../mednafen.h"
+#include "../hw_cpu/v810/v810_cpu.h"
+#include "../masmem.h"
+#include "../include/trio/trio.h"
 
 namespace MDFN_IEN_VB
 {

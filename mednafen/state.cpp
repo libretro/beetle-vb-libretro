@@ -19,7 +19,7 @@
 
 #include <string.h>
 
-#include <trio/trio.h>
+#include "include/trio/trio.h"
 #include "driver.h"
 #include "general.h"
 #include "state.h"
