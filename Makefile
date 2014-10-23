@@ -89,6 +89,10 @@ else ifeq ($(platform), ios)
    LDFLAGS += $(PTHREAD_FLAGS)
    FLAGS += $(PTHREAD_FLAGS)
 
+ifeq ($(IOSSDK),)
+   IOSSDK := $(shell xcrun -sdk iphoneos -show-sdk-path)
+endif
+
    CC = clang -arch armv7 -isysroot $(IOSSDK)
    CXX = clang++ -arch armv7 -isysroot $(IOSSDK)
    OSXVER = `sw_vers -productVersion | cut -d. -f 2`
