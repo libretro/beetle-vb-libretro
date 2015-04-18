@@ -7,6 +7,10 @@
 #endif
 #endif
 
+#ifdef DISABLE_EXCEPTIONS
+#define throw  (void)0,
+#endif
+
 /*
  TODO:
 	Write and Seek expansion that fail should not corrupt the state.
