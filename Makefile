@@ -158,6 +158,22 @@ else ifeq ($(platform), psp1)
    FLAGS += -DPSP -G0
    FLAGS += -DHAVE_MKDIR
    STATIC_LINKING = 1
+else ifeq ($(platform), ctr)
+   TARGET := $(TARGET_NAME)_ctr.a
+   CC = $(DEVKITARM)/bin/arm-none-eabi-gcc$(EXE_EXT)
+   CXX = $(DEVKITARM)/bin/arm-none-eabi-g++$(EXE_EXT)
+   AR = $(DEVKITARM)/bin/arm-none-eabi-ar$(EXE_EXT)
+   ENDIANNESS_DEFINES := -DLSB_FIRST
+   FLAGS += -DARM11 -D_3DS
+   FLAGS += -DHAVE_MKDIR
+   FLAGS += -march=armv6k -mtune=mpcore -mfloat-abi=hard
+   FLAGS += -mword-relocations
+   FLAGS += -fomit-frame-pointer -fstrict-aliasing -ffast-math
+   FLAGS += -fno-rtti
+   FLAGS += -fno-exceptions -DDISABLE_EXCEPTIONS
+   STATIC_LINKING = 1
+   IS_X86 := 0
+   NEED_BPP := 16
 else ifeq ($(platform), xenon)
    TARGET := $(TARGET_NAME)_xenon360.a
    CC = xenon-gcc$(EXE_EXT)

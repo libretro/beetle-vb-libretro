@@ -29,6 +29,10 @@
 
 #include "md5.h"
 
+#ifdef DISABLE_EXCEPTIONS
+#define throw  (void)0,
+#endif
+
 using namespace std;
 
 static bool IsAbsolutePath(const char *path)

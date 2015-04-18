@@ -29,6 +29,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef DISABLE_EXCEPTIONS
+#define throw  (void)0,
+#endif
+
 // Some really bad preprocessor abuse follows to handle platforms that don't have fseeko and ftello...and of course
 // for largefile support on Windows:
 

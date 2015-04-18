@@ -930,8 +930,15 @@ static int32 CalcNextEvent(void)
 static INLINE void CopyFBColumnToTarget_Anaglyph_BASE(const bool DisplayActive_arg, const int lr)
 {
      const int fb = DisplayFB;
-     uint32 *target = surface->pixels + Column;
-     const int32 pitch32 = surface->pitch32;
+
+#if defined(WANT_8BPP)
+     uint8  *target = surface->pixels8  + Column;
+#elif defined(WANT_16BPP)
+     uint16 *target = surface->pixels16 + Column;
+#else
+     uint32 *target = surface->pixels   + Column;
+#endif
+     const int32 pitchinpix = surface->pitchinpix;
      const uint8 *fb_source = &FB[fb][lr][64 * Column];
 
      for(int y = 56; y; y--)
@@ -946,12 +953,12 @@ static INLINE void CopyFBColumnToTarget_Anaglyph_BASE(const bool DisplayActive_a
         pixel = 0;
 
        if(lr)
-	*target |= pixel;
+         *target |= pixel;
        else
         *target = pixel;
 
        source_bits >>= 2;
-       target += pitch32;
+       target += pitchinpix;
       }
       fb_source++;
      }

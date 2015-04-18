@@ -32,6 +32,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef DISABLE_EXCEPTIONS
+#define throw  (void)0,
+#endif
+
 #define fseeko fseek
 #define ftello ftell
 

@@ -18,6 +18,11 @@
 #include "../mednafen.h"
 #include "surface.h"
 
+#ifdef DISABLE_EXCEPTIONS
+#define throw  (void)0,
+#endif
+
+
 MDFN_PixelFormat::MDFN_PixelFormat()
 {
    bpp = 0;

@@ -94,6 +94,7 @@ class MDFN_Surface //typedef struct
 
  ~MDFN_Surface();
 
+ uint8  *pixels8;
  uint16 *pixels16;
  uint32 *pixels;
 

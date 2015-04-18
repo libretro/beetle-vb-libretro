@@ -24,6 +24,10 @@
 #include "file.h"
 #include "general.h"
 
+#ifdef DISABLE_EXCEPTIONS
+#define throw  (void)0,
+#endif
+
 bool MDFNFILE::ApplyIPS(void *unused)
 {
    (void)unused;
