@@ -1094,10 +1094,9 @@ bool V810::bstr_subop(v810_timestamp_t &timestamp, int sub_op, int arg1)
  else
  {
   printf("BSTR Search: %02x\n", sub_op);
-  return(Do_BSTR_Search(timestamp, ((sub_op & 1) ? -1 : 1), (sub_op & 0x2) >> 1));
  }
- assert(0);
- return(false);
+
+ return(Do_BSTR_Search(timestamp, ((sub_op & 1) ? -1 : 1), (sub_op & 0x2) >> 1));
 }
 
 INLINE void V810::SetFPUOPNonFPUFlags(uint32 result)
