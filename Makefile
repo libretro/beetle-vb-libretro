@@ -6,19 +6,37 @@ MEDNAFEN_LIBRETRO_DIR := mednafen-libretro
 NEED_TREMOR = 0
 LIBRETRO_SOURCES :=
 
+ifneq ($(EMSCRIPTEN),)
+	platform = emscripten
+endif
+
 ifeq ($(platform),)
 platform = unix
 ifeq ($(shell uname -a),)
    platform = win
-else ifneq ($(findstring Darwin,$(shell uname -a)),)
-   platform = osx
-   arch = intel
-ifeq ($(shell uname -p),powerpc)
-   arch = ppc
-endif
 else ifneq ($(findstring MINGW,$(shell uname -a)),)
    platform = win
+else ifneq ($(findstring Darwin,$(shell uname -a)),)
+   platform = osx
+else ifneq ($(findstring win,$(shell uname -a)),)
+	platform = win
 endif
+endif
+
+# system platform
+system_platform = unix
+ifeq ($(shell uname -a),)
+	EXE_EXT = .exe
+	system_platform = win
+else ifneq ($(findstring Darwin,$(shell uname -a)),)
+	system_platform = osx
+ifeq ($(shell uname -p),powerpc)
+	arch = ppc
+else
+	arch = intel
+endif
+else ifneq ($(findstring MINGW,$(shell uname -a)),)
+	system_platform = win
 endif
 
 # If you have a system with 1GB RAM or more - cache the whole 
