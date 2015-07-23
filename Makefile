@@ -76,7 +76,6 @@ ifeq ($(platform), unix)
    TARGET := $(TARGET_NAME).so
    fpic := -fPIC
    SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-   ENDIANNESS_DEFINES := -DLSB_FIRST
    ifneq ($(shell uname -p | grep -E '((i.|x)86|amd64)'),)
       IS_X86 = 1
    endif
@@ -91,8 +90,6 @@ else ifeq ($(platform), osx)
 ifeq ($(arch),ppc)
    ENDIANNESS_DEFINES := -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN
    OLD_GCC := 1
-else
-   ENDIANNESS_DEFINES := -DLSB_FIRST
 endif
    OSXVER = `sw_vers -productVersion | cut -d. -f 2`
    OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
@@ -103,7 +100,6 @@ else ifeq ($(platform), ios)
    TARGET := $(TARGET_NAME)_ios.dylib
    fpic := -fPIC
    SHARED := -dynamiclib
-   ENDIANNESS_DEFINES := -DLSB_FIRST
    LDFLAGS += $(PTHREAD_FLAGS)
    FLAGS += $(PTHREAD_FLAGS)
 
@@ -131,7 +127,6 @@ else ifeq ($(platform), qnx)
    TARGET := $(TARGET_NAME)_qnx.so
    fpic := -fPIC
    SHARED := -lcpp -lm -shared -Wl,--no-undefined -Wl,--version-script=link.T
-   ENDIANNESS_DEFINES := -DLSB_FIRST
    #LDFLAGS += $(PTHREAD_FLAGS)
    #FLAGS += $(PTHREAD_FLAGS) -DHAVE_MKDIR
    FLAGS += -DHAVE_MKDIR
@@ -172,7 +167,6 @@ else ifeq ($(platform), psp1)
    CC = psp-gcc$(EXE_EXT)
    CXX = psp-g++$(EXE_EXT)
    AR = psp-ar$(EXE_EXT)
-   ENDIANNESS_DEFINES := -DLSB_FIRST
    FLAGS += -DPSP -G0
    FLAGS += -DHAVE_MKDIR
    STATIC_LINKING = 1
@@ -181,7 +175,6 @@ else ifeq ($(platform), ctr)
    CC = $(DEVKITARM)/bin/arm-none-eabi-gcc$(EXE_EXT)
    CXX = $(DEVKITARM)/bin/arm-none-eabi-g++$(EXE_EXT)
    AR = $(DEVKITARM)/bin/arm-none-eabi-ar$(EXE_EXT)
-   ENDIANNESS_DEFINES := -DLSB_FIRST
    FLAGS += -DARM11 -D_3DS
    FLAGS += -DHAVE_MKDIR
    FLAGS += -march=armv6k -mtune=mpcore -mfloat-abi=hard
@@ -225,7 +218,6 @@ else ifneq (,$(findstring armv,$(platform)))
    TARGET := $(TARGET_NAME).so
    fpic := -fPIC
    SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-   ENDIANNESS_DEFINES := -DLSB_FIRST
    CC = gcc
    LDFLAGS += $(PTHREAD_FLAGS)
    FLAGS += $(PTHREAD_FLAGS) -DHAVE_MKDIR
@@ -256,7 +248,6 @@ else
    IS_X86 = 1
    SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
    LDFLAGS += -static-libgcc -static-libstdc++ -lwinmm
-   ENDIANNESS_DEFINES := -DLSB_FIRST
    FLAGS += -DHAVE__MKDIR
 endif
 
