@@ -212,12 +212,6 @@
 					RelativePath="..\..\mednafen\file.cpp">
 				</File>
 				<File
-					RelativePath="..\..\mednafen\FileStream.cpp">
-				</File>
-				<File
-					RelativePath="..\..\mednafen\FileWrapper.cpp">
-				</File>
-				<File
 					RelativePath="..\..\mednafen\general.cpp">
 				</File>
 				<File

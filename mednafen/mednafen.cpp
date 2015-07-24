@@ -29,7 +29,6 @@
 #include	"state.h"
 #include "video.h"
 #include	"file.h"
-#include	"FileWrapper.h"
 
 #include	"mempatcher.h"
 #include	"md5.h"

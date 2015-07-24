@@ -47,12 +47,6 @@
     <ClCompile Include="..\..\..\mednafen\file.cpp">
       <Filter>Source Files\mednafen</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\mednafen\FileStream.cpp">
-      <Filter>Source Files\mednafen</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\mednafen\FileWrapper.cpp">
-      <Filter>Source Files\mednafen</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\mednafen\general.cpp">
       <Filter>Source Files\mednafen</Filter>
     </ClCompile>
