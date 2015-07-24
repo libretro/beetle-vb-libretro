@@ -3,15 +3,9 @@
 
 #include <string>
 
-extern uint32 MDFN_RoundUpPow2(uint32);
-
 void GetFileBase(const char *f);
 
 std::string MDFN_MakeFName(int type, int id1, const char *cd1);
-
-void MDFN_ltrim(char *string);
-void MDFN_rtrim(char *string);
-void MDFN_trim(char *string);
 
 typedef enum
 {
