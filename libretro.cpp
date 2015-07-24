@@ -55,9 +55,6 @@ static MDFN_Surface *surf;
 #include <iconv.h>
 #endif
 
-namespace MDFN_IEN_VB
-{
-
 enum
 {
  ANAGLYPH_PRESET_DISABLED = 0,
@@ -2170,10 +2167,6 @@ static void Emulate(EmulateSpecStruct *espec)
 
  VB_V810->ResetTS(0);
 }
-
-}
-
-using namespace MDFN_IEN_VB;
 
 #ifdef WANT_DEBUGGER
 static DebuggerInfoStruct DBGInfo =

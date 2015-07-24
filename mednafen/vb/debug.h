@@ -1,9 +1,6 @@
 #ifndef __VB_DEBUG_H
 #define __VB_DEBUG_H
 
-namespace MDFN_IEN_VB
-{
-
 void VBDBG_FlushBreakPoints(int type);
 void VBDBG_AddBreakPoint(int type, unsigned int A1, unsigned int A2, bool logical);
 void VBDBG_Disassemble(uint32 &a, uint32 SpecialA, char *);
@@ -27,7 +24,5 @@ void VBDBG_DoLog(const char *type, const char *format, ...);
 extern bool VB_LoggingOn;
 
 bool VBDBG_Init(void);
-
-};
 
 #endif

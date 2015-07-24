@@ -18,8 +18,6 @@
 #include "vb.h"
 #include "input.h"
 
-namespace MDFN_IEN_VB
-{
 static bool InstantReadHack;
 
 static bool IntPending;
@@ -47,182 +45,176 @@ static v810_timestamp_t last_ts;
 
 void VBINPUT_Init(void)
 {
- InstantReadHack = true;
+   InstantReadHack = true;
 }
 
 void VBINPUT_SetInstantReadHack(bool enabled)
 {
- InstantReadHack = enabled;
+   InstantReadHack = enabled;
 }
-
 
 void VBINPUT_SetInput(int port, const char *type, void *ptr)
 {
- data_ptr = (uint8 *)ptr;
+   data_ptr = (uint8 *)ptr;
 }
 
 uint8 VBINPUT_Read(v810_timestamp_t &timestamp, uint32 A)
 {
- uint8 ret = 0;
- 
- 
- VBINPUT_Update(timestamp);
+   uint8 ret = 0;
 
- //if(((A & 0xFF) == 0x10 || (A & 0xFF) == 0x14))
- // printf("Read %d\n", timestamp);
 
- //if(((A & 0xFF) == 0x10 || (A & 0xFF) == 0x14) && ReadCounter > 0)
- //{
- // printf("Input port read during hardware transfer: %08x %d\n", A, timestamp);
- //}
-  
- switch(A & 0xFF)
- {
-  case 0x10: if(InstantReadHack)
-	      ret = PadData;
-	     else
-	      ret = SDR & 0xFF;
-	     break;
+   VBINPUT_Update(timestamp);
 
-  case 0x14: if(InstantReadHack)
-	      ret = PadData >> 8;
-	     else
-	      ret = SDR >> 8;
-	     break;
+   //if(((A & 0xFF) == 0x10 || (A & 0xFF) == 0x14))
+   // printf("Read %d\n", timestamp);
 
-  case 0x28: ret = SCR | (0x40 | 0x08 | SCR_HW_SI);
-	     if(ReadCounter > 0)
-	      ret |= SCR_SI_STAT;
-	     break;
- }
+   //if(((A & 0xFF) == 0x10 || (A & 0xFF) == 0x14) && ReadCounter > 0)
+   //{
+   // printf("Input port read during hardware transfer: %08x %d\n", A, timestamp);
+   //}
 
-// printf("Input Read: %08x %02x\n", A, ret);
- VB_SetEvent(VB_EVENT_INPUT, (ReadCounter > 0) ? (timestamp + ReadCounter) : VB_EVENT_NONONO);
+   switch(A & 0xFF)
+   {
+      case 0x10: if(InstantReadHack)
+                    ret = PadData;
+                 else
+                    ret = SDR & 0xFF;
+                 break;
 
- return(ret);
+      case 0x14: if(InstantReadHack)
+                    ret = PadData >> 8;
+                 else
+                    ret = SDR >> 8;
+                 break;
+
+      case 0x28: ret = SCR | (0x40 | 0x08 | SCR_HW_SI);
+                 if(ReadCounter > 0)
+                    ret |= SCR_SI_STAT;
+                 break;
+   }
+
+   // printf("Input Read: %08x %02x\n", A, ret);
+   VB_SetEvent(VB_EVENT_INPUT, (ReadCounter > 0) ? (timestamp + ReadCounter) : VB_EVENT_NONONO);
+
+   return(ret);
 }
 
 void VBINPUT_Write(v810_timestamp_t &timestamp, uint32 A, uint8 V)
 {
- VBINPUT_Update(timestamp);
+   VBINPUT_Update(timestamp);
 
- //printf("Input write: %d, %08x %02x\n", timestamp, A, V);
- switch(A & 0xFF)
- {
-  case 0x28:
-	    if((V & SCR_HW_SI) && !(SCR & SCR_S_ABT_DIS) && ReadCounter <= 0)
-	    {
-	     //printf("Start Read: %d\n", timestamp);
-	     PadLatched = PadData;
-	     ReadBitPos = 0;
-	     ReadCounter = 640;
-	    }
+   //printf("Input write: %d, %08x %02x\n", timestamp, A, V);
+   switch(A & 0xFF)
+   {
+      case 0x28:
+         if((V & SCR_HW_SI) && !(SCR & SCR_S_ABT_DIS) && ReadCounter <= 0)
+         {
+            //printf("Start Read: %d\n", timestamp);
+            PadLatched = PadData;
+            ReadBitPos = 0;
+            ReadCounter = 640;
+         }
 
-	    if(V & SCR_S_ABT_DIS)
-	    {
-	     ReadCounter = 0;
-	     ReadBitPos = 0;
-	    }
+         if(V & SCR_S_ABT_DIS)
+         {
+            ReadCounter = 0;
+            ReadBitPos = 0;
+         }
 
-	    if(V & SCR_K_INT_INH)
-	    {
- 	     IntPending = false;
-	     VBIRQ_Assert(VBIRQ_SOURCE_INPUT, IntPending);
-	    }
+         if(V & SCR_K_INT_INH)
+         {
+            IntPending = false;
+            VBIRQ_Assert(VBIRQ_SOURCE_INPUT, IntPending);
+         }
 
-	    SCR = V & (0x80 | 0x20 | 0x10 | 1);
-	    break;
- }
+         SCR = V & (0x80 | 0x20 | 0x10 | 1);
+         break;
+   }
 
- VB_SetEvent(VB_EVENT_INPUT, (ReadCounter > 0) ? (timestamp + ReadCounter) : VB_EVENT_NONONO);
+   VB_SetEvent(VB_EVENT_INPUT, (ReadCounter > 0) ? (timestamp + ReadCounter) : VB_EVENT_NONONO);
 }
 
 void VBINPUT_Frame(void)
 {
- PadData = (MDFN_de16lsb(data_ptr) << 2) | 0x2;
+   PadData = (MDFN_de16lsb(data_ptr) << 2) | 0x2;
 }
 
 v810_timestamp_t VBINPUT_Update(const v810_timestamp_t timestamp)
 {
- int32 clocks = timestamp - last_ts;
+   int32 clocks = timestamp - last_ts;
 
- if(ReadCounter > 0)
- {
-  ReadCounter -= clocks;
-
-  while(ReadCounter <= 0)
-  {
-   SDR &= ~(1 << ReadBitPos);
-   SDR |= PadLatched & (1 << ReadBitPos);
-
-   ReadBitPos++;
-   if(ReadBitPos < 16)
-    ReadCounter += 640;
-   else
+   if(ReadCounter > 0)
    {
-    //printf("Read End: %d\n", timestamp);
-    if(!(SCR & SCR_K_INT_INH))
-    {
-     //printf("Input IRQ: %d\n", timestamp);
-     IntPending = true;
-     VBIRQ_Assert(VBIRQ_SOURCE_INPUT, IntPending);
-    }
-    break;
+      ReadCounter -= clocks;
+
+      while(ReadCounter <= 0)
+      {
+         SDR &= ~(1 << ReadBitPos);
+         SDR |= PadLatched & (1 << ReadBitPos);
+
+         ReadBitPos++;
+         if(ReadBitPos < 16)
+            ReadCounter += 640;
+         else
+         {
+            //printf("Read End: %d\n", timestamp);
+            if(!(SCR & SCR_K_INT_INH))
+            {
+               //printf("Input IRQ: %d\n", timestamp);
+               IntPending = true;
+               VBIRQ_Assert(VBIRQ_SOURCE_INPUT, IntPending);
+            }
+            break;
+         }
+      }
+
    }
-  }
-
- }
 
 
- last_ts = timestamp;
+   last_ts = timestamp;
 
- return((ReadCounter > 0) ? (timestamp + ReadCounter) : VB_EVENT_NONONO);
+   return((ReadCounter > 0) ? (timestamp + ReadCounter) : VB_EVENT_NONONO);
 }
 
 void VBINPUT_ResetTS(void)
 {
- last_ts = 0;
+   last_ts = 0;
 }
 
 void VBINPUT_Power(void)
 {
- last_ts = 0;
- PadData = 0;
- PadLatched = 0;
- SDR = 0;
- SCR = 0;
- ReadBitPos = 0;
- ReadCounter = 0;
- IntPending = false;
+   last_ts = 0;
+   PadData = 0;
+   PadLatched = 0;
+   SDR = 0;
+   SCR = 0;
+   ReadBitPos = 0;
+   ReadCounter = 0;
+   IntPending = false;
 
- VBIRQ_Assert(VBIRQ_SOURCE_INPUT, 0);
+   VBIRQ_Assert(VBIRQ_SOURCE_INPUT, 0);
 }
-
-
 
 int VBINPUT_StateAction(StateMem *sm, int load, int data_only)
 {
- SFORMAT StateRegs[] =
- {
-  SFVAR(PadData),
-  SFVAR(PadLatched),
-  SFVAR(SCR),
-  SFVAR(SDR),
-  SFVAR(ReadBitPos),
-  SFVAR(ReadCounter),
-  SFVAR(IntPending),
-  SFEND
- };
+   SFORMAT StateRegs[] =
+   {
+      SFVAR(PadData),
+      SFVAR(PadLatched),
+      SFVAR(SCR),
+      SFVAR(SDR),
+      SFVAR(ReadBitPos),
+      SFVAR(ReadCounter),
+      SFVAR(IntPending),
+      SFEND
+   };
 
- int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "INPUT");
+   int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "INPUT");
 
- if(load)
- {
+   if(load)
+   {
 
- }
+   }
 
- return(ret);
-}
-
-
+   return(ret);
 }
