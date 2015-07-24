@@ -206,9 +206,6 @@
 					RelativePath="..\..\mednafen\endian.cpp">
 				</File>
 				<File
-					RelativePath="..\..\mednafen\error.cpp">
-				</File>
-				<File
 					RelativePath="..\..\mednafen\file.cpp">
 				</File>
 				<File
