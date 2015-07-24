@@ -35,9 +35,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\mednafen\Stream.cpp">
-      <Filter>Source Files\mednafen</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\mednafen\endian.cpp">
       <Filter>Source Files\mednafen</Filter>
     </ClCompile>

@@ -232,9 +232,6 @@
 				<File
 					RelativePath="..\..\mednafen\state.cpp">
 				</File>
-				<File
-					RelativePath="..\..\mednafen\Stream.cpp">
-				</File>
 				<Filter
 					Name="trio"
 					Filter="">

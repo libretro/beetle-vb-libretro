@@ -29,7 +29,6 @@
     <ClCompile Include="..\..\mednafen\settings.cpp" />
     <ClCompile Include="..\..\mednafen\sound\Blip_Buffer.cpp" />
     <ClCompile Include="..\..\mednafen\state.cpp" />
-    <ClCompile Include="..\..\mednafen\Stream.cpp" />
     <ClCompile Include="..\..\mednafen\trio\trio.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>

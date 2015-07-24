@@ -49,7 +49,6 @@
     <ClCompile Include="..\..\mednafen\settings.cpp" />
     <ClCompile Include="..\..\mednafen\sound\Blip_Buffer.cpp" />
     <ClCompile Include="..\..\mednafen\state.cpp" />
-    <ClCompile Include="..\..\mednafen\Stream.cpp" />
     <ClCompile Include="..\..\mednafen\trio\trio.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='CodeAnalysis|Xbox 360'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Xbox 360'">CompileAsC</CompileAs>
