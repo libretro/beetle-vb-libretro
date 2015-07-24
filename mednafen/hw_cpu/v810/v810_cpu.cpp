@@ -345,7 +345,7 @@ bool V810::Init(V810_Emu_Mode mode, bool vb_mode)
 void V810::Kill(void)
 {
  for(unsigned int i = 0; i < FastMapAllocList.size(); i++)
-  MDFN_free(FastMapAllocList[i]);
+  free(FastMapAllocList[i]);
 
  FastMapAllocList.clear();
 }
@@ -368,7 +368,7 @@ uint8 *V810::SetFastMap(uint32 addresses[], uint32 length, unsigned int num_addr
  }
  assert((length & (V810_FAST_MAP_PSIZE - 1)) == 0);
 
- if(!(ret = (uint8 *)MDFN_malloc(length + V810_FAST_MAP_TRAMPOLINE_SIZE, name)))
+ if(!(ret = (uint8 *)malloc(length + V810_FAST_MAP_TRAMPOLINE_SIZE)))
  {
   return(NULL);
  }
