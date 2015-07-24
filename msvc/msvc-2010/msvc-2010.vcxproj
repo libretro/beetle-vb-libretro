@@ -27,7 +27,6 @@
     <ClCompile Include="..\..\mednafen\math_ops.cpp" />
     <ClCompile Include="..\..\mednafen\md5.cpp" />
     <ClCompile Include="..\..\mednafen\mednafen.cpp" />
-    <ClCompile Include="..\..\mednafen\MemoryStream.cpp" />
     <ClCompile Include="..\..\mednafen\mempatcher.cpp" />
     <ClCompile Include="..\..\mednafen\settings.cpp" />
     <ClCompile Include="..\..\mednafen\sound\Blip_Buffer.cpp" />
