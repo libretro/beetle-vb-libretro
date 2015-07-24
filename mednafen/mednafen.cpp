@@ -32,7 +32,6 @@
 
 #include	"mempatcher.h"
 #include	"md5.h"
-#include	"clamp.h"
 
 #ifdef _MSC_VER
 #include "msvc_compat.h"
