@@ -105,9 +105,11 @@ SOURCES_CXX += \
 	$(MEDNAFEN_DIR)/mempatcher.cpp \
 	$(MEDNAFEN_DIR)/md5.cpp \
 	$(MEDNAFEN_DIR)/file.cpp \
-	$(MEDNAFEN_DIR)/endian.cpp \
 	$(MEDNAFEN_DIR)/video/surface.cpp \
 	$(CORE_DIR)/libretro.cpp
+
+SOURCES_C += \
+	$(MEDNAFEN_DIR)/mednafen-endian.c
 endif
 
 SOURCES_C += $(MEDNAFEN_DIR)/trio/trio.c \
