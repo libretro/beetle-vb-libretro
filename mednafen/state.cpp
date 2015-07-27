@@ -153,7 +153,6 @@ static bool SubWrite(StateMem *st, SFORMAT *sf, const char *name_prefix = NULL)
    smem_write(st, nameo, 1 + nameo[0]);
    smem_write32le(st, bytesize);
 
-#ifdef MSB_FIRST
    /* Flip the byte order... */
    if(sf->flags & MDFNSTATE_BOOL)
    {
@@ -167,7 +166,6 @@ static bool SubWrite(StateMem *st, SFORMAT *sf, const char *name_prefix = NULL)
     Endian_A16_Swap(sf->v, bytesize / sizeof(uint16));
    else if(sf->flags & RLSB)
     FlipByteOrder((uint8_t*)sf->v, bytesize);
-#endif
     
   // Special case for the evil bool type, to convert bool to 1-byte elements.
   // Don't do it if we're only saving the raw data.
@@ -183,7 +181,6 @@ static bool SubWrite(StateMem *st, SFORMAT *sf, const char *name_prefix = NULL)
   else
    smem_write(st, (uint8 *)sf->v, bytesize);
 
-#ifdef MSB_FIRST
   /* Now restore the original byte order. */
   if(sf->flags & MDFNSTATE_BOOL)
   {
@@ -197,7 +194,6 @@ static bool SubWrite(StateMem *st, SFORMAT *sf, const char *name_prefix = NULL)
 	  Endian_A16_LE_to_NE(sf->v, bytesize / sizeof(uint16));
   else if(sf->flags & RLSB)
 	  FlipByteOrder((uint8_t*)sf->v, bytesize);
-#endif
 
   sf++; 
  }
@@ -369,7 +365,6 @@ static int ReadStateChunk(StateMem *st, SFORMAT *sf, int size)
       }
      }
 
-#ifdef MSB_FIRST
      if(tmp->flags & MDFNSTATE_RLSB64)
       Endian_A64_LE_to_NE(tmp->v, expected_size / sizeof(uint64));
      else if(tmp->flags & MDFNSTATE_RLSB32)
@@ -378,7 +373,6 @@ static int ReadStateChunk(StateMem *st, SFORMAT *sf, int size)
       Endian_A16_LE_to_NE(tmp->v, expected_size / sizeof(uint16));
      else if(tmp->flags & RLSB)
       FlipByteOrder((uint8_t*)tmp->v, expected_size);
-#endif
     }
    }
    else
