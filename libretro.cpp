@@ -2,7 +2,6 @@
 #include "mednafen/mempatcher.h"
 #include "mednafen/git.h"
 #include "mednafen/general.h"
-#include "mednafen/md5.h"
 #include "libretro.h"
 
 static MDFNGI *game;
@@ -49,7 +48,6 @@ static MDFN_Surface *surf;
 #endif
 #include "mednafen/vb/input.h"
 #include "mednafen/general.h"
-#include "mednafen/md5.h"
 #include "mednafen/mempatcher.h"
 #if 0
 #include <iconv.h>
@@ -1864,8 +1862,6 @@ static const struct VBGameEntry VBGames[] =
 static int Load(const char *name, MDFNFILE *fp)
 {
  V810_Emu_Mode cpu_mode;
- md5_context md5;
-
 
  VB_InDebugPeek = 0;
 
@@ -1889,10 +1885,6 @@ static int Load(const char *name, MDFNFILE *fp)
   return(0);
  }
 
- md5.starts();
- md5.update(GET_FDATA_PTR(fp), GET_FSIZE_PTR(fp));
- md5.finish(MDFNGameInfo->MD5);
-
  VB_HeaderInfo hinfo;
 
  ReadHeader(fp, &hinfo);
@@ -1903,7 +1895,6 @@ static int Load(const char *name, MDFNFILE *fp)
  MDFN_printf(_("Version:   %u\n"), hinfo.version);
 
  MDFN_printf(_("ROM:       %dKiB\n"), (int)(GET_FSIZE_PTR(fp) / 1024));
- MDFN_printf(_("ROM MD5:   0x%s\n"), md5_context::asciistr(MDFNGameInfo->MD5, 0).c_str());
  
  MDFN_printf("\n");
 
@@ -2954,9 +2945,6 @@ std::string MDFN_MakeFName(MakeFName_Type type, int id1, const char *cd1)
       case MDFNMKF_SAV:
          ret = retro_save_directory +slash + retro_base_name +
             std::string(".") +
-#ifndef _XBOX
-	    md5_context::asciistr(MDFNGameInfo->MD5, 0) + std::string(".") +
-#endif
             std::string(cd1);
          break;
       case MDFNMKF_FIRMWARE:

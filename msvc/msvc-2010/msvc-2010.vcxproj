@@ -21,7 +21,6 @@
     </ClCompile>
     <ClCompile Include="..\..\mednafen\hw_cpu\v810\v810_cpu.cpp" />
     <ClCompile Include="..\..\mednafen\hw_cpu\v810\v810_cpuD.cpp" />
-    <ClCompile Include="..\..\mednafen\md5.cpp" />
     <ClCompile Include="..\..\mednafen\mednafen.cpp" />
     <ClCompile Include="..\..\mednafen\mempatcher.cpp" />
     <ClCompile Include="..\..\mednafen\settings.cpp" />

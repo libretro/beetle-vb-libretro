@@ -103,7 +103,6 @@ SOURCES_CXX += \
 	$(MEDNAFEN_DIR)/general.cpp \
 	$(MEDNAFEN_DIR)/state.cpp \
 	$(MEDNAFEN_DIR)/mempatcher.cpp \
-	$(MEDNAFEN_DIR)/md5.cpp \
 	$(MEDNAFEN_DIR)/file.cpp \
 	$(MEDNAFEN_DIR)/video/surface.cpp \
 	$(CORE_DIR)/libretro.cpp

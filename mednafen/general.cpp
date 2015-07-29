@@ -27,8 +27,6 @@
 #include "general.h"
 #include "state.h"
 
-#include "md5.h"
-
 const char * GetFNComponent(const char *str)
 {
    const char *tp1;
