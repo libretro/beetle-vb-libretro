@@ -104,13 +104,14 @@ static uint32 Default_Color;
 
 static void MakeColorLUT(const MDFN_PixelFormat &format)
 {
-   for(int lr = 0; lr < 2; lr++)
+   unsigned lr, i, l_b, r_b;
+
+   for(lr = 0; lr < 2; lr++)
    {
-      for(int i = 0; i < 256; i++)
+      for(i = 0; i < 256; i++)
       {
          double r, g, b;
          double r_prime, g_prime, b_prime;
-
          r = g = b = (double)i / 255;
 
          // TODO: Use correct gamma curve, instead of approximation.
@@ -140,16 +141,14 @@ static void MakeColorLUT(const MDFN_PixelFormat &format)
    }
 
    // Anaglyph slow-mode LUT calculation
-   for(int l_b = 0; l_b < 256; l_b++)
+   for(l_b = 0; l_b < 256; l_b++)
    {
-      for(int r_b = 0; r_b < 256; r_b++)
+      for(r_b = 0; r_b < 256; r_b++)
       {
-         double r, g, b;
          double r_prime, g_prime, b_prime;
-
-         r = ColorLUTNoGC[0][l_b][0] + ColorLUTNoGC[1][r_b][0];
-         g = ColorLUTNoGC[0][l_b][1] + ColorLUTNoGC[1][r_b][1];
-         b = ColorLUTNoGC[0][l_b][2] + ColorLUTNoGC[1][r_b][2];
+         double r = ColorLUTNoGC[0][l_b][0] + ColorLUTNoGC[1][r_b][0];
+         double g = ColorLUTNoGC[0][l_b][1] + ColorLUTNoGC[1][r_b][1];
+         double b = ColorLUTNoGC[0][l_b][2] + ColorLUTNoGC[1][r_b][2];
 
          if(r > 1.0)
             r = 1.0;
@@ -169,6 +168,7 @@ static void MakeColorLUT(const MDFN_PixelFormat &format)
 
 static void RecalcBrightnessCache(void)
 {
+   unsigned i, lr;
    //printf("BRTA: %d, BRTB: %d, BRTC: %d, Rest: %d\n", BRTA, BRTB, BRTC, REST);
    int32 CumulativeTime = (BRTA + 1 + BRTB + 1 + BRTC + 1 + REST + 1) + 1;
    int32 MaxTime = 128;
@@ -178,7 +178,7 @@ static void RecalcBrightnessCache(void)
    BrightnessCache[2] = 0;
    BrightnessCache[3] = 0;
 
-   for(int i = 0; i < Repeat + 1; i++)
+   for(i = 0; i < Repeat + 1; i++)
    {
       int32 btemp[4];
 
@@ -221,14 +221,12 @@ static void RecalcBrightnessCache(void)
 
    //printf("BC: %d %d %d %d\n", BrightnessCache[0], BrightnessCache[1], BrightnessCache[2], BrightnessCache[3]);
 
-   for(int i = 0; i < 4; i++)
+   for(i = 0; i < 4; i++)
       BrightnessCache[i] = 255 * BrightnessCache[i] / MaxTime;
 
-   for(int lr = 0; lr < 2; lr++)
-      for(int i = 0; i < 4; i++)
-      {
+   for(lr = 0; lr < 2; lr++)
+      for(i = 0; i < 4; i++)
          BrightCLUT[lr][i] = ColorLUT[lr][BrightnessCache[i]];
-      }
 }
 
 static void Recalc3DModeStuff(bool non_rgb_output = false)
@@ -236,15 +234,12 @@ static void Recalc3DModeStuff(bool non_rgb_output = false)
    switch(VB3DMode)
    {
       default: 
+         CopyFBColumnToTarget = CopyFBColumnToTarget_Anaglyph;
          if(((Anaglyph_Colors[0] & 0xFF) && (Anaglyph_Colors[1] & 0xFF)) ||
                ((Anaglyph_Colors[0] & 0xFF00) && (Anaglyph_Colors[1] & 0xFF00)) ||
                ((Anaglyph_Colors[0] & 0xFF0000) && (Anaglyph_Colors[1] & 0xFF0000)) ||
                non_rgb_output)
-         {
             CopyFBColumnToTarget = CopyFBColumnToTarget_AnaglyphSlow;
-         }
-         else
-            CopyFBColumnToTarget = CopyFBColumnToTarget_Anaglyph;
          break;
 
       case VB3DMODE_CSCOPE:
@@ -268,27 +263,29 @@ static void Recalc3DModeStuff(bool non_rgb_output = false)
 
 void VIP_Set3DMode(uint32 mode, bool reverse, uint32 prescale, uint32 sbs_separation)
 {
-   VB3DMode = mode;
-   VB3DReverse = reverse ? 1 : 0;
-   VBPrescale = prescale;
+   uint32_t p;
+
+   VB3DMode         = mode;
+   VB3DReverse      = reverse ? 1 : 0;
+   VBPrescale       = prescale;
    VBSBS_Separation = sbs_separation;
 
    VidSettingsDirty = true;
 
-   for(uint32 p = 0; p < 256; p++)
+   for(p = 0; p < 256; p++)
    {
-      uint32 v;
+      unsigned i, ps, shifty;
       uint8 s[4];
+      uint32 v   = 0;
 
       s[0] = (p >> 0) & 0x3;
       s[1] = (p >> 2) & 0x3;
       s[2] = (p >> 4) & 0x3;
       s[3] = (p >> 6) & 0x3;
 
-      v = 0;
-      for(unsigned int i = 0, shifty = 0; i < 4; i++)
+      for(i = 0, shifty = 0; i < 4; i++)
       {
-         for(unsigned int ps = 0; ps < prescale; ps++)
+         for(ps = 0; ps < prescale; ps++)
          {
             v |= s[i] << shifty;
             shifty += 2;
@@ -347,7 +344,8 @@ static uint8 GPLT_Cache[4][4];
 
 static INLINE void Recalc_GPLT_Cache(int which)
 {
-   for(int i = 0; i < 4; i++)
+   unsigned i;
+   for(i = 0; i < 4; i++)
       GPLT_Cache[which][i] = (GPLT[which] >> (i * 2)) & 3;
 }
 
@@ -356,16 +354,14 @@ static uint8 JPLT_Cache[4][4];
 
 static INLINE void Recalc_JPLT_Cache(int which)
 {
-   for(int i = 0; i < 4; i++)
+   unsigned i;
+   for(i = 0; i < 4; i++)
       JPLT_Cache[which][i] = (JPLT[which] >> (i * 2)) & 3;
 }
 
 
 static uint16 BKCOL;
 
-//
-//
-//
 static int32 CalcNextEvent(void);
 
 static int32 last_ts;
@@ -421,6 +417,8 @@ bool VIP_Init(void)
 
 void VIP_Power(void)
 {
+   unsigned i;
+
    Repeat = 0;
    SB_Latch = 0;
    SBOUT_InactiveTime = -1;
@@ -461,7 +459,7 @@ void VIP_Power(void)
    XPCTRL = 0;
    SBCMP = 0;
 
-   for(int i = 0; i < 4; i++)
+   for(i = 0; i < 4; i++)
    {
       SPT[i] = 0;
       GPLT[i] = 0;
@@ -476,88 +474,103 @@ void VIP_Power(void)
 
 static INLINE uint16 ReadRegister(int32 &timestamp, uint32 A)
 {
-   uint16 ret = 0;	//0xFFFF;
+   uint16_t ret = 0;	//0xFFFF;
 
    if(A & 1)
       VIP_DBGMSG("Misaligned VIP Read: %08x", A);
 
    switch(A & 0xFE)
    {
-      default: VIP_DBGMSG("Unknown VIP register read: %08x", A);
-               break;
+      default:
+         VIP_DBGMSG("Unknown VIP register read: %08x", A);
+         break;
 
-      case 0x00: ret = InterruptPending;
-                 break;
+      case 0x00:
+         ret = InterruptPending;
+         break;
 
-      case 0x02: ret = InterruptEnable;
-                 break;
+      case 0x02:
+         ret = InterruptEnable;
+         break;
 
-      case 0x20: //printf("Read DPSTTS at %d\n", timestamp);
-                 ret = DPCTRL & 0x702;
-                 if((DisplayRegion & 1) && DisplayActive)
-                 {
-                    unsigned int DPBSY = 1 << ((DisplayRegion >> 1) & 1);
+      case 0x20:
+         //printf("Read DPSTTS at %d\n", timestamp);
+         ret = DPCTRL & 0x702;
+         if((DisplayRegion & 1) && DisplayActive)
+         {
+            unsigned int DPBSY = 1 << ((DisplayRegion >> 1) & 1);
 
-                    if(DisplayFB)
-                       DPBSY <<= 2;
+            if(DisplayFB)
+               DPBSY <<= 2;
 
-                    ret |= DPBSY << 2;
-                 }
-                 //if(!(DisplayRegion & 1))	// FIXME? (Had to do it this way for Galactic Pinball...)
-                 ret |= 1 << 6;
-                 break;
+            ret |= DPBSY << 2;
+         }
+         //if(!(DisplayRegion & 1))	// FIXME? (Had to do it this way for Galactic Pinball...)
+         ret |= 1 << 6;
+         break;
 
-                 // Note: Upper bits of BRTA, BRTB, BRTC, and REST(?) are 0 when read(on real hardware)
-      case 0x24: ret = BRTA;
-                 break;
+         // Note: Upper bits of BRTA, BRTB, BRTC, and REST(?) are 0 when read(on real hardware)
+      case 0x24:
+         ret = BRTA;
+         break;
 
-      case 0x26: ret = BRTB;
-                 break;
+      case 0x26:
+         ret = BRTB;
+         break;
 
-      case 0x28: ret = BRTC;
-                 break;
+      case 0x28:
+         ret = BRTC;
+         break;
 
-      case 0x2A: ret = REST;
-                 break;
+      case 0x2A:
+         ret = REST;
+         break;
 
-      case 0x30: ret = 0xFFFF;
-                 break;
+      case 0x30:
+         ret = 0xFFFF;
+         break;
 
-      case 0x40: ret = XPCTRL & 0x2;
-                 if(DrawingActive)
-                 {
-                    ret |= (1 + DrawingFB) << 2;
-                 }
-                 if(timestamp < SBOUT_InactiveTime)
-                 {
-                    ret |= 0x8000;
-                    ret |= /*DrawingBlock*/SB_Latch << 8;
-                 }
-                 break;     // XPSTTS, read-only
+      case 0x40:
+         ret = XPCTRL & 0x2;
+         if(DrawingActive)
+         {
+            ret |= (1 + DrawingFB) << 2;
+         }
+         if(timestamp < SBOUT_InactiveTime)
+         {
+            ret |= 0x8000;
+            ret |= /*DrawingBlock*/SB_Latch << 8;
+         }
+         break;     // XPSTTS, read-only
 
-      case 0x44: ret = 2;	// VIP version.  2 is a known valid version, while the validity of other numbers is unknown, so we'll just go with 2.
-                 break;
+      case 0x44:
+         ret = 2;	// VIP version.  2 is a known valid version, while the validity of other numbers is unknown, so we'll just go with 2.
+         break;
 
       case 0x48:
       case 0x4a:
       case 0x4c:
-      case 0x4e: ret = SPT[(A >> 1) & 3];
-                 break;
+      case 0x4e:
+         ret = SPT[(A >> 1) & 3];
+         break;
 
       case 0x60:
       case 0x62:
       case 0x64:
-      case 0x66: ret = GPLT[(A >> 1) & 3];
-                 break;
+      case 0x66:
+         ret = GPLT[(A >> 1) & 3];
+         break;
 
       case 0x68:
       case 0x6a:
       case 0x6c:
-      case 0x6e: ret = JPLT[(A >> 1) & 3];
-                 break;
+      case 0x6e:
+         ret = JPLT[(A >> 1) & 3];
+         break;
 
-      case 0x70: ret = BKCOL;
-                 break;
+      case 0x70:
+         ret = BKCOL;
+         break;
    }
 
    return(ret);
@@ -570,108 +583,122 @@ static INLINE void WriteRegister(int32 &timestamp, uint32 A, uint16 V)
 
    switch(A & 0xFE)
    {
-      default: VIP_DBGMSG("Unknown VIP register write: %08x %04x", A, V);
-               break;
+      default:
+         VIP_DBGMSG("Unknown VIP register write: %08x %04x", A, V);
+         break;
+      case 0x00:
+         break; // Interrupt pending, read-only
+      case 0x02:
+         InterruptEnable = V & 0xE01F;
 
-      case 0x00: break; // Interrupt pending, read-only
+         VIP_DBGMSG("Interrupt Enable: %04x", V);
 
-      case 0x02: {
-                    InterruptEnable = V & 0xE01F;
+         if(V & 0x2000)
+            VIP_DBGMSG("Warning: VIP SB Hit Interrupt enable: %04x\n", V);
+         CheckIRQ();
+         break;
+      case 0x04:
+         InterruptPending &= ~V;
+         CheckIRQ();
+         break;
 
-                    VIP_DBGMSG("Interrupt Enable: %04x", V);
+      case 0x20:
+         break; // Display control, read-only.
 
-                    if(V & 0x2000)
-                       VIP_DBGMSG("Warning: VIP SB Hit Interrupt enable: %04x\n", V);
-                    CheckIRQ();
-                 }
-                 break;
+      case 0x22:
+         DPCTRL = V & (0x703); // Display-control, write-only
+         if(V & 1)
+         {
+            DisplayActive = false;
+            InterruptPending &= ~(INT_TIME_ERR | INT_FRAME_START | INT_GAME_START | INT_RFB_END | INT_LFB_END | INT_SCAN_ERR);
+            CheckIRQ();
+         }
+         break;
 
-      case 0x04: InterruptPending &= ~V;
-                 CheckIRQ();
-                 break;
+      case 0x24:
+         BRTA = V & 0xFF;	// BRTA
+         RecalcBrightnessCache();
+         break;
 
-      case 0x20: break; // Display control, read-only.
+      case 0x26:
+         BRTB = V & 0xFF;	// BRTB
+         RecalcBrightnessCache();
+         break;
 
-      case 0x22: DPCTRL = V & (0x703); // Display-control, write-only
-                 if(V & 1)
-                 {
-                    DisplayActive = false;
-                    InterruptPending &= ~(INT_TIME_ERR | INT_FRAME_START | INT_GAME_START | INT_RFB_END | INT_LFB_END | INT_SCAN_ERR);
-                    CheckIRQ();
-                 }
-                 break;
+      case 0x28:
+         BRTC = V & 0xFF;	// BRTC
+         RecalcBrightnessCache();
+         break;
 
-      case 0x24: BRTA = V & 0xFF;	// BRTA
-                 RecalcBrightnessCache();
-                 break;
+      case 0x2A:
+         REST = V & 0xFF;	// REST
+         RecalcBrightnessCache();
+         break;
 
-      case 0x26: BRTB = V & 0xFF;	// BRTB
-                 RecalcBrightnessCache();
-                 break;
+      case 0x2E:
+         FRMCYC = V & 0xF;	// FRMCYC, write-only?
+         break;
 
-      case 0x28: BRTC = V & 0xFF;	// BRTC
-                 RecalcBrightnessCache();
-                 break;
+      case 0x30:
+         break;	// CTA, read-only(
 
-      case 0x2A: REST = V & 0xFF;	// REST
-                 RecalcBrightnessCache();
-                 break;
+      case 0x40:
+         break;	// XPSTTS, read-only
 
-      case 0x2E: FRMCYC = V & 0xF;	// FRMCYC, write-only?
-                 break;
+      case 0x42:
+         XPCTRL = V & 0x0002;	// XPCTRL, write-only
+         SBCMP = (V >> 8) & 0x1F;
 
-      case 0x30: break;	// CTA, read-only(
+         if(V & 1)
+         {
+            VIP_DBGMSG("XPRST");
+            DrawingActive = 0;
+            DrawingCounter = 0;
+            InterruptPending &= ~(INT_SB_HIT | INT_XP_END | INT_TIME_ERR);
+            CheckIRQ();
+         }
+         break;
 
-      case 0x40: break;	// XPSTTS, read-only
-
-      case 0x42: XPCTRL = V & 0x0002;	// XPCTRL, write-only
-                 SBCMP = (V >> 8) & 0x1F;
-
-                 if(V & 1)
-                 {
-                    VIP_DBGMSG("XPRST");
-                    DrawingActive = 0;
-                    DrawingCounter = 0;
-                    InterruptPending &= ~(INT_SB_HIT | INT_XP_END | INT_TIME_ERR);
-                    CheckIRQ();
-                 }
-                 break;
-
-      case 0x44: break;	// Version Control, read-only?
+      case 0x44:
+         break;	// Version Control, read-only?
 
       case 0x48:
       case 0x4a:
       case 0x4c:
-      case 0x4e: SPT[(A >> 1) & 3] = V & 0x3FF;
-                 break;
+      case 0x4e:
+         SPT[(A >> 1) & 3] = V & 0x3FF;
+         break;
 
       case 0x60:
       case 0x62: 
       case 0x64:
-      case 0x66: GPLT[(A >> 1) & 3] = V & 0xFC;
-                 Recalc_GPLT_Cache((A >> 1) & 3);
-                 break;
+      case 0x66:
+         GPLT[(A >> 1) & 3] = V & 0xFC;
+         Recalc_GPLT_Cache((A >> 1) & 3);
+         break;
 
       case 0x68:
       case 0x6a:
       case 0x6c:
-      case 0x6e: JPLT[(A >> 1) & 3] = V & 0xFC;
-                 Recalc_JPLT_Cache((A >> 1) & 3);
-                 break;
+      case 0x6e:
+         JPLT[(A >> 1) & 3] = V & 0xFC;
+         Recalc_JPLT_Cache((A >> 1) & 3);
+         break;
 
-      case 0x70: BKCOL = V & 0x3;
-                 break;
-
+      case 0x70:
+         BKCOL = V & 0x3;
+         break;
    }
 }
 
-//
-// Don't update the VIP state on reads/writes, the event system will update it with enough precision as far as VB software cares.
-//
+/* Don't update the VIP state on reads/writes, 
+ * the event system will update it with enough precision 
+ * as far as VB software cares.
+ */
 
 uint8 VIP_Read8(int32 &timestamp, uint32 A)
 {
-   uint8 ret = 0; //0xFF;
+   uint8_t ret = 0; //0xFF;
 
    //VIP_Update(timestamp);
 
@@ -680,50 +707,35 @@ uint8 VIP_Read8(int32 &timestamp, uint32 A)
       case 0x0:
       case 0x1:
          if((A & 0x7FFF) >= 0x6000)
-         {
-            ret = VIP_MA16R8(CHR_RAM, (A & 0x1FFF) | ((A >> 2) & 0x6000));
-         }
-         else
-         {
-            ret = FB[(A >> 15) & 1][(A >> 16) & 1][A & 0x7FFF];
-         }
+            return VIP_MA16R8(CHR_RAM, (A & 0x1FFF) | ((A >> 2) & 0x6000));
+         return FB[(A >> 15) & 1][(A >> 16) & 1][A & 0x7FFF];
+      case 0x2:
+      case 0x3:
+         return VIP_MA16R8(DRAM, A & 0x1FFFF);
+      case 0x4:
+      case 0x5:
+         if(A >= 0x5E000)
+            return ReadRegister(timestamp, A);
+         break;
+      case 0x6:
          break;
 
-      case 0x2:
-      case 0x3: ret = VIP_MA16R8(DRAM, A & 0x1FFFF);
-                break;
-
-      case 0x4:
-      case 0x5: if(A >= 0x5E000)
-                   ret = ReadRegister(timestamp, A);
-                else
-                   VIP_DBGMSG("Unknown VIP Read: %08x", A);
-                break;
-
-      case 0x6: break;
-
-      case 0x7: if(A >= 0x8000)
-                {
-                   ret = VIP_MA16R8(CHR_RAM, A & 0x7FFF);
-                }
-                else
-                   VIP_DBGMSG("Unknown VIP Read: %08x", A);
-                break;
-
-      default: VIP_DBGMSG("Unknown VIP Read: %08x", A);
-               break;
+      case 0x7:
+         if(A >= 0x8000)
+            return VIP_MA16R8(CHR_RAM, A & 0x7FFF);
+         break;
+      default:
+         break;
    }
 
-
    //VB_SetEvent(VB_EVENT_VIP, timestamp + CalcNextEvent());
+   VIP_DBGMSG("Unknown VIP Read: %08x", A);
 
-   return(ret);
+   return 0;
 }
 
 uint16 VIP_Read16(int32 &timestamp, uint32 A)
 {
-   uint16 ret = 0; //0xFFFF;
-
    //VIP_Update(timestamp); 
 
    switch(A >> 16)
@@ -731,44 +743,30 @@ uint16 VIP_Read16(int32 &timestamp, uint32 A)
       case 0x0:
       case 0x1:
          if((A & 0x7FFF) >= 0x6000)
-         {
-            ret = VIP_MA16R16(CHR_RAM, (A & 0x1FFF) | ((A >> 2) & 0x6000));
-         }
-         else
-         {
-            ret = LoadU16_LE((uint16 *)&FB[(A >> 15) & 1][(A >> 16) & 1][A & 0x7FFF]);
-         }
-         break;
-
+            return VIP_MA16R16(CHR_RAM, (A & 0x1FFF) | ((A >> 2) & 0x6000));
+         return LoadU16_LE((uint16 *)&FB[(A >> 15) & 1][(A >> 16) & 1][A & 0x7FFF]);
       case 0x2:
-      case 0x3: ret = VIP_MA16R16(DRAM, A & 0x1FFFF);
-                break;
-
+      case 0x3:
+         return VIP_MA16R16(DRAM, A & 0x1FFFF);
       case 0x4:
       case 0x5: 
-                if(A >= 0x5E000)
-                   ret = ReadRegister(timestamp, A);
-                else
-                   VIP_DBGMSG("Unknown VIP Read: %08x", A);
-                break;
-
-      case 0x6: break;
-
-      case 0x7: if(A >= 0x8000)
-                {
-                   ret = VIP_MA16R16(CHR_RAM, A & 0x7FFF);
-                }
-                else
-                   VIP_DBGMSG("Unknown VIP Read: %08x", A);
-                break;
-
-      default: VIP_DBGMSG("Unknown VIP Read: %08x", A);
-               break;
+         if(A >= 0x5E000)
+            return ReadRegister(timestamp, A);
+         break;
+      case 0x6:
+         break;
+      case 0x7:
+         if(A >= 0x8000)
+            return VIP_MA16R16(CHR_RAM, A & 0x7FFF);
+         break;
+      default:
+         break;
    }
 
+   VIP_DBGMSG("Unknown VIP Read: %08x", A);
 
    //VB_SetEvent(VB_EVENT_VIP, timestamp + CalcNextEvent());
-   return(ret);
+   return 0;
 }
 
 void VIP_Write8(int32 &timestamp, uint32 A, uint8 V)
@@ -789,27 +787,32 @@ void VIP_Write8(int32 &timestamp, uint32 A, uint8 V)
          break;
 
       case 0x2:
-      case 0x3: VIP_MA16W8(DRAM, A & 0x1FFFF, V);
-                break;
+      case 0x3:
+         VIP_MA16W8(DRAM, A & 0x1FFFF, V);
+         break;
 
       case 0x4:
-      case 0x5: if(A >= 0x5E000)
-                   WriteRegister(timestamp, A, V);
-                else
-                   VIP_DBGMSG("Unknown VIP Write: %08x %02x", A, V);
-                break;
+      case 0x5:
+         if(A >= 0x5E000)
+            WriteRegister(timestamp, A, V);
+         else
+            VIP_DBGMSG("Unknown VIP Write: %08x %02x", A, V);
+         break;
 
-      case 0x6: VIP_DBGMSG("Unknown VIP Write: %08x %02x", A, V);
-                break;
+      case 0x6:
+         VIP_DBGMSG("Unknown VIP Write: %08x %02x", A, V);
+         break;
 
-      case 0x7: if(A >= 0x8000)
-                   VIP_MA16W8(CHR_RAM, A & 0x7FFF, V);
-                else
-                   VIP_DBGMSG("Unknown VIP Write: %08x %02x", A, V);
-                break;
+      case 0x7:
+         if(A >= 0x8000)
+            VIP_MA16W8(CHR_RAM, A & 0x7FFF, V);
+         else
+            VIP_DBGMSG("Unknown VIP Write: %08x %02x", A, V);
+         break;
 
-      default: VIP_DBGMSG("Unknown VIP Write: %08x %02x", A, V);
-               break;
+      default:
+         VIP_DBGMSG("Unknown VIP Write: %08x %02x", A, V);
+         break;
    }
 
    //VB_SetEvent(VB_EVENT_VIP, timestamp + CalcNextEvent());
@@ -833,27 +836,28 @@ void VIP_Write16(int32 &timestamp, uint32 A, uint16 V)
          break;
 
       case 0x2:
-      case 0x3: VIP_MA16W16(DRAM, A & 0x1FFFF, V);
-                break;
-
+      case 0x3:
+         VIP_MA16W16(DRAM, A & 0x1FFFF, V);
+         break;
       case 0x4:
-      case 0x5: if(A >= 0x5E000)
-                   WriteRegister(timestamp, A, V);
-                else
-                   VIP_DBGMSG("Unknown VIP Write: %08x %04x", A, V);
-                break;
-
-      case 0x6: VIP_DBGMSG("Unknown VIP Write: %08x %04x", A, V);
-                break;
-
-      case 0x7: if(A >= 0x8000)
-                   VIP_MA16W16(CHR_RAM, A & 0x7FFF, V);
-                else
-                   VIP_DBGMSG("Unknown VIP Write: %08x %04x", A, V);
-                break;
-
-      default: VIP_DBGMSG("Unknown VIP Write: %08x %04x", A, V);
-               break;
+      case 0x5:
+         if(A >= 0x5E000)
+            WriteRegister(timestamp, A, V);
+         else
+            VIP_DBGMSG("Unknown VIP Write: %08x %04x", A, V);
+         break;
+      case 0x6:
+         VIP_DBGMSG("Unknown VIP Write: %08x %04x", A, V);
+         break;
+      case 0x7:
+         if(A >= 0x8000)
+            VIP_MA16W16(CHR_RAM, A & 0x7FFF, V);
+         else
+            VIP_DBGMSG("Unknown VIP Write: %08x %04x", A, V);
+         break;
+      default:
+         VIP_DBGMSG("Unknown VIP Write: %08x %04x", A, V);
+         break;
    }
 
 
@@ -865,8 +869,6 @@ static bool skip;
 
 void VIP_StartFrame(EmulateSpecStruct *espec)
 {
-   // puts("Start frame");
-
    if(espec->VideoFormatChanged || VidSettingsDirty)
    {
       MakeColorLUT(espec->surface->format);
@@ -926,6 +928,7 @@ static int32 CalcNextEvent(void)
 
 static INLINE void CopyFBColumnToTarget_Anaglyph_BASE(const bool DisplayActive_arg, const int lr)
 {
+   int y, y_sub;
    const int fb = DisplayFB;
 
 #if defined(WANT_8BPP)
@@ -938,11 +941,11 @@ static INLINE void CopyFBColumnToTarget_Anaglyph_BASE(const bool DisplayActive_a
    const int32 pitchinpix = surface->pitchinpix;
    const uint8 *fb_source = &FB[fb][lr][64 * Column];
 
-   for(int y = 56; y; y--)
+   for(y = 56; y; y--)
    {
       uint32 source_bits = *fb_source;
 
-      for(int y_sub = 4; y_sub; y_sub--)
+      for(y_sub = 4; y_sub; y_sub--)
       {
          uint32 pixel = BrightCLUT[lr][source_bits & 3];
 
@@ -1059,15 +1062,16 @@ static void CopyFBColumnToTarget_AnaglyphSlow(void)
 
 static void CopyFBColumnToTarget_CScope_BASE(const bool DisplayActive_arg, const int lr, const int dest_lr)
 {
+   int y, y_sub;
    const int fb = DisplayFB;
    uint32 *target = surface->pixels + (dest_lr ? 512 - 16 - 1 : 16) + (dest_lr ? Column : 383 - Column) * surface->pitch32;
    const uint8 *fb_source = &FB[fb][lr][64 * Column];
 
-   for(int y = 56; y; y--)
+   for(y = 56; y; y--)
    {
       uint32 source_bits = *fb_source;
 
-      for(int y_sub = 4; y_sub; y_sub--)
+      for(y_sub = 4; y_sub; y_sub--)
       {
          if(DisplayActive_arg)
             *target = BrightCLUT[lr][source_bits & 3];
@@ -1523,90 +1527,46 @@ int VIP_StateAction(StateMem *sm, int load, int data_only)
 
 uint32 VIP_GetRegister(const unsigned int id, char *special, const uint32 special_len)
 {
-   uint32 ret = 0xDEADBEEF;
-
    switch(id)
    {
       case VIP_GSREG_IPENDING:
-         ret = InterruptPending;
-         break;
-
+         return InterruptPending;
       case VIP_GSREG_IENABLE:
-         ret = InterruptEnable;
-         break;
-
+         return InterruptEnable;
       case VIP_GSREG_DPCTRL:
-         ret = DPCTRL;
-         break;
-
+         return DPCTRL;
       case VIP_GSREG_BRTA:
-         ret = BRTA;
-         break;
-
+         return BRTA;
       case VIP_GSREG_BRTB:
-         ret = BRTB;
-         break;
-
+         return BRTB;
       case VIP_GSREG_BRTC:
-         ret = BRTC;
-         break;
-
+         return BRTC;
       case VIP_GSREG_REST:
-         ret = REST;
-         break;
-
+         return REST;
       case VIP_GSREG_FRMCYC:
-         ret = FRMCYC;
-         break;
-
+         return FRMCYC;
       case VIP_GSREG_XPCTRL:
-         ret = XPCTRL | (SBCMP << 8);
-         break;
-
+         return XPCTRL | (SBCMP << 8);
       case VIP_GSREG_SPT0:
       case VIP_GSREG_SPT1:
       case VIP_GSREG_SPT2:
       case VIP_GSREG_SPT3:
-         ret = SPT[id - VIP_GSREG_SPT0];
-         break;
-
+         return SPT[id - VIP_GSREG_SPT0];
       case VIP_GSREG_GPLT0:
       case VIP_GSREG_GPLT1:
       case VIP_GSREG_GPLT2:
       case VIP_GSREG_GPLT3:
-         ret = GPLT[id - VIP_GSREG_GPLT0];
-         break;
-
+         return GPLT[id - VIP_GSREG_GPLT0];
       case VIP_GSREG_JPLT0:
       case VIP_GSREG_JPLT1:
       case VIP_GSREG_JPLT2:
       case VIP_GSREG_JPLT3:
-         ret = JPLT[id - VIP_GSREG_JPLT0];
-         break;
-
+         return JPLT[id - VIP_GSREG_JPLT0];
       case VIP_GSREG_BKCOL:
-         ret = BKCOL;
-         break;
-
+         return BKCOL;
    }
 
-   if(id == VIP_GSREG_IPENDING || id == VIP_GSREG_IENABLE)
-   {
-      if(special)
-         trio_snprintf(special, special_len, "%s: %s%s%s%s%s%s%s%s",
-               (id == VIP_GSREG_IPENDING) ? "Interrupts Pending" : "Interrupts Enabled",
-               (ret & INT_SCAN_ERR) ? "SCAN_ERR " : "",
-               (ret & INT_LFB_END) ? "LFB_END " : "",
-               (ret & INT_RFB_END) ? "RFB_END " : "",
-               (ret & INT_GAME_START) ? "GAME_START " : "",
-               (ret & INT_FRAME_START) ? "FRAME_START " : "",
-               (ret & INT_SB_HIT) ? "SB_HIT " : "",
-               (ret & INT_XP_END) ? "XP_END " : "",
-               (ret & INT_TIME_ERR) ? "TIME_ERR " : "");
-
-   }
-
-   return(ret);
+   return 0xDEADBEEF;
 }
 
 void VIP_SetRegister(const unsigned int id, const uint32 value)
