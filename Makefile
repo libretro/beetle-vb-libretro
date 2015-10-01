@@ -3,10 +3,6 @@ FRONTEND_SUPPORTS_RGB565 = 1
 
 CORE_DIR := .
 
-ifneq ($(EMSCRIPTEN),)
-	platform = emscripten
-endif
-
 ifeq ($(platform),)
 platform = unix
 ifeq ($(shell uname -a),)
