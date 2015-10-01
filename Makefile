@@ -37,7 +37,7 @@ endif
 CACHE_CD = 0
 
 core = vb
-NEED_BPP = 32
+NEED_BPP = 16
 NEED_BLIP = 1
 WANT_NEW_API = 1
 NEED_STEREO_SOUND = 1
