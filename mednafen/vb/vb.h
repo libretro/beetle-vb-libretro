@@ -34,7 +34,6 @@ enum
 #include "../mednafen.h"
 #include "../hw_cpu/v810/v810_cpu.h"
 #include "../masmem.h"
-#include "../include/trio/trio.h"
 
 void VB_SetEvent(const int type, const v810_timestamp_t next_timestamp);
 
