@@ -45,9 +45,9 @@ void MDFN_DispMessage(const char *format, ...)
 {
  va_list ap;
  va_start(ap,format);
- char *msg = NULL;
+ char *msg = new char[4096];
 
- vasprintf(&msg, format,ap);
+ vsnprintf(msg, 4096, format,ap);
  va_end(ap);
 
  MDFND_DispMessage((UTF8*)msg);
