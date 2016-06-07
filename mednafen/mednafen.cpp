@@ -26,7 +26,7 @@
 #include	"general.h"
 
 #include	"state.h"
-#include "video.h"
+#include "video/surface.h"
 #include	"file.h"
 
 #include	"mempatcher.h"

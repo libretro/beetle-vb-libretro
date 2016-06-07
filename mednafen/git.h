@@ -3,8 +3,6 @@
 
 #include <string>
 
-#include "video.h"
-
 typedef struct
 {
  const char *extension; // Example ".nes"
@@ -12,6 +10,7 @@ typedef struct
 } FileExtensionSpecStruct;
 
 #include "file.h"
+#include "video/surface.h"
 
 enum
 {
