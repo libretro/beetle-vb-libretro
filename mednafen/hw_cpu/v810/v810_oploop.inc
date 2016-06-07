@@ -202,7 +202,7 @@
 
             // set CY before we destroy the regisrer info....
             SetFlag(PSW_CY, (val != 0) && ((P_REG[arg2] >> (32 - val))&0x01) );
-	    SetFlag(PSW_OV, FALSE);
+	    SetFlag(PSW_OV, false);
             SetPREG(arg2, P_REG[arg2] << val);
 	    SetSZ(P_REG[arg2]);            
 	END_OP();
@@ -212,7 +212,7 @@
             val = P_REG[arg1] & 0x1F;
             // set CY before we destroy the regisrer info....
             SetFlag(PSW_CY, (val) && ((P_REG[arg2] >> (val-1))&0x01));
-	    SetFlag(PSW_OV, FALSE);
+	    SetFlag(PSW_OV, false);
 	    SetPREG(arg2, P_REG[arg2] >> val);
 	    SetSZ(P_REG[arg2]);
 	END_OP();
@@ -235,7 +235,7 @@
             val = P_REG[arg1] & 0x1F;
 			
 	    SetFlag(PSW_CY, (val) && ((P_REG[arg2]>>(val-1))&0x01) );
-	    SetFlag(PSW_OV, FALSE);
+	    SetFlag(PSW_OV, false);
 
 	    SetPREG(arg2, (uint32) ((int32)P_REG[arg2] >> val));
             
@@ -245,28 +245,28 @@
 	BEGIN_OP(OR);
             ADDCLOCK(1);
             SetPREG(arg2, P_REG[arg1] | P_REG[arg2]);
-	    SetFlag(PSW_OV, FALSE);
+	    SetFlag(PSW_OV, false);
 	    SetSZ(P_REG[arg2]);
 	END_OP();
 
 	BEGIN_OP(AND);
             ADDCLOCK(1);
             SetPREG(arg2, P_REG[arg1] & P_REG[arg2]);
-	    SetFlag(PSW_OV, FALSE);
+	    SetFlag(PSW_OV, false);
 	    SetSZ(P_REG[arg2]);
 	END_OP();
 
 	BEGIN_OP(XOR);
             ADDCLOCK(1);
 	    SetPREG(arg2, P_REG[arg1] ^ P_REG[arg2]);
-	    SetFlag(PSW_OV, FALSE);
+	    SetFlag(PSW_OV, false);
 	    SetSZ(P_REG[arg2]);
 	END_OP();
 
 	BEGIN_OP(NOT);
             ADDCLOCK(1);
 	    SetPREG(arg2, ~P_REG[arg1]);
-	    SetFlag(PSW_OV, FALSE);
+	    SetFlag(PSW_OV, false);
 	    SetSZ(P_REG[arg2]);
 	END_OP();
 
@@ -359,7 +359,7 @@
 	    SetFlag(PSW_CY, arg1 && ((P_REG[arg2] >> (arg1-1))&0x01) );
             // set CY before we destroy the regisrer info....
             SetPREG(arg2, P_REG[arg2] >> arg1);
-	    SetFlag(PSW_OV, FALSE);
+	    SetFlag(PSW_OV, false);
 	    SetSZ(P_REG[arg2]);
 	END_OP();
 
@@ -369,7 +369,7 @@
             // set CY before we destroy the regisrer info....
 
             SetPREG(arg2, P_REG[arg2] << arg1);
-	    SetFlag(PSW_OV, FALSE);
+	    SetFlag(PSW_OV, false);
 	    SetSZ(P_REG[arg2]);
 	END_OP();
 
@@ -379,7 +379,7 @@
 
             SetPREG(arg2, (uint32) ((int32)P_REG[arg2] >> arg1));
 
-	    SetFlag(PSW_OV, FALSE);
+	    SetFlag(PSW_OV, false);
 	    SetSZ(P_REG[arg2]);
 	END_OP();
 
@@ -472,7 +472,7 @@
 	END_OP();
 
 	BEGIN_OP(BR);
-          	COND_BRANCH(TRUE);
+          	COND_BRANCH(true);
 	END_OP();
 
 	BEGIN_OP(BLT);
@@ -551,21 +551,21 @@
 	BEGIN_OP(ORI);
             ADDCLOCK(1);
             SetPREG(arg3, arg1 | P_REG[arg2]);
-	    SetFlag(PSW_OV, FALSE);
+	    SetFlag(PSW_OV, false);
 	    SetSZ(P_REG[arg3]);
 	END_OP();
 
 	BEGIN_OP(ANDI);
             ADDCLOCK(1);
             SetPREG(arg3, (arg1 & P_REG[arg2]));
-	    SetFlag(PSW_OV, FALSE);
+	    SetFlag(PSW_OV, false);
 	    SetSZ(P_REG[arg3]);
 	END_OP();
 
 	BEGIN_OP(XORI);
             ADDCLOCK(1);
 	    SetPREG(arg3, arg1 ^ P_REG[arg2]);
-	    SetFlag(PSW_OV, FALSE);
+	    SetFlag(PSW_OV, false);
 	    SetSZ(P_REG[arg3]);
 	END_OP();
 
@@ -868,7 +868,7 @@
 	     SetPREG(30, remainder);
              SetPREG(arg2, quotient);
 
-	     SetFlag(PSW_OV, FALSE);
+	     SetFlag(PSW_OV, false);
 	     SetSZ(quotient);
             }
 	    lastop = -1;
@@ -891,7 +891,7 @@
 	    {
                 if((P_REG[arg2]==0x80000000)&&(P_REG[arg1]==0xFFFFFFFF)) 
 		{
-			SetFlag(PSW_OV, TRUE);
+			SetFlag(PSW_OV, true);
 			P_REG[30]=0;
 	                SetPREG(arg2, 0x80000000);
 	                SetSZ(P_REG[arg2]);
@@ -905,7 +905,7 @@
 	             SetPREG(30, remainder);
 	             SetPREG(arg2, quotient);
 
-	             SetFlag(PSW_OV, FALSE);
+	             SetFlag(PSW_OV, false);
 	             SetSZ(quotient);
 		}
 	    }
@@ -928,13 +928,13 @@
             if(bstr_subop(timestamp, arg2, arg1))
 	    {
 	     RB_DECPCBY2();
-             in_bstr = TRUE;
+             in_bstr = true;
              in_bstr_to = tmpop;
 	    }
 	    else
 	    {
-	     in_bstr = FALSE;
-	     have_src_cache = have_dst_cache = FALSE;
+	     in_bstr = false;
+	     have_src_cache = have_dst_cache = false;
 	    }
 	END_OP();
 
@@ -1032,9 +1032,9 @@
 	 Halted = HALT_NONE;
 
 	 // Invalidate our bitstring state(forces the instruction to be re-read, and the r/w buffers reloaded).
-	 in_bstr = FALSE;
-	 have_src_cache = FALSE;
-	 have_dst_cache = FALSE;
+	 in_bstr = false;
+	 have_src_cache = false;
+	 have_dst_cache = false;
 
 	 IPendingCache = 0;
 

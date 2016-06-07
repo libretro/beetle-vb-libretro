@@ -50,7 +50,7 @@ void MDFN_DispMessage(const char *format, ...)
  vsnprintf(msg, 4096, format,ap);
  va_end(ap);
 
- MDFND_DispMessage((UTF8*)msg);
+ MDFND_DispMessage((uint8_t*)msg);
 }
 
 void MDFN_ResetMessages(void)
@@ -114,7 +114,7 @@ MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
       unsigned int x;
       char *tmp;
 
-      MDFNGameInfo->name = (UTF8 *)strdup(GetFNComponent(name));
+      MDFNGameInfo->name = (uint8_t*)strdup(GetFNComponent(name));
 
       for(x=0;x<strlen((char *)MDFNGameInfo->name);x++)
       {

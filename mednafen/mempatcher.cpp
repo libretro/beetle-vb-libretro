@@ -22,6 +22,8 @@
 #include <errno.h>
 #include <vector>
 
+#include <boolean.h>
+
 #include "general.h"
 #include "mempatcher.h"
 
@@ -53,7 +55,7 @@ static std::vector<CHEATF> cheats;
 static int savecheats;
 static uint32 resultsbytelen = 1;
 static bool resultsbigendian = 0;
-static bool CheatsActive = TRUE;
+static bool CheatsActive = true;
 
 bool SubCheatsOn = 0;
 std::vector<SUBCHEAT> SubCheats[8];

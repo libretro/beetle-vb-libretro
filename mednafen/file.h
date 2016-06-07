@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include <boolean.h>
+
 #define MDFNFILE_EC_NOTFOUND	1
 #define MDFNFILE_EC_OTHER	2
 
@@ -16,8 +18,8 @@ class MDFNFILE
 
 	~MDFNFILE();
 
-	bool Open(const char *path, const void *known_ext, const char *purpose = NULL, const bool suppress_notfound_pe = FALSE);
-	INLINE bool Open(const std::string &path, const void *known_ext, const char *purpose = NULL, const bool suppress_notfound_pe = FALSE)
+	bool Open(const char *path, const void *known_ext, const char *purpose = NULL, const bool suppress_notfound_pe = false);
+	INLINE bool Open(const std::string &path, const void *known_ext, const char *purpose = NULL, const bool suppress_notfound_pe = false)
 	{
 	 return(Open(path.c_str(), known_ext, purpose, suppress_notfound_pe));
 	}

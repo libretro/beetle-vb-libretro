@@ -2724,7 +2724,7 @@ void retro_run()
 
    if (memcmp(&last_pixel_format, &spec.surface->format, sizeof(MDFN_PixelFormat)))
    {
-      spec.VideoFormatChanged = TRUE;
+      spec.VideoFormatChanged = true;
 
       last_pixel_format = spec.surface->format;
    }

@@ -41,6 +41,8 @@ found freely through public domain sources.
 //////////////////////////////////////////////////////////
 // CPU routines
 
+#include <boolean.h>
+
 #include "../../mednafen.h"
 #include "../../masmem.h"
 
@@ -231,7 +233,7 @@ INLINE uint32 V810::RDCACHE(v810_timestamp_t &timestamp, uint32 addr)
     timestamp++;
     Cache[CI].data[SBI] = MemRead16(timestamp, addr & ~0x3) | ((MemRead16(timestamp, (addr & ~0x3) | 0x2) << 16));
    }
-   Cache[CI].data_valid[SBI] = TRUE;
+   Cache[CI].data_valid[SBI] = true;
   }
  }
  else
@@ -247,8 +249,8 @@ INLINE uint32 V810::RDCACHE(v810_timestamp_t &timestamp, uint32 addr)
    Cache[CI].data[SBI] = MemRead16(timestamp, addr & ~0x3) | ((MemRead16(timestamp, (addr & ~0x3) | 0x2) << 16));
   }
   //Cache[CI].data[SBI] = MemRead32(timestamp, addr & ~0x3);
-  Cache[CI].data_valid[SBI] = TRUE;
-  Cache[CI].data_valid[SBI ^ 1] = FALSE;
+  Cache[CI].data_valid[SBI] = true;
+  Cache[CI].data_valid[SBI ^ 1] = false;
  }
 
  //{
@@ -312,7 +314,7 @@ void V810::Reset()
 
  lastop = 0;
 
- in_bstr = FALSE;
+ in_bstr = false;
 
  RecalcIPendingCache();
 }
@@ -322,7 +324,7 @@ bool V810::Init(V810_Emu_Mode mode, bool vb_mode)
  EmuMode = mode;
  VBMode = vb_mode;
 
- in_bstr = FALSE;
+ in_bstr = false;
  in_bstr_to = 0;
 
  if(mode == V810_EMU_MODE_FAST)
@@ -339,7 +341,7 @@ bool V810::Init(V810_Emu_Mode mode, bool vb_mode)
    FastMap[A / V810_FAST_MAP_PSIZE] = DummyRegion - A;
  }
 
- return(TRUE);
+ return(true);
 }
 
 void V810::Kill(void)
@@ -841,13 +843,13 @@ INLINE void V810::BSTR_WWORD(v810_timestamp_t &timestamp, uint32 A, uint32 V)
                 {						\
                  if(!have_src_cache)                            \
                  {                                              \
-		  have_src_cache = TRUE;			\
+		  have_src_cache = true;			\
                   src_cache = BSTR_RWORD(timestamp, src);       \
                  }                                              \
 								\
 		 if(!have_dst_cache)				\
 		 {						\
-		  have_dst_cache = TRUE;			\
+		  have_dst_cache = true;			\
                   dst_cache = BSTR_RWORD(timestamp, dst);       \
                  }                                              \
 								\
@@ -859,14 +861,14 @@ INLINE void V810::BSTR_WWORD(v810_timestamp_t &timestamp, uint32 A, uint32 V)
 		 if(!srcoff)					\
 		 {                                              \
 		  src += 4;					\
-		  have_src_cache = FALSE;			\
+		  have_src_cache = false;			\
 		 }                                              \
 								\
                  if(!dstoff)                                    \
                  {                                              \
                   BSTR_WWORD(timestamp, dst, dst_cache);        \
                   dst += 4;                                     \
-		  have_dst_cache = FALSE;			\
+		  have_dst_cache = false;			\
 		  if(timestamp >= next_event_ts)		\
 		   break;					\
                  }                                              \
@@ -896,7 +898,7 @@ INLINE bool V810::Do_BSTR_Search(v810_timestamp_t &timestamp, const int inc_mul,
 	{
 		if(!have_src_cache)
 		{
-		 have_src_cache = TRUE;
+		 have_src_cache = true;
 		 timestamp++;
 		 src_cache = BSTR_RWORD(timestamp, src);
 		}
@@ -920,7 +922,7 @@ INLINE bool V810::Do_BSTR_Search(v810_timestamp_t &timestamp, const int inc_mul,
 
 	        if(!srcoff)
 		{
-	         have_src_cache = FALSE;
+	         have_src_cache = false;
 		 src += inc_mul * 4;
 		 if(timestamp >= next_event_ts)
 		  break;
@@ -1452,9 +1454,9 @@ void V810::Exception(uint32 handler, uint16 eCode)
     printf("Exception: %08x %04x\n", handler, eCode);
 
     // Invalidate our bitstring state(forces the instruction to be re-read, and the r/w buffers reloaded).
-    in_bstr = FALSE;
-    have_src_cache = FALSE;
-    have_dst_cache = FALSE;
+    in_bstr = false;
+    have_src_cache = false;
+    have_dst_cache = false;
 
     if(S_REG[PSW] & PSW_NP) // Fatal exception
     {
