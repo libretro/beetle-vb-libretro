@@ -185,11 +185,6 @@ static INLINE bool MDFN_DumpToFileReal(const char *filename, int compress, const
    return 1;
 }
 
-bool MDFN_DumpToFile(const char *filename, int compress, const std::vector<PtrLengthPair> &pearpairs)
-{
-   return (MDFN_DumpToFileReal(filename, compress, pearpairs));
-}
-
 bool MDFN_DumpToFile(const char *filename, int compress, const void *data, uint64 length)
 {
    std::vector<PtrLengthPair> tmp_pairs;

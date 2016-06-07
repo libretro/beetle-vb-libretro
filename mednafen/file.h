@@ -102,6 +102,5 @@ class PtrLengthPair
 // (Note: There is a setting that will force compress to 0 in the internal DumpToFile logic, for hackers who don't want to ungzip save files.)
 
 bool MDFN_DumpToFile(const char *filename, int compress, const void *data, const uint64 length);
-bool MDFN_DumpToFile(const char *filename, int compress, const std::vector<PtrLengthPair> &pearpairs);
 
 #endif
