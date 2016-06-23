@@ -68,33 +68,6 @@ ifeq ($(FRONTEND_SUPPORTS_RGB565), 1)
 FLAGS += -DFRONTEND_SUPPORTS_RGB565
 endif
 
-ifeq ($(CACHE_CD), 1)
-FLAGS += -D__LIBRETRO_CACHE_CD__
-endif
-
-ifeq ($(NEED_CD), 1)
-ifneq ($(HAVE_GRIFFIN),1)
-SOURCES_CXX += $(MEDNAFEN_DIR)/cdrom/CDAccess.cpp \
-	$(MEDNAFEN_DIR)/cdrom/CDAccess_Image.cpp \
-	$(MEDNAFEN_DIR)/cdrom/CDAccess_CCD.cpp \
-	$(MEDNAFEN_DIR)/cdrom/CDUtility.cpp \
-	$(MEDNAFEN_DIR)/cdrom/lec.cpp \
-	$(MEDNAFEN_DIR)/cdrom/SimpleFIFO.cpp \
-	$(MEDNAFEN_DIR)/cdrom/audioreader.cpp \
-	$(MEDNAFEN_DIR)/cdrom/galois.cpp \
-	$(MEDNAFEN_DIR)/cdrom/recover-raw.cpp \
-	$(MEDNAFEN_DIR)/cdrom/l-ec.cpp \
-	$(MEDNAFEN_DIR)/cdrom/crc32.cpp \
-	$(MEDNAFEN_DIR)/cdrom/cdromif.cpp
-endif
-   FLAGS += -DNEED_CD
-endif
-
-ifeq ($(NEED_TREMOR), 1)
-   SOURCES_C += $(wildcard $(MEDNAFEN_DIR)/tremor/*.c)
-   FLAGS += -DNEED_TREMOR
-endif
-
 ifneq ($(HAVE_GRIFFIN), 1)
 SOURCES_CXX += \
 	$(MEDNAFEN_DIR)/mednafen.cpp \
