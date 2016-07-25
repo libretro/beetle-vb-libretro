@@ -206,7 +206,7 @@
 					RelativePath="..\..\mednafen\endian.cpp">
 				</File>
 				<File
-					RelativePath="..\..\mednafen\file.cpp">
+					RelativePath="..\..\mednafen\file.c">
 				</File>
 				<File
 					RelativePath="..\..\mednafen\general.cpp">

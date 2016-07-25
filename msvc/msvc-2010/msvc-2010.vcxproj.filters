@@ -35,7 +35,7 @@
     <ClCompile Include="..\..\..\mednafen\endian.cpp">
       <Filter>Source Files\mednafen</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\mednafen\file.cpp">
+    <ClCompile Include="..\..\..\mednafen\file.c">
       <Filter>Source Files\mednafen</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\mednafen\general.cpp">

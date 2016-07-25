@@ -13,7 +13,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\libretro.cpp" />
     <ClCompile Include="..\..\mednafen\endian.cpp" />
-    <ClCompile Include="..\..\mednafen\file.cpp" />
+    <ClCompile Include="..\..\mednafen\file.c" />
     <ClCompile Include="..\..\mednafen\general.cpp" />
     <ClCompile Include="..\..\mednafen\hw_cpu\v810\fpu-new\softfloat.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>

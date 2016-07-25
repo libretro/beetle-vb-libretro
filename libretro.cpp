@@ -40,6 +40,68 @@ static MDFN_Surface *surf;
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+class PtrLengthPair
+{
+ public:
+
+ inline PtrLengthPair(const void *new_data, const uint64 new_length)
+ {
+  data = new_data;
+  length = new_length;
+ }
+
+ ~PtrLengthPair() 
+ { 
+
+ } 
+
+ INLINE const void *GetData(void) const
+ {
+  return(data);
+ }
+
+ INLINE uint64 GetLength(void) const
+ {
+  return(length);
+ }
+
+ private:
+ const void *data;
+ uint64 length;
+};
+
+static INLINE bool MDFN_DumpToFileReal(const char *filename, int compress, const std::vector<PtrLengthPair> &pearpairs)
+{
+   FILE *fp = fopen(filename, "wb");
+
+   if (!fp)
+      return 0;
+
+   for(unsigned int i = 0; i < pearpairs.size(); i++)
+   {
+      const void *data = pearpairs[i].GetData();
+      const uint64 length = pearpairs[i].GetLength();
+
+      if (fwrite(data, 1, length, fp) != length)
+      {
+         fclose(fp);
+         return 0;
+      }
+   }
+
+   if (fclose(fp) == EOF)
+      return 0;
+
+   return 1;
+}
+
+static bool MDFN_DumpToFile(const char *filename, int compress, const void *data, uint64 length)
+{
+   std::vector<PtrLengthPair> tmp_pairs;
+   tmp_pairs.push_back(PtrLengthPair(data, length));
+   return (MDFN_DumpToFileReal(filename, compress, tmp_pairs));
+}
+
 #include "mednafen/vb/vb.h"
 #include "mednafen/vb/timer.h"
 #include "mednafen/vb/vsu.h"
@@ -2418,9 +2480,9 @@ void MDFN_ResetMessages(void)
 
 static MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
 {
-   MDFNFILE GameFile;
 	std::vector<FileExtensionSpecStruct> valid_iae;
    MDFNGameInfo = &EmulatedVB;
+   MDFNFILE *GameFile = NULL;
 
 	MDFN_printf(_("Loading %s...\n"),name);
 
@@ -2435,7 +2497,9 @@ static MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
       curexts++;
    }
 
-	if(!GameFile.Open(name, &valid_iae[0], _("game")))
+   GameFile = file_open(name);
+
+	if(!GameFile)
    {
       MDFNGameInfo = NULL;
       return 0;
@@ -2451,13 +2515,8 @@ static MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
 	// End load per-game settings
 	//
 
-   if(MDFNGameInfo->Load(name, &GameFile) <= 0)
-   {
-      GameFile.Close();
-      MDFN_indent(-2);
-      MDFNGameInfo = NULL;
-      return(0);
-   }
+   if(MDFNGameInfo->Load(name, GameFile) <= 0)
+      goto error;
 
 	MDFN_LoadGameCheats(NULL);
 	MDFNMP_InstallReadPatches();
@@ -2483,6 +2542,12 @@ static MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
    }
 
    return(MDFNGameInfo);
+
+error:
+   file_close(GameFile);
+   MDFN_indent(-2);
+   MDFNGameInfo = NULL;
+   return NULL;
 }
 
 static void MDFNI_CloseGame(void)
