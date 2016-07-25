@@ -22,31 +22,6 @@ void MDFND_Message(const char *s);
 uint32 MDFND_GetTime(void);
 void MDFND_Sleep(uint32 ms);
 
-#ifdef WANT_THREADING
-/* Being threading support. */
-// Mostly based off SDL's prototypes and semantics.
-// Driver code should actually define MDFN_Thread and MDFN_Mutex.
-
-struct MDFN_Thread;
-struct MDFN_Mutex;
-
-MDFN_Thread *MDFND_CreateThread(int (*fn)(void *), void *data);
-void MDFND_WaitThread(MDFN_Thread *thread, int *status);
-void MDFND_KillThread(MDFN_Thread *thread);
-
-MDFN_Mutex *MDFND_CreateMutex(void);
-void MDFND_DestroyMutex(MDFN_Mutex *mutex);
-int MDFND_LockMutex(MDFN_Mutex *mutex);
-int MDFND_UnlockMutex(MDFN_Mutex *mutex);
-
-/* End threading support. */
-#endif
-
-/* path = path of game/file to load.  returns NULL on failure. */
-MDFNGI *MDFNI_LoadGame(const char *force_module, const char *path);
-
-MDFNGI *MDFNI_LoadCD(const char *sysname, const char *devicename);
-
 // Call this function as early as possible, even before MDFNI_Initialize()
 bool MDFNI_InitializeModule(void);
 
@@ -57,9 +32,6 @@ int MDFNI_Initialize(const char *basedir);
 /* Sets the base directory(save states, snapshots, etc. are saved in directories
    below this directory. */
 void MDFNI_SetBaseDirectory(const char *dir);
-
-/* Closes currently loaded game */
-void MDFNI_CloseGame(void);
 
 void MDFN_DispMessage(const char *format, ...);
 #define MDFNI_DispMessage MDFN_DispMessage
