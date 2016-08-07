@@ -149,6 +149,7 @@ else ifeq ($(platform), vita)
 	CXX = arm-vita-eabi-g++$(EXE_EXT)
 	AR = arm-vita-eabi-ar$(EXE_EXT)
    FLAGS += -DVITA -DHAVE_MKDIR
+   NEED_BPP := 16
    STATIC_LINKING = 1
 
 else ifeq ($(platform), ctr)
