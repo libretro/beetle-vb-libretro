@@ -77,7 +77,6 @@ SOURCES_CXX += \
 	$(CORE_DIR)/libretro.cpp
 
 SOURCES_C += \
-	$(MEDNAFEN_DIR)/general.c \
 	$(MEDNAFEN_DIR)/file.c \
 	$(MEDNAFEN_DIR)/mednafen-endian.c
 endif

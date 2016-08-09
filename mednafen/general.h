@@ -24,14 +24,4 @@ typedef enum
 
 std::string MDFN_MakeFName(MakeFName_Type type, int id1, const char *cd1);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-const char * GetFNComponent(const char *str);
-
-#ifdef __cplusplus
-}
-#endif
-
 #endif
