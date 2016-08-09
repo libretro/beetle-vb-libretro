@@ -2249,7 +2249,7 @@ static DebuggerInfoStruct DBGInfo =
 #endif
 
 
-static int StateAction(StateMem *sm, int load, int data_only)
+int StateAction(StateMem *sm, int load, int data_only)
 {
  const v810_timestamp_t timestamp = VB_V810->v810_timestamp;
  int ret = 1;
@@ -2409,34 +2409,6 @@ static const FileExtensionSpecStruct KnownExtensions[] =
 
 MDFNGI EmulatedVB =
 {
- "vb",
- "Virtual Boy",
- KnownExtensions,
- MODPRIO_INTERNAL_HIGH,
- #ifdef WANT_DEBUGGER
- &DBGInfo,
- #else
- NULL,		// Debug info
- #endif
- &InputInfo,	//
- Load,
- TestMagic,
- NULL,
- NULL,
- CloseGame,
- SetLayerEnableMask,
- NULL,		// Layer names, null-delimited
- NULL,
- NULL,
- NULL,
- NULL,
- NULL,
- NULL,
- false,
- StateAction,
- Emulate,
- VBINPUT_SetInput,
- DoSimpleCommand,
  VBSettings,
  MDFN_MASTERCLOCK_FIXED(VB_MASTER_CLOCK),
  0,
@@ -2489,7 +2461,7 @@ static MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
 	MDFN_indent(1);
 
 	// Construct a NULL-delimited list of known file extensions for MDFN_fopen()
-   const FileExtensionSpecStruct *curexts = MDFNGameInfo->FileExtensions;
+   const FileExtensionSpecStruct *curexts = KnownExtensions;
 
    while(curexts->extension && curexts->description)
    {
@@ -2505,7 +2477,7 @@ static MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
       return 0;
    }
 
-	MDFN_printf(_("Using module: %s(%s)\n\n"), MDFNGameInfo->shortname, MDFNGameInfo->fullname);
+	MDFN_printf("Using module: vb\n\n");
 	MDFN_indent(1);
 
 	//
@@ -2515,7 +2487,7 @@ static MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
 	// End load per-game settings
 	//
 
-   if(MDFNGameInfo->Load(name, GameFile) <= 0)
+   if(Load(name, GameFile) <= 0)
       goto error;
 
 	MDFN_LoadGameCheats(NULL);
@@ -2557,7 +2529,7 @@ static void MDFNI_CloseGame(void)
 
    MDFN_FlushGameCheats(0);
 
-   MDFNGameInfo->CloseGame();
+   CloseGame();
 
    if(MDFNGameInfo->name)
       free(MDFNGameInfo->name);
@@ -2786,7 +2758,7 @@ void retro_init(void)
 
 void retro_reset(void)
 {
-   game->DoSimpleCommand(MDFN_MSC_RESET);
+   DoSimpleCommand(MDFN_MSC_RESET);
 }
 
 bool retro_load_game_special(unsigned, const struct retro_game_info *, size_t)
@@ -2856,13 +2828,11 @@ static uint16_t input_buf[MAX_PLAYERS];
 
 static void hookup_ports(bool force)
 {
-   MDFNGI *currgame = game;
-
    if (initial_ports_hookup && !force)
       return;
 
    // Possible endian bug ...
-   currgame->SetInput(0, "gamepad", &input_buf[0]);
+   VBINPUT_SetInput(0, "gamepad", &input_buf[0]);
 
    initial_ports_hookup = true;
 }
@@ -3014,7 +2984,7 @@ void retro_run()
       last_sound_rate = spec.SoundRate;
    }
 
-   curgame->Emulate(&spec);
+   Emulate(&spec);
 
    int16 *const SoundBuf = spec.SoundBuf + spec.SoundBufSizeALMS * curgame->soundchan;
    int32 SoundBufSize = spec.SoundBufSize - spec.SoundBufSizeALMS;
@@ -3138,24 +3108,14 @@ static size_t serialize_size;
 
 size_t retro_serialize_size(void)
 {
-   MDFNGI *curgame = (MDFNGI*)game;
-   //if (serialize_size)
-   //   return serialize_size;
-
-   if (!curgame->StateAction)
-   {
-      if (log_cb)
-         log_cb(RETRO_LOG_WARN, "[mednafen]: Module %s doesn't support save states.\n", curgame->shortname);
-      return 0;
-   }
-
    StateMem st;
+   MDFNGI *curgame = (MDFNGI*)game;
    memset(&st, 0, sizeof(st));
 
    if (!MDFNSS_SaveSM(&st, 0, 0, NULL, NULL, NULL))
    {
       if (log_cb)
-         log_cb(RETRO_LOG_WARN, "[mednafen]: Module %s doesn't support save states.\n", curgame->shortname);
+         log_cb(RETRO_LOG_WARN, "[mednafen]: Module vb doesn't support save states.\n");
       return 0;
    }
 

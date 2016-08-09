@@ -138,18 +138,22 @@ void MDFNMP_InstallReadPatches(void)
 
  std::vector<SUBCHEAT>::iterator chit;
 
+#if 0
  for(unsigned int x = 0; x < 8; x++)
   for(chit = SubCheats[x].begin(); chit != SubCheats[x].end(); chit++)
   {
    if(MDFNGameInfo->InstallReadPatch)
     MDFNGameInfo->InstallReadPatch(chit->addr);
   }
+#endif
 }
 
 void MDFNMP_RemoveReadPatches(void)
 {
+#if 0
  if(MDFNGameInfo->RemoveReadPatches)
   MDFNGameInfo->RemoveReadPatches();
+#endif
 }
 
 /* This function doesn't allocate any memory for "name" */
@@ -288,6 +292,8 @@ static bool TestConditions(const char *string)
    v_value = strtoull(value, NULL, 0);
 
   value_at_address = 0;
+
+#if 0
   for(unsigned int x = 0; x < bytelen; x++)
   {
    unsigned int shiftie;
@@ -298,6 +304,7 @@ static bool TestConditions(const char *string)
     shiftie = x * 8;
    value_at_address |= MDFNGameInfo->MemRead(v_address + x) << shiftie;
   }
+#endif
 
   //printf("A: %08x, V: %08llx, VA: %08llx, OP: %s\n", v_address, v_value, value_at_address, operation);
   if(!strcmp(operation, ">="))
