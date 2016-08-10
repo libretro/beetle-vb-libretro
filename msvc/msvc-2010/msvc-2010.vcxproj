@@ -22,7 +22,10 @@
     <ClCompile Include="..\..\mednafen\hw_cpu\v810\v810_cpuD.cpp" />
     <ClCompile Include="..\..\mednafen\mempatcher.cpp" />
     <ClCompile Include="..\..\mednafen\settings.cpp" />
-    <ClCompile Include="..\..\mednafen\sound\Blip_Buffer.cpp" />
+    <ClCompile Include="..\..\mednafen\sound\Blip_Buffer.c">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
+   </ClCompile>
     <ClCompile Include="..\..\mednafen\state.cpp" />
     <ClCompile Include="..\..\mednafen\vb\input.cpp" />
     <ClCompile Include="..\..\mednafen\vb\timer.cpp" />

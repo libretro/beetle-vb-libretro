@@ -74,8 +74,8 @@ class VSU
       int32 last_ts;
 
       Blip_Buffer *sbuf[2];
-      Blip_Synth<blip_good_quality, 1024> Synth;
-      Blip_Synth<blip_med_quality, 1024> NoiseSynth;
+      Blip_Synth Synth;
+      Blip_Synth NoiseSynth;
 };
 
 #endif

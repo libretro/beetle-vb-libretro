@@ -53,7 +53,7 @@
     <ClCompile Include="..\..\..\mednafen\state.cpp">
       <Filter>Source Files\mednafen</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\mednafen\sound\Blip_Buffer.cpp">
+    <ClCompile Include="..\..\..\mednafen\sound\Blip_Buffer.c">
       <Filter>Source Files\mednafen\sound</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\stubs.cpp">

@@ -2185,9 +2185,9 @@ static void Emulate(EmulateSpecStruct *espec)
  {
   for(int y = 0; y < 2; y++)
   {
-   sbuf[y].set_sample_rate(espec->SoundRate ? espec->SoundRate : 44100, 50);
-   sbuf[y].clock_rate((long)(VB_MASTER_CLOCK / 4));
-   sbuf[y].bass_freq(20);
+   Blip_Buffer_set_sample_rate(&sbuf[y], espec->SoundRate ? espec->SoundRate : 44100, 50);
+   Blip_Buffer_set_clock_rate(&sbuf[y], (long)(VB_MASTER_CLOCK / 4));
+   Blip_Buffer_bass_freq(&sbuf[y], 20);
   }
  }
 
@@ -2204,8 +2204,8 @@ static void Emulate(EmulateSpecStruct *espec)
  {
   for(int y = 0; y < 2; y++)
   {
-   sbuf[y].end_frame((v810_timestamp + VSU_CycleFix) >> 2);
-   espec->SoundBufSize = sbuf[y].read_samples(espec->SoundBuf + y, espec->SoundBufMaxSize, 1);
+   Blip_Buffer_end_frame(&sbuf[y], (v810_timestamp + VSU_CycleFix) >> 2);
+   espec->SoundBufSize = Blip_Buffer_read_samples(&sbuf[y], espec->SoundBuf + y, espec->SoundBufMaxSize);
   }
  }
 

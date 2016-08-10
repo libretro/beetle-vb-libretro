@@ -27,7 +27,7 @@ VSU::VSU(Blip_Buffer *bb_l, Blip_Buffer *bb_r)
    sbuf[0] = bb_l;
    sbuf[1] = bb_r;
 
-   Synth.volume(1.0 / 6 / 2);
+   Blip_Synth_set_volume(&Synth, 1.0 / 6 / 2, 0x400);
 
    for(ch = 0; ch < 6; ch++)
       for(lr = 0; lr < 2; lr++)
@@ -250,8 +250,8 @@ void VSU::Update(int32 timestamp)
 
       // Output sound here
       CalcCurrentOutput(ch, left, right);
-      Synth.offset_inline(running_timestamp, left - last_output[ch][0], sbuf[0]);
-      Synth.offset_inline(running_timestamp, right - last_output[ch][1], sbuf[1]);
+      Blip_Synth_offset(&Synth, running_timestamp, left - last_output[ch][0], sbuf[0]);
+      Blip_Synth_offset(&Synth, running_timestamp, right - last_output[ch][1], sbuf[1]);
       last_output[ch][0] = left;
       last_output[ch][1] = right;
 
@@ -429,8 +429,8 @@ void VSU::Update(int32 timestamp)
 
          // Output sound here too.
          CalcCurrentOutput(ch, left, right);
-         Synth.offset_inline(running_timestamp, left - last_output[ch][0], sbuf[0]);
-         Synth.offset_inline(running_timestamp, right - last_output[ch][1], sbuf[1]);
+         Blip_Synth_offset(&Synth, running_timestamp, left - last_output[ch][0], sbuf[0]);
+         Blip_Synth_offset(&Synth, running_timestamp, right - last_output[ch][1], sbuf[1]);
          last_output[ch][0] = left;
          last_output[ch][1] = right;
       }

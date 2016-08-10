@@ -221,7 +221,37 @@
 					Name="sound"
 					Filter="">
 					<File
-						RelativePath="..\..\mednafen\sound\Blip_Buffer.cpp">
+						RelativePath="..\..\mednafen\sound\Blip_Buffer.c">
+								<FileConfiguration
+									Name="Debug|Xbox">
+									<Tool
+										Name="VCCLCompilerTool"
+										CompileAs="2"/>
+								</FileConfiguration>
+								<FileConfiguration
+									Name="Profile|Xbox">
+									<Tool
+										Name="VCCLCompilerTool"
+										CompileAs="2"/>
+								</FileConfiguration>
+								<FileConfiguration
+									Name="Profile_FastCap|Xbox">
+									<Tool
+										Name="VCCLCompilerTool"
+										CompileAs="2"/>
+								</FileConfiguration>
+								<FileConfiguration
+									Name="Release|Xbox">
+									<Tool
+										Name="VCCLCompilerTool"
+										CompileAs="2"/>
+								</FileConfiguration>
+								<FileConfiguration
+									Name="Release_LTCG|Xbox">
+									<Tool
+										Name="VCCLCompilerTool"
+										CompileAs="2"/>
+								</FileConfiguration>
 					</File>
 				</Filter>
 				<Filter
