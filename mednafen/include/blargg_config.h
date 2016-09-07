@@ -16,9 +16,6 @@
 // Uncomment to use faster, lower quality sound synthesis
 //#define BLIP_BUFFER_FAST 1
 
-// Uncomment if automatic byte-order determination doesn't work
-//#define BLARGG_BIG_ENDIAN 1
-
 // Uncomment if you get errors in the bool section of blargg_common.h
 //#define BLARGG_COMPILER_HAS_BOOL 1
 
