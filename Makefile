@@ -43,6 +43,10 @@ WANT_NEW_API = 1
 NEED_STEREO_SOUND = 1
 CORE_DEFINE := -DWANT_VB_EMU
 TARGET_NAME := mednafen_$(core)
+GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
+ifneq ($(GIT_VERSION)," unknown")
+	CXXFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
+endif
 
 ifeq ($(platform), unix)
    TARGET := $(TARGET_NAME)_libretro.so
