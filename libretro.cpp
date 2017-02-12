@@ -2655,7 +2655,7 @@ static void set_basename(const char *path)
 #define MEDNAFEN_CORE_GEOMETRY_BASE_H (game->nominal_height)
 #define MEDNAFEN_CORE_GEOMETRY_MAX_W 384
 #define MEDNAFEN_CORE_GEOMETRY_MAX_H 224
-#define MEDNAFEN_CORE_GEOMETRY_ASPECT_RATIO (4.0 / 3.0)
+#define MEDNAFEN_CORE_GEOMETRY_ASPECT_RATIO (12.0 / 7.0)
 #define FB_WIDTH 384
 #define FB_HEIGHT 224
 
