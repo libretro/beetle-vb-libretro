@@ -77,7 +77,5 @@ SOURCES_CXX += \
 	$(MEDNAFEN_DIR)/video/surface.cpp \
 	$(CORE_DIR)/libretro.cpp
 
-SOURCES_C += \
-	$(MEDNAFEN_DIR)/file.c \
-	$(MEDNAFEN_DIR)/mednafen-endian.c
+SOURCES_C += $(MEDNAFEN_DIR)/file.c 
 endif

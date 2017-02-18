@@ -126,6 +126,11 @@ void VBINPUT_Write(v810_timestamp_t &timestamp, uint32 A, uint8 V)
    VB_SetEvent(VB_EVENT_INPUT, (ReadCounter > 0) ? (timestamp + ReadCounter) : VB_EVENT_NONONO);
 }
 
+static inline uint16_t MDFN_de16lsb(const uint8_t *morp)
+{
+   return(morp[0] | (morp[1] << 8));
+}
+
 void VBINPUT_Frame(void)
 {
    PadData = (MDFN_de16lsb(data_ptr) << 2) | 0x2;
