@@ -1,6 +1,8 @@
 #ifndef _STATE_H
 #define _STATE_H
 
+#include <retro_inline.h>
+
 typedef struct
 {
    uint8_t *data;
@@ -109,7 +111,6 @@ class SSDescriptor
       bool optional;
 };
 
-int MDFNSS_StateAction(void *st, int load, int data_only, std::vector <SSDescriptor> &sections);
 int MDFNSS_StateAction(void *st, int load, int data_only, SFORMAT *sf, const char *name, bool optional = 0);
 
 #endif
