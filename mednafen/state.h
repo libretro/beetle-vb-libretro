@@ -89,9 +89,7 @@ INLINE uint32_t SF_FORCE_D(double *) { return(0); }
 
 #define SFEND { 0, 0, 0, 0 }
 
-#include <vector>
-
-// State-Section Descriptor
+/* State-Section Descriptor */
 class SSDescriptor
 {
    public:
