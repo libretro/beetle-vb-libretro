@@ -554,6 +554,47 @@ struct VB_HeaderInfo
  uint8 version;
 };
 
+static void ReadHeader(MDFNFILE *fp, VB_HeaderInfo *hi)
+{
+#if 0
+ iconv_t sjis_ict = iconv_open("UTF-8", "shift_jis");
+
+ if(sjis_ict != (iconv_t)-1)
+ {
+  char *in_ptr, *out_ptr;
+  size_t ibl, obl;
+
+  ibl = 20;
+  obl = sizeof(hi->game_title) - 1;
+
+  in_ptr = (char*)GET_FDATA_PTR(fp) + (0xFFFFFDE0 & (GET_FSIZE_PTR(fp) - 1));
+  out_ptr = hi->game_title;
+
+  iconv(sjis_ict, (ICONV_CONST char **)&in_ptr, &ibl, &out_ptr, &obl);
+  iconv_close(sjis_ict);
+
+  *out_ptr = 0;
+
+  MDFN_RemoveControlChars(hi->game_title);
+  MDFN_trim(hi->game_title);
+ }
+ else
+  hi->game_title[0] = 0;
+
+ hi->game_code = MDFN_de32lsb(fp->data + (0xFFFFFDFB & (fp->size - 1)));
+ hi->manf_code = MDFN_de16lsb(fp->data + (0xFFFFFDF9 & (fp->size - 1)));
+ hi->version = fp->data[0xFFFFFDFF & (fp->size - 1)];
+#endif
+}
+
+static bool TestMagic(const char *name, MDFNFILE *fp)
+{
+ if(!strcasecmp(GET_FEXTS_PTR(fp), "vb") || !strcasecmp(GET_FEXTS_PTR(fp), "vboy"))
+  return(true);
+
+ return(false);
+}
+
 struct VBGameEntry
 {
  uint32 checksums[16];
@@ -1881,7 +1922,7 @@ static const struct VBGameEntry VBGames[] =
  }},
 };
 
-static int Load(const char *name, const struct retro_game_info *game)
+static int Load(const char *name, MDFNFILE *fp)
 {
  V810_Emu_Mode cpu_mode;
 
@@ -1889,25 +1930,36 @@ static int Load(const char *name, const struct retro_game_info *game)
 
  cpu_mode = (V810_Emu_Mode)MDFN_GetSettingI("vb.cpu_emulation");
 
- if(game->size != round_up_pow2(game->size))
+ if(GET_FSIZE_PTR(fp) != round_up_pow2(GET_FSIZE_PTR(fp)))
  {
   puts("VB ROM image size is not a power of 2???");
   return(0);
  }
 
- if(game->size < 256)
+ if(GET_FSIZE_PTR(fp) < 256)
  {
   puts("VB ROM image size is too small??");
   return(0);
  }
 
- if(game->size > (1 << 24))
+ if(GET_FSIZE_PTR(fp) > (1 << 24))
  {
   puts("VB ROM image size is too large??");
   return(0);
  }
 
  VB_HeaderInfo hinfo;
+
+ ReadHeader(fp, &hinfo);
+
+ MDFN_printf(_("Title:     %s\n"), hinfo.game_title);
+ MDFN_printf(_("Game ID Code: %u\n"), hinfo.game_code);
+ MDFN_printf(_("Manufacturer Code: %d\n"), hinfo.manf_code);
+ MDFN_printf(_("Version:   %u\n"), hinfo.version);
+
+ MDFN_printf(_("ROM:       %dKiB\n"), (int)(GET_FSIZE_PTR(fp) / 1024));
+ 
+ MDFN_printf("\n");
 
  MDFN_printf(_("V810 Emulation Mode: %s\n"), (cpu_mode == V810_EMU_MODE_ACCURATE) ? _("Accurate") : _("Fast"));
 
@@ -1941,7 +1993,7 @@ static int Load(const char *name, const struct retro_game_info *game)
 
 
  // Round up the ROM size to 65536(we mirror it a little later)
- GPROM_Mask = (game->size < 65536) ? (65536 - 1) : (game->size - 1);
+ GPROM_Mask = (GET_FSIZE_PTR(fp) < 65536) ? (65536 - 1) : (GET_FSIZE_PTR(fp) - 1);
 
  for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
  {
@@ -1957,8 +2009,10 @@ static int Load(const char *name, const struct retro_game_info *game)
  Map_Addresses.clear();
 
  // Mirror ROM images < 64KiB to 64KiB
- for(uint64 i = 0; i < 65536; i += game->size)
-    memcpy(GPROM + i, game->data, game->size);
+ for(uint64 i = 0; i < 65536; i += GET_FSIZE_PTR(fp))
+ {
+  memcpy(GPROM + i, GET_FDATA_PTR(fp), GET_FSIZE_PTR(fp));
+ }
 
  GPRAM_Mask = 0xFFFF;
 
@@ -2396,27 +2450,60 @@ void MDFN_ResetMessages(void)
 }
 
 
-static MDFNGI *MDFNI_LoadGame(const char *force_module, const struct retro_game_info *game)
+static MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
 {
+	std::vector<FileExtensionSpecStruct> valid_iae;
    MDFNGameInfo = &EmulatedVB;
+   MDFNFILE *GameFile = NULL;
 
-   // Load per-game settings
-   //
-   // Maybe we should make a "pgcfg" subdir, and automatically load all files in it?
-   // End load per-game settings
+	MDFN_printf(_("Loading %s...\n"),name);
 
-   if(Load("", game) <= 0)
+	MDFN_indent(1);
+
+	// Construct a NULL-delimited list of known file extensions for MDFN_fopen()
+   const FileExtensionSpecStruct *curexts = KnownExtensions;
+
+   while(curexts->extension && curexts->description)
    {
-      MDFNGameInfo = NULL;
-      return NULL;
+      valid_iae.push_back(*curexts);
+      curexts++;
    }
 
-   MDFN_LoadGameCheats(NULL);
-   MDFNMP_InstallReadPatches();
+   GameFile = file_open(name);
 
-   MDFN_ResetMessages();	// Save state, status messages, etc.
+	if(!GameFile)
+   {
+      MDFNGameInfo = NULL;
+      return 0;
+   }
+
+	MDFN_printf("Using module: vb\n\n");
+	MDFN_indent(1);
+
+	//
+	// Load per-game settings
+	//
+	// Maybe we should make a "pgcfg" subdir, and automatically load all files in it?
+	// End load per-game settings
+	//
+
+   if(Load(name, GameFile) <= 0)
+      goto error;
+
+	MDFN_LoadGameCheats(NULL);
+	MDFNMP_InstallReadPatches();
+
+	MDFN_ResetMessages();	// Save state, status messages, etc.
+
+	MDFN_indent(-2);
 
    return(MDFNGameInfo);
+
+error:
+   file_close(GameFile);
+   MDFN_indent(-2);
+   MDFNGameInfo = NULL;
+   return NULL;
 }
 
 static void MDFNI_CloseGame(void)
@@ -2773,7 +2860,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
    check_variables();
 
-   game = MDFNI_LoadGame(MEDNAFEN_CORE_NAME_MODULE, info);
+   game = MDFNI_LoadGame(MEDNAFEN_CORE_NAME_MODULE, info->path);
    if (!game)
       return false;
 
@@ -2914,7 +3001,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #define GIT_VERSION ""
 #endif
    info->library_version  = MEDNAFEN_CORE_VERSION GIT_VERSION;
-   info->need_fullpath    = false;
+   info->need_fullpath    = true;
    info->valid_extensions = MEDNAFEN_CORE_EXTENSIONS;
    info->block_extract    = false;
 }
