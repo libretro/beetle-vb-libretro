@@ -76,6 +76,4 @@ SOURCES_CXX += \
 	$(MEDNAFEN_DIR)/mempatcher.cpp \
 	$(MEDNAFEN_DIR)/video/surface.cpp \
 	$(CORE_DIR)/libretro.cpp
-
-SOURCES_C += $(MEDNAFEN_DIR)/file.c 
 endif
