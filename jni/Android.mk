@@ -17,7 +17,6 @@ endif
 
 ifeq ($(TARGET_ARCH),x86)
 ANDROID_FLAGS := -DANDROID_X86
-IS_X86 = 1
 endif
 
 ifeq ($(TARGET_ARCH),mips)
@@ -30,18 +29,11 @@ LOCAL_CFLAGS   += $(ANDROID_FLAGS)
 CORE_DIR        := ..
 LOCAL_MODULE    := libretro
 
-# If you have a system with 1GB RAM or more - cache the whole 
-# CD for CD-based systems in order to prevent file access delays/hiccups
-CACHE_CD = 0
 
-core = vb
 NEED_BPP = 32
-WANT_NEW_API = 1
 NEED_BLIP = 1
-NEED_STEREO_SOUND = 1
-CORE_DEFINE := -DWANT_VB_EMU
 
-TARGET_NAME := mednafen_$(core)_libretro
+TARGET_NAME := mednafen_vb_libretro
 
 include ../Makefile.common
 
@@ -57,7 +49,7 @@ endif
 LDFLAGS += $(fpic) $(SHARED)
 FLAGS += $(fpic) $(NEW_GCC_FLAGS) $(INCFLAGS)
 
-FLAGS += $(ENDIANNESS_DEFINES) -DSIZEOF_DOUBLE=8 $(WARNINGS) -DMEDNAFEN_VERSION=\"0.9.26\" -DPACKAGE=\"mednafen\" -DMEDNAFEN_VERSION_NUMERIC=926 -DPSS_STYLE=1 -DMPC_FIXED_POINT $(CORE_DEFINE) -DSTDC_HEADERS -D__STDC_LIMIT_MACROS -D__LIBRETRO__ -DNDEBUG -D_LOW_ACCURACY_ $(SOUND_DEFINE)
+FLAGS += $(ENDIANNESS_DEFINES) -DSIZEOF_DOUBLE=8 $(WARNINGS) -DMEDNAFEN_VERSION=\"0.9.26\" -DPACKAGE=\"mednafen\" -DMEDNAFEN_VERSION_NUMERIC=926 -DPSS_STYLE=1 -DMPC_FIXED_POINT $(CORE_DEFINE) -DSTDC_HEADERS -D__STDC_LIMIT_MACROS -D__LIBRETRO__ -DNDEBUG -D_LOW_ACCURACY_
 
 LOCAL_CFLAGS =  $(FLAGS) 
 LOCAL_CXXFLAGS += $(FLAGS) -fexceptions

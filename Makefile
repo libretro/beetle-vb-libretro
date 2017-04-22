@@ -28,15 +28,9 @@ else
    arch = intel
 endif
 
-# If you have a system with 1GB RAM or more - cache the whole 
-# CD for CD-based systems in order to prevent file access delays/hiccups
-CACHE_CD = 0
 
 NEED_BPP = 16
 NEED_BLIP = 1
-WANT_NEW_API = 1
-NEED_STEREO_SOUND = 1
-CORE_DEFINE := -DWANT_VB_EMU
 
 TARGET_NAME := mednafen_vb
 
@@ -51,11 +45,6 @@ ifneq (,$(findstring unix,$(platform)))
    TARGET := $(TARGET_NAME)_libretro.so
    fpic := -fPIC
    SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-   ifneq ($(shell uname -p | grep -E '((i.|x)86|amd64)'),)
-      IS_X86 = 1
-   else
-      IS_X86 = 0
-   endif
 
    # Raspberry Pi
    ifneq (,$(findstring rpi,$(platform)))
@@ -177,7 +166,6 @@ else ifeq ($(platform), ctr)
    FLAGS += -fno-rtti
    FLAGS += -fno-exceptions -DDISABLE_EXCEPTIONS
    STATIC_LINKING = 1
-   IS_X86 := 0
    NEED_BPP := 16
 
 # Xbox 360
@@ -233,7 +221,6 @@ else
    TARGET := $(TARGET_NAME)_libretro.dll
    CC = gcc
    CXX = g++
-   IS_X86 = 1
    SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
    LDFLAGS += -static-libgcc -static-libstdc++ -lwinmm
    FLAGS += -DHAVE__MKDIR
@@ -272,7 +259,7 @@ LDFLAGS += $(fpic) $(SHARED)
 FLAGS   += $(fpic) $(NEW_GCC_FLAGS)
 FLAGS   += $(INCFLAGS)
 
-FLAGS += $(ENDIANNESS_DEFINES) -DSIZEOF_DOUBLE=8 $(WARNINGS) -DMEDNAFEN_VERSION=\"0.9.31\" -DPACKAGE=\"mednafen\" -DMEDNAFEN_VERSION_NUMERIC=931 -DPSS_STYLE=1 -DMPC_FIXED_POINT $(CORE_DEFINE) -DSTDC_HEADERS -D__STDC_LIMIT_MACROS -D__LIBRETRO__ -D_LOW_ACCURACY_ $(EXTRA_INCLUDES) $(SOUND_DEFINE)
+FLAGS += $(ENDIANNESS_DEFINES) -DSIZEOF_DOUBLE=8 $(WARNINGS) -DMEDNAFEN_VERSION=\"0.9.31\" -DPACKAGE=\"mednafen\" -DMEDNAFEN_VERSION_NUMERIC=931 -DPSS_STYLE=1 -DMPC_FIXED_POINT $(CORE_DEFINE) -DSTDC_HEADERS -D__STDC_LIMIT_MACROS -D__LIBRETRO__ -D_LOW_ACCURACY_ $(EXTRA_INCLUDES)
 
 CXXFLAGS += $(FLAGS)
 CFLAGS += $(FLAGS)
