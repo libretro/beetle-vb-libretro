@@ -37,10 +37,6 @@ ifeq ($(NEED_DEINTERLACER), 1)
    FLAGS += -DNEED_DEINTERLACER
 endif
 
-ifeq ($(IS_X86), 1)
-FLAGS += -DARCH_X86
-endif
-
 ifeq ($(NEED_BPP), 8)
 FLAGS += -DWANT_8BPP
 endif
@@ -53,16 +49,8 @@ ifeq ($(NEED_BPP), 32)
 FLAGS += -DWANT_32BPP
 endif
 
-ifeq ($(WANT_NEW_API), 1)
-FLAGS += -DWANT_NEW_API
-endif
-
 ifeq ($(NO_COMPUTED_GOTO), 1)
 FLAGS += -DNO_COMPUTED_GOTO
-endif
-
-ifeq ($(NEED_STEREO_SOUND), 1)
-FLAGS += -DWANT_STEREO_SOUND
 endif
 
 ifeq ($(FRONTEND_SUPPORTS_RGB565), 1)
