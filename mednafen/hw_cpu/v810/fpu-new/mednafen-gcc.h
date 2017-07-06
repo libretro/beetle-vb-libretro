@@ -59,11 +59,3 @@ typedef int64_t sbits64;
 *----------------------------------------------------------------------------*/
 #define LIT64( a ) a##LL
 #endif
-
-/*----------------------------------------------------------------------------
-| The macro `INLINE' can be used before functions that should be inlined.  If
-| a compiler does not support explicit inlining, this macro should be defined
-| to be `static'.
-*----------------------------------------------------------------------------*/
-//#define INLINE extern inline
-#define INLINE static inline

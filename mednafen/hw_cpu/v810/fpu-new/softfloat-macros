@@ -39,7 +39,7 @@ these four paragraphs for those parts of this code that are retained.
 | The result is stored in the location pointed to by `zPtr'.
 *----------------------------------------------------------------------------*/
 
-INLINE void shift32RightJamming( bits32 a, int16 count, bits32 *zPtr )
+static INLINE void shift32RightJamming( bits32 a, int16 count, bits32 *zPtr )
 {
     bits32 z;
 
@@ -64,7 +64,7 @@ INLINE void shift32RightJamming( bits32 a, int16 count, bits32 *zPtr )
 | which are stored at the locations pointed to by `z0Ptr' and `z1Ptr'.
 *----------------------------------------------------------------------------*/
 
-INLINE void
+static INLINE void
  shift64Right(
      bits32 a0, bits32 a1, int16 count, bits32 *z0Ptr, bits32 *z1Ptr )
 {
@@ -99,7 +99,7 @@ INLINE void
 | the locations pointed to by `z0Ptr' and `z1Ptr'.
 *----------------------------------------------------------------------------*/
 
-INLINE void
+static INLINE void
  shift64RightJamming(
      bits32 a0, bits32 a1, int16 count, bits32 *z0Ptr, bits32 *z1Ptr )
 {
@@ -150,7 +150,7 @@ INLINE void
 | `z2Ptr'.)
 *----------------------------------------------------------------------------*/
 
-INLINE void
+static INLINE void
  shift64ExtraRightJamming(
      bits32 a0,
      bits32 a1,
@@ -208,7 +208,7 @@ INLINE void
 | pieces which are stored at the locations pointed to by `z0Ptr' and `z1Ptr'.
 *----------------------------------------------------------------------------*/
 
-INLINE void
+static INLINE void
  shortShift64Left(
      bits32 a0, bits32 a1, int16 count, bits32 *z0Ptr, bits32 *z1Ptr )
 {
@@ -227,7 +227,7 @@ INLINE void
 | `z1Ptr', and `z2Ptr'.
 *----------------------------------------------------------------------------*/
 
-INLINE void
+static INLINE void
  shortShift96Left(
      bits32 a0,
      bits32 a1,
@@ -262,7 +262,7 @@ INLINE void
 | are stored at the locations pointed to by `z0Ptr' and `z1Ptr'.
 *----------------------------------------------------------------------------*/
 
-INLINE void
+static INLINE void
  add64(
      bits32 a0, bits32 a1, bits32 b0, bits32 b1, bits32 *z0Ptr, bits32 *z1Ptr )
 {
@@ -282,7 +282,7 @@ INLINE void
 | `z1Ptr', and `z2Ptr'.
 *----------------------------------------------------------------------------*/
 
-INLINE void
+static INLINE void
  add96(
      bits32 a0,
      bits32 a1,
@@ -320,7 +320,7 @@ INLINE void
 | `z1Ptr'.
 *----------------------------------------------------------------------------*/
 
-INLINE void
+static INLINE void
  sub64(
      bits32 a0, bits32 a1, bits32 b0, bits32 b1, bits32 *z0Ptr, bits32 *z1Ptr )
 {
@@ -338,7 +338,7 @@ INLINE void
 | `z0Ptr', `z1Ptr', and `z2Ptr'.
 *----------------------------------------------------------------------------*/
 
-INLINE void
+static INLINE void
  sub96(
      bits32 a0,
      bits32 a1,
@@ -374,7 +374,7 @@ INLINE void
 | `z0Ptr' and `z1Ptr'.
 *----------------------------------------------------------------------------*/
 
-INLINE void mul32To64( bits32 a, bits32 b, bits32 *z0Ptr, bits32 *z1Ptr )
+static INLINE void mul32To64( bits32 a, bits32 b, bits32 *z0Ptr, bits32 *z1Ptr )
 {
     bits16 aHigh, aLow, bHigh, bLow;
     bits32 z0, zMiddleA, zMiddleB, z1;
@@ -404,7 +404,7 @@ INLINE void mul32To64( bits32 a, bits32 b, bits32 *z0Ptr, bits32 *z1Ptr )
 | `z2Ptr'.
 *----------------------------------------------------------------------------*/
 
-INLINE void
+static INLINE void
  mul64By32To96(
      bits32 a0,
      bits32 a1,
@@ -432,7 +432,7 @@ INLINE void
 | the locations pointed to by `z0Ptr', `z1Ptr', `z2Ptr', and `z3Ptr'.
 *----------------------------------------------------------------------------*/
 
-INLINE void
+static INLINE void
  mul64To128(
      bits32 a0,
      bits32 a1,
@@ -579,7 +579,7 @@ static int8 countLeadingZeros32( bits32 a )
 | returns 0.
 *----------------------------------------------------------------------------*/
 
-INLINE flag eq64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
+static INLINE flag eq64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
 {
 
     return ( a0 == b0 ) && ( a1 == b1 );
@@ -592,7 +592,7 @@ INLINE flag eq64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
 | Otherwise, returns 0.
 *----------------------------------------------------------------------------*/
 
-INLINE flag le64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
+static INLINE flag le64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
 {
 
     return ( a0 < b0 ) || ( ( a0 == b0 ) && ( a1 <= b1 ) );
@@ -605,7 +605,7 @@ INLINE flag le64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
 | returns 0.
 *----------------------------------------------------------------------------*/
 
-INLINE flag lt64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
+static INLINE flag lt64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
 {
 
     return ( a0 < b0 ) || ( ( a0 == b0 ) && ( a1 < b1 ) );
@@ -618,7 +618,7 @@ INLINE flag lt64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
 | returns 0.
 *----------------------------------------------------------------------------*/
 
-INLINE flag ne64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
+static INLINE flag ne64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
 {
 
     return ( a0 != b0 ) || ( a1 != b1 );
