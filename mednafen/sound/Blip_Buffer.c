@@ -116,12 +116,13 @@ blip_resampled_time_t Blip_Buffer_clock_rate_factor(Blip_Buffer* bbuf,
 
 void Blip_Buffer_bass_freq(Blip_Buffer* bbuf,  int freq)
 {
-   bbuf->bass_freq = freq;
    int shift = 31;
+   bbuf->bass_freq = freq;
    if (freq > 0)
    {
+      long f;
       shift = 13;
-      long f = (freq << 16) / bbuf->sample_rate;
+      f     = (freq << 16) / bbuf->sample_rate;
       while ((f >>= 1) && --shift) { }
    }
    bbuf->bass_shift = shift;
@@ -169,10 +170,10 @@ long Blip_Buffer_read_samples(Blip_Buffer* bbuf, blip_sample_t* out,
 
    if (count)
    {
-      int const bass = BLIP_READER_BASS(*bbuf);
-      BLIP_READER_BEGIN(reader, *bbuf);
-
       blip_long n;
+      int const bass = BLIP_READER_BASS(*bbuf);
+
+      BLIP_READER_BEGIN(reader, *bbuf);
 
       for (n = count; n; --n)
       {
