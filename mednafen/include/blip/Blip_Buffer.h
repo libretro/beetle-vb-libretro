@@ -9,12 +9,6 @@
 #include <stdint.h>
 #include <assert.h>
 
-#ifdef __GNUC__
-#define blip_inline static inline __attribute__((always_inline))
-#else
-#define blip_inline static inline
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -84,7 +78,7 @@ void Blip_Buffer_bass_freq(Blip_Buffer* bbuf, int frequency);
 void Blip_Buffer_clear(Blip_Buffer* bbuf, int entire_buffer /*= 1*/);
 
 // Number of samples available for reading with read_samples()
-blip_inline long Blip_Buffer_samples_avail(Blip_Buffer* bbuf);
+static INLINE long Blip_Buffer_samples_avail(Blip_Buffer* bbuf);
 
 // Remove 'count' samples from those waiting to be read
 void Blip_Buffer_remove_samples(Blip_Buffer* bbuf, long count);
@@ -145,20 +139,20 @@ typedef struct
    int delta_factor;
 } Blip_Synth;
 
-blip_inline void Blip_Synth_set_volume(Blip_Synth* synth, double v, int range)
+static INLINE void Blip_Synth_set_volume(Blip_Synth* synth, double v, int range)
 {
    synth->delta_factor = ((v * (1.0 / (range < 0 ? -range : range))) *
                               (1L << blip_sample_bits) + 0.5);
 }
 // Works directly in terms of fractional output samples. Contact author for more info.
-blip_inline void Blip_Synth_offset_resampled(Blip_Synth* synth, blip_resampled_time_t,
+static INLINE void Blip_Synth_offset_resampled(Blip_Synth* synth, blip_resampled_time_t,
                                  int delta, Blip_Buffer*);
 
 // Add an amplitude transition of specified delta, optionally into specified buffer
 // rather than the one set with output(). Delta can be positive or negative.
 // The actual change in amplitude is delta * (volume / range)
 
-blip_inline void Blip_Synth_offset(Blip_Synth* synth, blip_time_t t, int delta,
+static INLINE void Blip_Synth_offset(Blip_Synth* synth, blip_time_t t, int delta,
                        Blip_Buffer* buf)
 {
    Blip_Synth_offset_resampled(synth, t * buf->factor + buf->offset, delta, buf);
@@ -196,7 +190,7 @@ int const blip_reader_default_bass = 9;
 // End of public interface
 
 
-blip_inline void Blip_Synth_offset_resampled(
+static INLINE void Blip_Synth_offset_resampled(
    Blip_Synth* synth,
    blip_resampled_time_t time,
    int delta, Blip_Buffer* blip_buf)
@@ -223,12 +217,12 @@ blip_inline void Blip_Synth_offset_resampled(
    buf [1] = right;
 }
 
-blip_inline long Blip_Buffer_samples_avail(Blip_Buffer* bbuf)
+static INLINE long Blip_Buffer_samples_avail(Blip_Buffer* bbuf)
 {
    return (long)(bbuf->offset >> BLIP_BUFFER_ACCURACY);
 }
 
-blip_inline void Blip_Buffer_set_clock_rate(Blip_Buffer* bbuf, long cps)
+static INLINE void Blip_Buffer_set_clock_rate(Blip_Buffer* bbuf, long cps)
 {
    bbuf->factor = Blip_Buffer_clock_rate_factor(bbuf, bbuf->clock_rate = cps);
 }
