@@ -3122,14 +3122,30 @@ bool retro_unserialize(const void *data, size_t size)
    return MDFNSS_LoadSM(&st, 0, 0);
 }
 
-void *retro_get_memory_data(unsigned)
+void *retro_get_memory_data(unsigned type)
 {
-   return NULL;
+   switch(type)
+   {
+      case RETRO_MEMORY_SYSTEM_RAM:
+         return WRAM;
+      case RETRO_MEMORY_SAVE_RAM:
+         return GPRAM;
+      default:
+         return NULL;
+   }
 }
 
-size_t retro_get_memory_size(unsigned)
+size_t retro_get_memory_size(unsigned type)
 {
-   return 0;
+   switch(type)
+   {
+      case RETRO_MEMORY_SYSTEM_RAM:
+         return 0x10000;
+      case RETRO_MEMORY_SAVE_RAM:
+         return GPRAM_Mask + 1;
+      default:
+         return 0;
+   }
 }
 
 void retro_cheat_reset(void)
