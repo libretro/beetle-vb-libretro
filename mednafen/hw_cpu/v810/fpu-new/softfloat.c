@@ -69,7 +69,7 @@ int8 float_exception_flags = 0;
 | Returns the fraction bits of the single-precision floating-point value `a'.
 *----------------------------------------------------------------------------*/
 
-INLINE bits32 extractFloat32Frac( float32 a )
+static INLINE bits32 extractFloat32Frac( float32 a )
 {
 
     return a & 0x007FFFFF;
@@ -80,7 +80,7 @@ INLINE bits32 extractFloat32Frac( float32 a )
 | Returns the exponent bits of the single-precision floating-point value `a'.
 *----------------------------------------------------------------------------*/
 
-INLINE int16 extractFloat32Exp( float32 a )
+static INLINE int16 extractFloat32Exp( float32 a )
 {
 
     return ( a>>23 ) & 0xFF;
@@ -91,7 +91,7 @@ INLINE int16 extractFloat32Exp( float32 a )
 | Returns the sign bit of the single-precision floating-point value `a'.
 *----------------------------------------------------------------------------*/
 
-INLINE flag extractFloat32Sign( float32 a )
+static INLINE flag extractFloat32Sign( float32 a )
 {
 
     return a>>31;
@@ -127,7 +127,7 @@ static void
 | significand.
 *----------------------------------------------------------------------------*/
 
-INLINE float32 packFloat32( flag zSign, int16 zExp, bits32 zSig )
+static INLINE float32 packFloat32( flag zSign, int16 zExp, bits32 zSig )
 {
 
     return ( ( (bits32) zSign )<<31 ) + ( ( (bits32) zExp )<<23 ) + zSig;
@@ -237,7 +237,7 @@ static float32
 | floating-point value `a'.
 *----------------------------------------------------------------------------*/
 
-INLINE bits32 extractFloat64Frac1( float64 a )
+static INLINE bits32 extractFloat64Frac1( float64 a )
 {
 
     return a.low;
@@ -249,7 +249,7 @@ INLINE bits32 extractFloat64Frac1( float64 a )
 | floating-point value `a'.
 *----------------------------------------------------------------------------*/
 
-INLINE bits32 extractFloat64Frac0( float64 a )
+static INLINE bits32 extractFloat64Frac0( float64 a )
 {
 
     return a.high & 0x000FFFFF;
@@ -260,7 +260,7 @@ INLINE bits32 extractFloat64Frac0( float64 a )
 | Returns the exponent bits of the double-precision floating-point value `a'.
 *----------------------------------------------------------------------------*/
 
-INLINE int16 extractFloat64Exp( float64 a )
+static INLINE int16 extractFloat64Exp( float64 a )
 {
 
     return ( a.high>>20 ) & 0x7FF;
@@ -271,7 +271,7 @@ INLINE int16 extractFloat64Exp( float64 a )
 | Returns the sign bit of the double-precision floating-point value `a'.
 *----------------------------------------------------------------------------*/
 
-INLINE flag extractFloat64Sign( float64 a )
+static INLINE flag extractFloat64Sign( float64 a )
 {
 
     return a.high>>31;
@@ -331,7 +331,7 @@ static void
 | `zSig0' and `zSig1' concatenated form a complete, normalized significand.
 *----------------------------------------------------------------------------*/
 
-INLINE float64
+static INLINE float64
  packFloat64( flag zSign, int16 zExp, bits32 zSig0, bits32 zSig1 )
 {
     float64 z;
