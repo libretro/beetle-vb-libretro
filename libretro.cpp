@@ -3115,9 +3115,13 @@ bool retro_serialize(void *data, size_t size)
 {
    StateMem st;
    bool ret          = false;
+   uint8_t *_dat     = (uint8_t*)malloc(size);
+
+   if (!_dat)
+      return false;
 
    /* Mednafen can realloc the buffer so we need to ensure this is safe. */
-   st.data           = (uint8_t*)malloc(size);
+   st.data           = _dat;
    st.loc            = 0;
    st.len            = 0;
    st.malloced       = size;
