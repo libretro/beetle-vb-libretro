@@ -2929,8 +2929,7 @@ static void update_input(void)
 
 static uint64_t video_frames, audio_frames;
 
-
-void retro_run()
+void retro_run(void)
 {
    MDFNGI *curgame = game;
 
@@ -3097,15 +3096,15 @@ static size_t serialize_size;
 size_t retro_serialize_size(void)
 {
    StateMem st;
-   MDFNGI *curgame = (MDFNGI*)game;
-   memset(&st, 0, sizeof(st));
+
+   st.data           = NULL;
+   st.loc            = 0;
+   st.len            = 0;
+   st.malloced       = 0;
+   st.initial_malloc = 0;
 
    if (!MDFNSS_SaveSM(&st, 0, 0, NULL, NULL, NULL))
-   {
-      if (log_cb)
-         log_cb(RETRO_LOG_WARN, "[mednafen]: Module vb doesn't support save states.\n");
       return 0;
-   }
 
    free(st.data);
    return serialize_size = st.len;
