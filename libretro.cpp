@@ -557,9 +557,9 @@ struct VB_HeaderInfo
  uint8 version;
 };
 
+#if 0
 static void ReadHeader(MDFNFILE *fp, VB_HeaderInfo *hi)
 {
-#if 0
  iconv_t sjis_ict = iconv_open("UTF-8", "shift_jis");
 
  if(sjis_ict != (iconv_t)-1)
@@ -587,8 +587,8 @@ static void ReadHeader(MDFNFILE *fp, VB_HeaderInfo *hi)
  hi->game_code = MDFN_de32lsb(fp->data + (0xFFFFFDFB & (fp->size - 1)));
  hi->manf_code = MDFN_de16lsb(fp->data + (0xFFFFFDF9 & (fp->size - 1)));
  hi->version = fp->data[0xFFFFFDFF & (fp->size - 1)];
-#endif
 }
+#endif
 
 static bool TestMagic(const char *name, MDFNFILE *fp)
 {
@@ -1925,206 +1925,208 @@ static const struct VBGameEntry VBGames[] =
  }},
 };
 
-static int Load(const char *name, MDFNFILE *fp)
+static int Load(const uint8_t *data, size_t size)
 {
- V810_Emu_Mode cpu_mode;
+   V810_Emu_Mode cpu_mode;
 
- VB_InDebugPeek = 0;
+   VB_InDebugPeek = 0;
 
- cpu_mode = (V810_Emu_Mode)MDFN_GetSettingI("vb.cpu_emulation");
+   cpu_mode = (V810_Emu_Mode)MDFN_GetSettingI("vb.cpu_emulation");
 
- if(GET_FSIZE_PTR(fp) != round_up_pow2(GET_FSIZE_PTR(fp)))
- {
-  puts("VB ROM image size is not a power of 2???");
-  return(0);
- }
+   if(size != round_up_pow2(size))
+   {
+      puts("VB ROM image size is not a power of 2???");
+      return(0);
+   }
 
- if(GET_FSIZE_PTR(fp) < 256)
- {
-  puts("VB ROM image size is too small??");
-  return(0);
- }
+   if(size < 256)
+   {
+      puts("VB ROM image size is too small??");
+      return(0);
+   }
 
- if(GET_FSIZE_PTR(fp) > (1 << 24))
- {
-  puts("VB ROM image size is too large??");
-  return(0);
- }
+   if(size > (1 << 24))
+   {
+      puts("VB ROM image size is too large??");
+      return(0);
+   }
 
- VB_HeaderInfo hinfo;
+#if 0
+   VB_HeaderInfo hinfo;
 
- ReadHeader(fp, &hinfo);
+   ReadHeader(fp, &hinfo);
 
- MDFN_printf(_("Title:     %s\n"), hinfo.game_title);
- MDFN_printf(_("Game ID Code: %u\n"), hinfo.game_code);
- MDFN_printf(_("Manufacturer Code: %d\n"), hinfo.manf_code);
- MDFN_printf(_("Version:   %u\n"), hinfo.version);
+   MDFN_printf(_("Title:     %s\n"), hinfo.game_title);
+   MDFN_printf(_("Game ID Code: %u\n"), hinfo.game_code);
+   MDFN_printf(_("Manufacturer Code: %d\n"), hinfo.manf_code);
+   MDFN_printf(_("Version:   %u\n"), hinfo.version);
+#endif
 
- MDFN_printf(_("ROM:       %dKiB\n"), (int)(GET_FSIZE_PTR(fp) / 1024));
- 
- MDFN_printf("\n");
+   MDFN_printf(_("ROM:       %dKiB\n"), (int)(size / 1024));
 
- MDFN_printf(_("V810 Emulation Mode: %s\n"), (cpu_mode == V810_EMU_MODE_ACCURATE) ? _("Accurate") : _("Fast"));
+   MDFN_printf("\n");
 
- VB_V810 = new V810();
- VB_V810->Init(cpu_mode, true);
+   MDFN_printf(_("V810 Emulation Mode: %s\n"), (cpu_mode == V810_EMU_MODE_ACCURATE) ? _("Accurate") : _("Fast"));
 
- VB_V810->SetMemReadHandlers(MemRead8, MemRead16, NULL);
- VB_V810->SetMemWriteHandlers(MemWrite8, MemWrite16, NULL);
+   VB_V810 = new V810();
+   VB_V810->Init(cpu_mode, true);
 
- VB_V810->SetIOReadHandlers(MemRead8, MemRead16, NULL);
- VB_V810->SetIOWriteHandlers(MemWrite8, MemWrite16, NULL);
+   VB_V810->SetMemReadHandlers(MemRead8, MemRead16, NULL);
+   VB_V810->SetMemWriteHandlers(MemWrite8, MemWrite16, NULL);
 
- for(int i = 0; i < 256; i++)
- {
-  VB_V810->SetMemReadBus32(i, false);
-  VB_V810->SetMemWriteBus32(i, false);
- }
+   VB_V810->SetIOReadHandlers(MemRead8, MemRead16, NULL);
+   VB_V810->SetIOWriteHandlers(MemWrite8, MemWrite16, NULL);
 
- std::vector<uint32> Map_Addresses;
+   for(int i = 0; i < 256; i++)
+   {
+      VB_V810->SetMemReadBus32(i, false);
+      VB_V810->SetMemWriteBus32(i, false);
+   }
 
- for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
- {
-  for(uint64 sub_A = 5 << 24; sub_A < (6 << 24); sub_A += 65536)
-  {
-   Map_Addresses.push_back(A + sub_A);
-  }
- }
+   std::vector<uint32> Map_Addresses;
 
- WRAM = VB_V810->SetFastMap(&Map_Addresses[0], 65536, Map_Addresses.size(), "WRAM");
- Map_Addresses.clear();
+   for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
+   {
+      for(uint64 sub_A = 5 << 24; sub_A < (6 << 24); sub_A += 65536)
+      {
+         Map_Addresses.push_back(A + sub_A);
+      }
+   }
 
-
- // Round up the ROM size to 65536(we mirror it a little later)
- GPROM_Mask = (GET_FSIZE_PTR(fp) < 65536) ? (65536 - 1) : (GET_FSIZE_PTR(fp) - 1);
-
- for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
- {
-  for(uint64 sub_A = 7 << 24; sub_A < (8 << 24); sub_A += GPROM_Mask + 1)
-  {
-   Map_Addresses.push_back(A + sub_A);
-   //printf("%08x\n", (uint32)(A + sub_A));
-  }
- }
+   WRAM = VB_V810->SetFastMap(&Map_Addresses[0], 65536, Map_Addresses.size(), "WRAM");
+   Map_Addresses.clear();
 
 
- GPROM = VB_V810->SetFastMap(&Map_Addresses[0], GPROM_Mask + 1, Map_Addresses.size(), "Cart ROM");
- Map_Addresses.clear();
+   // Round up the ROM size to 65536(we mirror it a little later)
+   GPROM_Mask = (size < 65536) ? (65536 - 1) : (size - 1);
 
- // Mirror ROM images < 64KiB to 64KiB
- for(uint64 i = 0; i < 65536; i += GET_FSIZE_PTR(fp))
- {
-  memcpy(GPROM + i, GET_FDATA_PTR(fp), GET_FSIZE_PTR(fp));
- }
-
- GPRAM_Mask = 0xFFFF;
-
- for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
- {
-  for(uint64 sub_A = 6 << 24; sub_A < (7 << 24); sub_A += GPRAM_Mask + 1)
-  {
-   //printf("GPRAM: %08x\n", A + sub_A);
-   Map_Addresses.push_back(A + sub_A);
-  }
- }
+   for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
+   {
+      for(uint64 sub_A = 7 << 24; sub_A < (8 << 24); sub_A += GPROM_Mask + 1)
+      {
+         Map_Addresses.push_back(A + sub_A);
+         //printf("%08x\n", (uint32)(A + sub_A));
+      }
+   }
 
 
- GPRAM = VB_V810->SetFastMap(&Map_Addresses[0], GPRAM_Mask + 1, Map_Addresses.size(), "Cart RAM");
- Map_Addresses.clear();
+   GPROM = VB_V810->SetFastMap(&Map_Addresses[0], GPROM_Mask + 1, Map_Addresses.size(), "Cart ROM");
+   Map_Addresses.clear();
 
- memset(GPRAM, 0, GPRAM_Mask + 1);
+   // Mirror ROM images < 64KiB to 64KiB
+   for(uint64 i = 0; i < 65536; i += size)
+   {
+      memcpy(GPROM + i, data, size);
+   }
 
- {
-  FILE *gp = gzopen(MDFN_MakeFName(MDFNMKF_SAV, 0, "sav").c_str(), "rb");
+   GPRAM_Mask = 0xFFFF;
 
-  if(gp)
-  {
-   if(gzread(gp, GPRAM, 65536) != 65536)
-    puts("Error reading GPRAM");
-   gzclose(gp);
-  }
- }
-
- VIP_Init();
- VB_VSU = new VSU(&sbuf[0], &sbuf[1]);
- VBINPUT_Init();
-
- VB3DMode = MDFN_GetSettingUI("vb.3dmode");
- uint32 prescale = MDFN_GetSettingUI("vb.liprescale");
- uint32 sbs_separation = MDFN_GetSettingUI("vb.sidebyside.separation");
-
- VIP_Set3DMode(VB3DMode, MDFN_GetSettingUI("vb.3dreverse"), prescale, sbs_separation);
+   for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
+   {
+      for(uint64 sub_A = 6 << 24; sub_A < (7 << 24); sub_A += GPRAM_Mask + 1)
+      {
+         //printf("GPRAM: %08x\n", A + sub_A);
+         Map_Addresses.push_back(A + sub_A);
+      }
+   }
 
 
- //SettingChanged("vb.3dmode");
- SettingChanged("vb.disable_parallax");
- SettingChanged("vb.anaglyph.lcolor");
- SettingChanged("vb.anaglyph.rcolor");
- SettingChanged("vb.anaglyph.preset");
- SettingChanged("vb.default_color");
+   GPRAM = VB_V810->SetFastMap(&Map_Addresses[0], GPRAM_Mask + 1, Map_Addresses.size(), "Cart RAM");
+   Map_Addresses.clear();
 
- SettingChanged("vb.instant_display_hack");
- SettingChanged("vb.allow_draw_skip");
+   memset(GPRAM, 0, GPRAM_Mask + 1);
 
- SettingChanged("vb.input.instant_read_hack");
+   {
+      FILE *gp = gzopen(MDFN_MakeFName(MDFNMKF_SAV, 0, "sav").c_str(), "rb");
 
- MDFNGameInfo->fps = (int64)20000000 * 65536 * 256 / (259 * 384 * 4);
+      if(gp)
+      {
+         if(gzread(gp, GPRAM, 65536) != 65536)
+            puts("Error reading GPRAM");
+         gzclose(gp);
+      }
+   }
 
+   VIP_Init();
+   VB_VSU = new VSU(&sbuf[0], &sbuf[1]);
+   VBINPUT_Init();
 
- VB_Power();
+   VB3DMode = MDFN_GetSettingUI("vb.3dmode");
+   uint32 prescale = MDFN_GetSettingUI("vb.liprescale");
+   uint32 sbs_separation = MDFN_GetSettingUI("vb.sidebyside.separation");
 
-
- #ifdef WANT_DEBUGGER
- VBDBG_Init();
- #endif
-
-
- MDFNGameInfo->nominal_width = 384;
- MDFNGameInfo->nominal_height = 224;
- MDFNGameInfo->fb_width = 384;
- MDFNGameInfo->fb_height = 224;
-
- switch(VB3DMode)
- {
-  default: break;
-
-  case VB3DMODE_VLI:
-        MDFNGameInfo->nominal_width = 768 * prescale;
-        MDFNGameInfo->nominal_height = 224;
-        MDFNGameInfo->fb_width = 768 * prescale;
-        MDFNGameInfo->fb_height = 224;
-        break;
-
-  case VB3DMODE_HLI:
-        MDFNGameInfo->nominal_width = 384;
-        MDFNGameInfo->nominal_height = 448 * prescale;
-        MDFNGameInfo->fb_width = 384;
-        MDFNGameInfo->fb_height = 448 * prescale;
-        break;
-
-  case VB3DMODE_CSCOPE:
-	MDFNGameInfo->nominal_width = 512;
-	MDFNGameInfo->nominal_height = 384;
-	MDFNGameInfo->fb_width = 512;
-	MDFNGameInfo->fb_height = 384;
-	break;
-
-  case VB3DMODE_SIDEBYSIDE:
-	MDFNGameInfo->nominal_width = 384 * 2 + sbs_separation;
-  	MDFNGameInfo->nominal_height = 224;
-  	MDFNGameInfo->fb_width = 384 * 2 + sbs_separation;
- 	MDFNGameInfo->fb_height = 224;
-	break;
- }
- MDFNGameInfo->lcm_width = MDFNGameInfo->fb_width;
- MDFNGameInfo->lcm_height = MDFNGameInfo->fb_height;
+   VIP_Set3DMode(VB3DMode, MDFN_GetSettingUI("vb.3dreverse"), prescale, sbs_separation);
 
 
- MDFNMP_Init(32768, ((uint64)1 << 27) / 32768);
- MDFNMP_AddRAM(65536, 5 << 24, WRAM);
- if((GPRAM_Mask + 1) >= 32768)
-  MDFNMP_AddRAM(GPRAM_Mask + 1, 6 << 24, GPRAM);
- return(1);
+   //SettingChanged("vb.3dmode");
+   SettingChanged("vb.disable_parallax");
+   SettingChanged("vb.anaglyph.lcolor");
+   SettingChanged("vb.anaglyph.rcolor");
+   SettingChanged("vb.anaglyph.preset");
+   SettingChanged("vb.default_color");
+
+   SettingChanged("vb.instant_display_hack");
+   SettingChanged("vb.allow_draw_skip");
+
+   SettingChanged("vb.input.instant_read_hack");
+
+   MDFNGameInfo->fps = (int64)20000000 * 65536 * 256 / (259 * 384 * 4);
+
+
+   VB_Power();
+
+
+#ifdef WANT_DEBUGGER
+   VBDBG_Init();
+#endif
+
+
+   MDFNGameInfo->nominal_width = 384;
+   MDFNGameInfo->nominal_height = 224;
+   MDFNGameInfo->fb_width = 384;
+   MDFNGameInfo->fb_height = 224;
+
+   switch(VB3DMode)
+   {
+      default: break;
+
+      case VB3DMODE_VLI:
+               MDFNGameInfo->nominal_width = 768 * prescale;
+               MDFNGameInfo->nominal_height = 224;
+               MDFNGameInfo->fb_width = 768 * prescale;
+               MDFNGameInfo->fb_height = 224;
+               break;
+
+      case VB3DMODE_HLI:
+               MDFNGameInfo->nominal_width = 384;
+               MDFNGameInfo->nominal_height = 448 * prescale;
+               MDFNGameInfo->fb_width = 384;
+               MDFNGameInfo->fb_height = 448 * prescale;
+               break;
+
+      case VB3DMODE_CSCOPE:
+               MDFNGameInfo->nominal_width = 512;
+               MDFNGameInfo->nominal_height = 384;
+               MDFNGameInfo->fb_width = 512;
+               MDFNGameInfo->fb_height = 384;
+               break;
+
+      case VB3DMODE_SIDEBYSIDE:
+               MDFNGameInfo->nominal_width = 384 * 2 + sbs_separation;
+               MDFNGameInfo->nominal_height = 224;
+               MDFNGameInfo->fb_width = 384 * 2 + sbs_separation;
+               MDFNGameInfo->fb_height = 224;
+               break;
+   }
+   MDFNGameInfo->lcm_width = MDFNGameInfo->fb_width;
+   MDFNGameInfo->lcm_height = MDFNGameInfo->fb_height;
+
+
+   MDFNMP_Init(32768, ((uint64)1 << 27) / 32768);
+   MDFNMP_AddRAM(65536, 5 << 24, WRAM);
+   if((GPRAM_Mask + 1) >= 32768)
+      MDFNMP_AddRAM(GPRAM_Mask + 1, 6 << 24, GPRAM);
+   return(1);
 }
 
 static void CloseGame(void)
@@ -2453,32 +2455,12 @@ void MDFN_ResetMessages(void)
 }
 
 
-static MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
+static MDFNGI *MDFNI_LoadGame(const char *force_module, const uint8_t *data, size_t size)
 {
 	std::vector<FileExtensionSpecStruct> valid_iae;
    MDFNGameInfo = &EmulatedVB;
-   MDFNFILE *GameFile = NULL;
-
-	MDFN_printf(_("Loading %s...\n"),name);
 
 	MDFN_indent(1);
-
-	// Construct a NULL-delimited list of known file extensions for MDFN_fopen()
-   const FileExtensionSpecStruct *curexts = KnownExtensions;
-
-   while(curexts->extension && curexts->description)
-   {
-      valid_iae.push_back(*curexts);
-      curexts++;
-   }
-
-   GameFile = file_open(name);
-
-	if(!GameFile)
-   {
-      MDFNGameInfo = NULL;
-      return 0;
-   }
 
 	MDFN_printf("Using module: vb\n\n");
 	MDFN_indent(1);
@@ -2490,7 +2472,7 @@ static MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
 	// End load per-game settings
 	//
 
-   if(Load(name, GameFile) <= 0)
+   if(Load(data, size) <= 0)
       goto error;
 
 	MDFN_LoadGameCheats(NULL);
@@ -2503,7 +2485,6 @@ static MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
    return(MDFNGameInfo);
 
 error:
-   file_close(GameFile);
    MDFN_indent(-2);
    MDFNGameInfo = NULL;
    return NULL;
@@ -2863,7 +2844,8 @@ bool retro_load_game(const struct retro_game_info *info)
 
    check_variables();
 
-   game = MDFNI_LoadGame(MEDNAFEN_CORE_NAME_MODULE, info->path);
+   game = MDFNI_LoadGame(MEDNAFEN_CORE_NAME_MODULE, 
+         (const uint8_t*)info->data, info->size);
    if (!game)
       return false;
 
@@ -3003,7 +2985,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #define GIT_VERSION ""
 #endif
    info->library_version  = MEDNAFEN_CORE_VERSION GIT_VERSION;
-   info->need_fullpath    = true;
+   info->need_fullpath    = false;
    info->valid_extensions = MEDNAFEN_CORE_EXTENSIONS;
    info->block_extract    = false;
 }
