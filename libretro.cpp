@@ -590,14 +590,6 @@ static void ReadHeader(MDFNFILE *fp, VB_HeaderInfo *hi)
 }
 #endif
 
-static bool TestMagic(const char *name, MDFNFILE *fp)
-{
- if(!strcasecmp(GET_FEXTS_PTR(fp), "vb") || !strcasecmp(GET_FEXTS_PTR(fp), "vboy"))
-  return(true);
-
- return(false);
-}
-
 struct VBGameEntry
 {
  uint32 checksums[16];

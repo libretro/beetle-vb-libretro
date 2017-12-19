@@ -9,7 +9,6 @@ typedef struct
  const char *description; // Example "iNES Format ROM Image"
 } FileExtensionSpecStruct;
 
-#include "file.h"
 #include "video/surface.h"
 
 enum
