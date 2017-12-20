@@ -481,68 +481,60 @@ static int ReadStateChunk(StateMem *st, SFORMAT *sf, int size)
 }
 
 static int MDFNSS_StateAction_internal(StateMem *st, int load, int data_only,
-      std::vector <SSDescriptor> &sections)
+      SSDescriptor *section)
 {
-   std::vector<SSDescriptor>::iterator section;
-
    if(load)
    {
       char sname[32];
 
-      for(section = sections.begin(); section != sections.end(); section++)
+      uint32_t tmp_size = 0;
+      int found         = 0;
+      uint32_t total    = 0;
+
+      while(smem_read(st, (uint8_t *)sname, 32) == 32)
       {
-         uint32_t tmp_size = 0;
-         int found         = 0;
-         uint32_t total    = 0;
+         if(smem_read32le(st, &tmp_size) != 4)
+            return(0);
 
-         while(smem_read(st, (uint8_t *)sname, 32) == 32)
+         total += tmp_size + 32 + 4;
+
+         // Yay, we found the section
+         if(!strncmp(sname, section->name, 32))
          {
-            if(smem_read32le(st, &tmp_size) != 4)
+            if(!ReadStateChunk(st, section->sf, tmp_size))
+            {
+               printf("Error reading chunk: %s\n", section->name);
                return(0);
-
-            total += tmp_size + 32 + 4;
-
-            // Yay, we found the section
-            if(!strncmp(sname, section->name, 32))
+            }
+            found = 1;
+            break;
+         } 
+         else
+         {
+            if(smem_seek(st, tmp_size, SEEK_CUR) < 0)
             {
-               if(!ReadStateChunk(st, section->sf, tmp_size))
-               {
-                  printf("Error reading chunk: %s\n", section->name);
-                  return(0);
-               }
-               found = 1;
-               break;
-            } 
-            else
-            {
-               if(smem_seek(st, tmp_size, SEEK_CUR) < 0)
-               {
-                  puts("Chunk seek failure");
-                  return(0);
-               }
+               puts("Chunk seek failure");
+               return(0);
             }
          }
+      }
 
-         if(smem_seek(st, -total, SEEK_CUR) < 0)
-         {
-            puts("Reverse seek error");
-            return(0);
-         }
+      if(smem_seek(st, -total, SEEK_CUR) < 0)
+      {
+         puts("Reverse seek error");
+         return(0);
+      }
 
-         if(!found && !section->optional) // Not found.  We are sad!
-         {
-            printf("Section missing:  %.32s\n", section->name);
-            return(0);
-         }
+      if(!found && !section->optional) // Not found.  We are sad!
+      {
+         printf("Section missing:  %.32s\n", section->name);
+         return(0);
       }
    }
    else
    {
-      for(section = sections.begin(); section != sections.end(); section++)
-      {
-         if(!WriteStateChunk(st, section->name, section->sf))
-            return(0);
-      }
+      if(!WriteStateChunk(st, section->name, section->sf))
+         return(0);
    }
 
    return(1);
@@ -550,11 +542,14 @@ static int MDFNSS_StateAction_internal(StateMem *st, int load, int data_only,
 
 int MDFNSS_StateAction(void *st_p, int load, int data_only, SFORMAT *sf, const char *name, bool optional)
 {
-   StateMem *st = (StateMem*)st_p;
-   std::vector <SSDescriptor> love;
+   SSDescriptor love;
+   StateMem *st  = (StateMem*)st_p;
 
-   love.push_back(SSDescriptor(sf, name, optional));
-   return MDFNSS_StateAction_internal(st, load, 0, love);
+   love.sf       = sf;
+   love.name     = name;
+   love.optional = optional;
+
+   return MDFNSS_StateAction_internal(st, load, 0, &love);
 }
 
 int MDFNSS_SaveSM(void *st_p, int, int, const void*, const void*, const void*)

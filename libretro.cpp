@@ -2267,7 +2267,7 @@ int StateAction(StateMem *sm, int load, int data_only)
   SFEND
  };
 
- ret &= MDFNSS_StateAction(sm, load, data_only, StateRegs, "MAIN");
+ ret &= MDFNSS_StateAction(sm, load, data_only, StateRegs, "MAIN", false);
 
  ret &= VB_V810->StateAction(sm, load, data_only);
 

@@ -1510,7 +1510,7 @@ int VIP_StateAction(StateMem *sm, int load, int data_only)
       SFEND
    };
 
-   int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "VIP");
+   int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "VIP", false);
 
    if(load)
    {

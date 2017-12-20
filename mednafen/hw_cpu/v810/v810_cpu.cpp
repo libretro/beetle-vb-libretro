@@ -1572,7 +1572,7 @@ int V810::StateAction(StateMem *sm, int load, int data_only)
   SFEND
  };
 
- int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "V810");
+ int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "V810", false);
 
  if(load)
  {
