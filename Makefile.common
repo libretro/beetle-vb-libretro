@@ -65,6 +65,8 @@ SOURCES_CXX += \
 	$(MEDNAFEN_DIR)/video/surface.cpp \
 	$(CORE_DIR)/libretro.cpp
 
+SOURCES_C += $(MEDNAFEN_DIR)/file.c 
+
 ifneq ($(STATIC_LINKING), 1)
 SOURCES_C += \
 	$(LIBRETRO_COMM_DIR)/streams/file_stream.c \
