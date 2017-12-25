@@ -11,9 +11,6 @@ extern std::vector<MDFNGI *>MDFNSystems;
 
 /* Indent stdout newlines +- "indent" amount */
 void MDFN_indent(int indent);
-void MDFN_printf(const char *format, ...);
-
-#define MDFNI_printf MDFN_printf
 
 /* Displays an error.  Can block or not. */
 void MDFND_PrintError(const char *s);
@@ -32,9 +29,6 @@ int MDFNI_Initialize(const char *basedir);
 /* Sets the base directory(save states, snapshots, etc. are saved in directories
    below this directory. */
 void MDFNI_SetBaseDirectory(const char *dir);
-
-void MDFN_DispMessage(const char *format, ...);
-#define MDFNI_DispMessage MDFN_DispMessage
 
 uint32 MDFNI_CRC32(uint32 crc, uint8 *buf, uint32 len);
 

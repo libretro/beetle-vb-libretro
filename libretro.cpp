@@ -1955,16 +1955,14 @@ static int Load(const char *name, MDFNFILE *fp)
 
  ReadHeader(fp, &hinfo);
 
- MDFN_printf(_("Title:     %s\n"), hinfo.game_title);
- MDFN_printf(_("Game ID Code: %u\n"), hinfo.game_code);
- MDFN_printf(_("Manufacturer Code: %d\n"), hinfo.manf_code);
- MDFN_printf(_("Version:   %u\n"), hinfo.version);
+ log_cb(RETRO_LOG_INFO, "Title:     %s\n", hinfo.game_title);
+ log_cb(RETRO_LOG_INFO, "Game ID Code: %u\n", hinfo.game_code);
+ log_cb(RETRO_LOG_INFO, "Manufacturer Code: %d\n", hinfo.manf_code);
+ log_cb(RETRO_LOG_INFO, "Version:   %u\n", hinfo.version);
 
- MDFN_printf(_("ROM:       %dKiB\n"), (int)(GET_FSIZE_PTR(fp) / 1024));
+ log_cb(RETRO_LOG_INFO, "ROM:       %dKiB\n", (int)(GET_FSIZE_PTR(fp) / 1024));
  
- MDFN_printf("\n");
-
- MDFN_printf(_("V810 Emulation Mode: %s\n"), (cpu_mode == V810_EMU_MODE_ACCURATE) ? _("Accurate") : _("Fast"));
+ log_cb(RETRO_LOG_INFO, "V810 Emulation Mode: %s\n", (cpu_mode == V810_EMU_MODE_ACCURATE) ? "Accurate" : "Fast");
 
  VB_V810 = new V810();
  VB_V810->Init(cpu_mode, true);
@@ -2435,18 +2433,6 @@ MDFNGI *MDFNGameInfo = &EmulatedVB;
 /* forward declarations */
 extern void MDFND_DispMessage(unsigned char *str);
 
-void MDFN_DispMessage(const char *format, ...)
-{
- va_list ap;
- va_start(ap,format);
- char *msg = new char[4096];
-
- vsnprintf(msg, 4096, format,ap);
- va_end(ap);
-
- MDFND_DispMessage((uint8_t*)msg);
-}
-
 void MDFN_ResetMessages(void)
 {
  MDFND_DispMessage(NULL);
@@ -2458,10 +2444,6 @@ static MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
 	std::vector<FileExtensionSpecStruct> valid_iae;
    MDFNGameInfo = &EmulatedVB;
    MDFNFILE *GameFile = NULL;
-
-	MDFN_printf(_("Loading %s...\n"),name);
-
-	MDFN_indent(1);
 
 	// Construct a NULL-delimited list of known file extensions for MDFN_fopen()
    const FileExtensionSpecStruct *curexts = KnownExtensions;
@@ -2480,12 +2462,7 @@ static MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
       return 0;
    }
 
-	MDFN_printf("Using module: vb\n\n");
-	MDFN_indent(1);
-
-	//
 	// Load per-game settings
-	//
 	// Maybe we should make a "pgcfg" subdir, and automatically load all files in it?
 	// End load per-game settings
 	//
@@ -2541,89 +2518,6 @@ void MDFN_indent(int indent)
 }
 
 static uint8 lastchar = 0;
-
-void MDFN_printf(const char *format, ...)
-{
-   char *format_temp;
-   char *temp;
-   unsigned int x, newlen;
-
-   va_list ap;
-   va_start(ap,format);
-
-
-   // First, determine how large our format_temp buffer needs to be.
-   uint8 lastchar_backup = lastchar; // Save lastchar!
-   for(newlen=x=0;x<strlen(format);x++)
-   {
-      if(lastchar == '\n' && format[x] != '\n')
-      {
-         int y;
-         for(y=0;y<curindent;y++)
-            newlen++;
-      }
-      newlen++;
-      lastchar = format[x];
-   }
-
-   format_temp = (char *)malloc(newlen + 1); // Length + NULL character, duh
-
-   // Now, construct our format_temp string
-   lastchar = lastchar_backup; // Restore lastchar
-   for(newlen=x=0;x<strlen(format);x++)
-   {
-      if(lastchar == '\n' && format[x] != '\n')
-      {
-         int y;
-         for(y=0;y<curindent;y++)
-            format_temp[newlen++] = ' ';
-      }
-      format_temp[newlen++] = format[x];
-      lastchar = format[x];
-   }
-
-   format_temp[newlen] = 0;
-
-   temp = new char[4096];
-   vsnprintf(temp, 4096, format_temp, ap);
-   free(format_temp);
-
-   MDFND_Message(temp);
-   free(temp);
-
-   va_end(ap);
-}
-
-void MDFN_PrintError(const char *format, ...)
-{
- char *temp;
-
- va_list ap;
-
- va_start(ap, format);
- temp = new char[4096];
- vsnprintf(temp, 4096, format, ap);
- MDFND_PrintError(temp);
- free(temp);
-
- va_end(ap);
-}
-
-void MDFN_DebugPrintReal(const char *file, const int line, const char *format, ...)
-{
- char *temp;
-
- va_list ap;
-
- va_start(ap, format);
-
- temp = new char[4096];
- vsnprintf(temp, 4096, format, ap);
- fprintf(stderr, "%s:%d  %s\n", file, line, temp);
- free(temp);
-
- va_end(ap);
-}
 
 static bool failed_init;
 
