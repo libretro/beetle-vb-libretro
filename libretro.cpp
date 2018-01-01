@@ -1,12 +1,10 @@
 #include <stdarg.h>
 
 #include <libretro.h>
-#include <streams/file_stream.h>
 
 #include "mednafen/mednafen.h"
 #include "mednafen/mempatcher.h"
 #include "mednafen/git.h"
-#include "mednafen/general.h"
 
 static MDFNGI *game;
 
@@ -113,7 +111,6 @@ static bool MDFN_DumpToFile(const char *filename, int compress, const void *data
 #include "mednafen/vb/debug.h"
 #endif
 #include "mednafen/vb/input.h"
-#include "mednafen/general.h"
 #include "mednafen/mempatcher.h"
 #if 0
 #include <iconv.h>
@@ -557,7 +554,7 @@ struct VB_HeaderInfo
  uint8 version;
 };
 
-static void ReadHeader(MDFNFILE *fp, VB_HeaderInfo *hi)
+static void ReadHeader(const uint8_t *data, size_t size, VB_HeaderInfo *hi)
 {
 #if 0
  iconv_t sjis_ict = iconv_open("UTF-8", "shift_jis");
@@ -570,7 +567,7 @@ static void ReadHeader(MDFNFILE *fp, VB_HeaderInfo *hi)
   ibl = 20;
   obl = sizeof(hi->game_title) - 1;
 
-  in_ptr = (char*)GET_FDATA_PTR(fp) + (0xFFFFFDE0 & (GET_FSIZE_PTR(fp) - 1));
+  in_ptr = (char*)data + (0xFFFFFDE0 & (size - 1));
   out_ptr = hi->game_title;
 
   iconv(sjis_ict, (ICONV_CONST char **)&in_ptr, &ibl, &out_ptr, &obl);
@@ -584,18 +581,10 @@ static void ReadHeader(MDFNFILE *fp, VB_HeaderInfo *hi)
  else
   hi->game_title[0] = 0;
 
- hi->game_code = MDFN_de32lsb(fp->data + (0xFFFFFDFB & (fp->size - 1)));
- hi->manf_code = MDFN_de16lsb(fp->data + (0xFFFFFDF9 & (fp->size - 1)));
- hi->version = fp->data[0xFFFFFDFF & (fp->size - 1)];
+ hi->game_code = MDFN_de32lsb(data + (0xFFFFFDFB & (size - 1)));
+ hi->manf_code = MDFN_de16lsb(data + (0xFFFFFDF9 & (size - 1)));
+ hi->version = data[0xFFFFFDFF & (size - 1)];
 #endif
-}
-
-static bool TestMagic(const char *name, MDFNFILE *fp)
-{
- if(!strcasecmp(GET_FEXTS_PTR(fp), "vb") || !strcasecmp(GET_FEXTS_PTR(fp), "vboy"))
-  return(true);
-
- return(false);
 }
 
 struct VBGameEntry
@@ -1925,220 +1914,195 @@ static const struct VBGameEntry VBGames[] =
  }},
 };
 
-static int Load(const char *name, MDFNFILE *fp)
+static int Load(const uint8_t *data, size_t size)
 {
- V810_Emu_Mode cpu_mode;
+   V810_Emu_Mode cpu_mode;
 
- VB_InDebugPeek = 0;
+   VB_InDebugPeek = 0;
 
- cpu_mode = (V810_Emu_Mode)MDFN_GetSettingI("vb.cpu_emulation");
+   cpu_mode = (V810_Emu_Mode)MDFN_GetSettingI("vb.cpu_emulation");
 
- if(GET_FSIZE_PTR(fp) != round_up_pow2(GET_FSIZE_PTR(fp)))
- {
-  puts("VB ROM image size is not a power of 2???");
-  return(0);
- }
+   if(size != round_up_pow2(size))
+   {
+      puts("VB ROM image size is not a power of 2???");
+      return(0);
+   }
 
- if(GET_FSIZE_PTR(fp) < 256)
- {
-  puts("VB ROM image size is too small??");
-  return(0);
- }
+   if(size < 256)
+   {
+      puts("VB ROM image size is too small??");
+      return(0);
+   }
 
- if(GET_FSIZE_PTR(fp) > (1 << 24))
- {
-  puts("VB ROM image size is too large??");
-  return(0);
- }
+   if(size > (1 << 24))
+   {
+      puts("VB ROM image size is too large??");
+      return(0);
+   }
 
- VB_HeaderInfo hinfo;
+   VB_HeaderInfo hinfo;
 
- ReadHeader(fp, &hinfo);
+   ReadHeader(data, size, &hinfo);
 
- log_cb(RETRO_LOG_INFO, "Title:     %s\n", hinfo.game_title);
- log_cb(RETRO_LOG_INFO, "Game ID Code: %u\n", hinfo.game_code);
- log_cb(RETRO_LOG_INFO, "Manufacturer Code: %d\n", hinfo.manf_code);
- log_cb(RETRO_LOG_INFO, "Version:   %u\n", hinfo.version);
+   log_cb(RETRO_LOG_INFO, "Title:     %s\n", hinfo.game_title);
+   log_cb(RETRO_LOG_INFO, "Game ID Code: %u\n", hinfo.game_code);
+   log_cb(RETRO_LOG_INFO, "Manufacturer Code: %d\n", hinfo.manf_code);
+   log_cb(RETRO_LOG_INFO, "Version:   %u\n", hinfo.version);
 
- log_cb(RETRO_LOG_INFO, "ROM:       %dKiB\n", (int)(GET_FSIZE_PTR(fp) / 1024));
- 
- log_cb(RETRO_LOG_INFO, "V810 Emulation Mode: %s\n", (cpu_mode == V810_EMU_MODE_ACCURATE) ? "Accurate" : "Fast");
+   log_cb(RETRO_LOG_INFO, "ROM:       %dKiB\n", (int)(size / 1024));
 
- VB_V810 = new V810();
- VB_V810->Init(cpu_mode, true);
+   log_cb(RETRO_LOG_INFO, "V810 Emulation Mode: %s\n", (cpu_mode == V810_EMU_MODE_ACCURATE) ? "Accurate" : "Fast");
 
- VB_V810->SetMemReadHandlers(MemRead8, MemRead16, NULL);
- VB_V810->SetMemWriteHandlers(MemWrite8, MemWrite16, NULL);
+   VB_V810 = new V810();
+   VB_V810->Init(cpu_mode, true);
 
- VB_V810->SetIOReadHandlers(MemRead8, MemRead16, NULL);
- VB_V810->SetIOWriteHandlers(MemWrite8, MemWrite16, NULL);
+   VB_V810->SetMemReadHandlers(MemRead8, MemRead16, NULL);
+   VB_V810->SetMemWriteHandlers(MemWrite8, MemWrite16, NULL);
 
- for(int i = 0; i < 256; i++)
- {
-  VB_V810->SetMemReadBus32(i, false);
-  VB_V810->SetMemWriteBus32(i, false);
- }
+   VB_V810->SetIOReadHandlers(MemRead8, MemRead16, NULL);
+   VB_V810->SetIOWriteHandlers(MemWrite8, MemWrite16, NULL);
 
- std::vector<uint32> Map_Addresses;
+   for(int i = 0; i < 256; i++)
+   {
+      VB_V810->SetMemReadBus32(i, false);
+      VB_V810->SetMemWriteBus32(i, false);
+   }
 
- for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
- {
-  for(uint64 sub_A = 5 << 24; sub_A < (6 << 24); sub_A += 65536)
-  {
-   Map_Addresses.push_back(A + sub_A);
-  }
- }
+   std::vector<uint32> Map_Addresses;
 
- WRAM = VB_V810->SetFastMap(&Map_Addresses[0], 65536, Map_Addresses.size(), "WRAM");
- Map_Addresses.clear();
+   for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
+   {
+      for(uint64 sub_A = 5 << 24; sub_A < (6 << 24); sub_A += 65536)
+      {
+         Map_Addresses.push_back(A + sub_A);
+      }
+   }
 
-
- // Round up the ROM size to 65536(we mirror it a little later)
- GPROM_Mask = (GET_FSIZE_PTR(fp) < 65536) ? (65536 - 1) : (GET_FSIZE_PTR(fp) - 1);
-
- for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
- {
-  for(uint64 sub_A = 7 << 24; sub_A < (8 << 24); sub_A += GPROM_Mask + 1)
-  {
-   Map_Addresses.push_back(A + sub_A);
-   //printf("%08x\n", (uint32)(A + sub_A));
-  }
- }
+   WRAM = VB_V810->SetFastMap(&Map_Addresses[0], 65536, Map_Addresses.size(), "WRAM");
+   Map_Addresses.clear();
 
 
- GPROM = VB_V810->SetFastMap(&Map_Addresses[0], GPROM_Mask + 1, Map_Addresses.size(), "Cart ROM");
- Map_Addresses.clear();
+   // Round up the ROM size to 65536(we mirror it a little later)
+   GPROM_Mask = (size < 65536) ? (65536 - 1) : (size - 1);
 
- // Mirror ROM images < 64KiB to 64KiB
- for(uint64 i = 0; i < 65536; i += GET_FSIZE_PTR(fp))
- {
-  memcpy(GPROM + i, GET_FDATA_PTR(fp), GET_FSIZE_PTR(fp));
- }
-
- GPRAM_Mask = 0xFFFF;
-
- for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
- {
-  for(uint64 sub_A = 6 << 24; sub_A < (7 << 24); sub_A += GPRAM_Mask + 1)
-  {
-   //printf("GPRAM: %08x\n", A + sub_A);
-   Map_Addresses.push_back(A + sub_A);
-  }
- }
+   for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
+   {
+      for(uint64 sub_A = 7 << 24; sub_A < (8 << 24); sub_A += GPROM_Mask + 1)
+      {
+         Map_Addresses.push_back(A + sub_A);
+         //printf("%08x\n", (uint32)(A + sub_A));
+      }
+   }
 
 
- GPRAM = VB_V810->SetFastMap(&Map_Addresses[0], GPRAM_Mask + 1, Map_Addresses.size(), "Cart RAM");
- Map_Addresses.clear();
+   GPROM = VB_V810->SetFastMap(&Map_Addresses[0], GPROM_Mask + 1, Map_Addresses.size(), "Cart ROM");
+   Map_Addresses.clear();
 
- memset(GPRAM, 0, GPRAM_Mask + 1);
+   // Mirror ROM images < 64KiB to 64KiB
+   for(uint64 i = 0; i < 65536; i += size)
+      memcpy(GPROM + i, data, size);
 
- {
-  FILE *gp = gzopen(MDFN_MakeFName(MDFNMKF_SAV, 0, "sav").c_str(), "rb");
+   GPRAM_Mask = 0xFFFF;
 
-  if(gp)
-  {
-   if(gzread(gp, GPRAM, 65536) != 65536)
-    puts("Error reading GPRAM");
-   gzclose(gp);
-  }
- }
-
- VIP_Init();
- VB_VSU = new VSU(&sbuf[0], &sbuf[1]);
- VBINPUT_Init();
-
- VB3DMode = MDFN_GetSettingUI("vb.3dmode");
- uint32 prescale = MDFN_GetSettingUI("vb.liprescale");
- uint32 sbs_separation = MDFN_GetSettingUI("vb.sidebyside.separation");
-
- VIP_Set3DMode(VB3DMode, MDFN_GetSettingUI("vb.3dreverse"), prescale, sbs_separation);
+   for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
+   {
+      for(uint64 sub_A = 6 << 24; sub_A < (7 << 24); sub_A += GPRAM_Mask + 1)
+      {
+         //printf("GPRAM: %08x\n", A + sub_A);
+         Map_Addresses.push_back(A + sub_A);
+      }
+   }
 
 
- //SettingChanged("vb.3dmode");
- SettingChanged("vb.disable_parallax");
- SettingChanged("vb.anaglyph.lcolor");
- SettingChanged("vb.anaglyph.rcolor");
- SettingChanged("vb.anaglyph.preset");
- SettingChanged("vb.default_color");
+   GPRAM = VB_V810->SetFastMap(&Map_Addresses[0], GPRAM_Mask + 1, Map_Addresses.size(), "Cart RAM");
+   Map_Addresses.clear();
 
- SettingChanged("vb.instant_display_hack");
- SettingChanged("vb.allow_draw_skip");
+   memset(GPRAM, 0, GPRAM_Mask + 1);
 
- SettingChanged("vb.input.instant_read_hack");
+   VIP_Init();
+   VB_VSU = new VSU(&sbuf[0], &sbuf[1]);
+   VBINPUT_Init();
 
- MDFNGameInfo->fps = (int64)20000000 * 65536 * 256 / (259 * 384 * 4);
+   VB3DMode = MDFN_GetSettingUI("vb.3dmode");
+   uint32 prescale = MDFN_GetSettingUI("vb.liprescale");
+   uint32 sbs_separation = MDFN_GetSettingUI("vb.sidebyside.separation");
 
-
- VB_Power();
+   VIP_Set3DMode(VB3DMode, MDFN_GetSettingUI("vb.3dreverse"), prescale, sbs_separation);
 
 
- #ifdef WANT_DEBUGGER
- VBDBG_Init();
- #endif
+   //SettingChanged("vb.3dmode");
+   SettingChanged("vb.disable_parallax");
+   SettingChanged("vb.anaglyph.lcolor");
+   SettingChanged("vb.anaglyph.rcolor");
+   SettingChanged("vb.anaglyph.preset");
+   SettingChanged("vb.default_color");
+
+   SettingChanged("vb.instant_display_hack");
+   SettingChanged("vb.allow_draw_skip");
+
+   SettingChanged("vb.input.instant_read_hack");
+
+   MDFNGameInfo->fps = (int64)20000000 * 65536 * 256 / (259 * 384 * 4);
 
 
- MDFNGameInfo->nominal_width = 384;
- MDFNGameInfo->nominal_height = 224;
- MDFNGameInfo->fb_width = 384;
- MDFNGameInfo->fb_height = 224;
-
- switch(VB3DMode)
- {
-  default: break;
-
-  case VB3DMODE_VLI:
-        MDFNGameInfo->nominal_width = 768 * prescale;
-        MDFNGameInfo->nominal_height = 224;
-        MDFNGameInfo->fb_width = 768 * prescale;
-        MDFNGameInfo->fb_height = 224;
-        break;
-
-  case VB3DMODE_HLI:
-        MDFNGameInfo->nominal_width = 384;
-        MDFNGameInfo->nominal_height = 448 * prescale;
-        MDFNGameInfo->fb_width = 384;
-        MDFNGameInfo->fb_height = 448 * prescale;
-        break;
-
-  case VB3DMODE_CSCOPE:
-	MDFNGameInfo->nominal_width = 512;
-	MDFNGameInfo->nominal_height = 384;
-	MDFNGameInfo->fb_width = 512;
-	MDFNGameInfo->fb_height = 384;
-	break;
-
-  case VB3DMODE_SIDEBYSIDE:
-	MDFNGameInfo->nominal_width = 384 * 2 + sbs_separation;
-  	MDFNGameInfo->nominal_height = 224;
-  	MDFNGameInfo->fb_width = 384 * 2 + sbs_separation;
- 	MDFNGameInfo->fb_height = 224;
-	break;
- }
- MDFNGameInfo->lcm_width = MDFNGameInfo->fb_width;
- MDFNGameInfo->lcm_height = MDFNGameInfo->fb_height;
+   VB_Power();
 
 
- MDFNMP_Init(32768, ((uint64)1 << 27) / 32768);
- MDFNMP_AddRAM(65536, 5 << 24, WRAM);
- if((GPRAM_Mask + 1) >= 32768)
-  MDFNMP_AddRAM(GPRAM_Mask + 1, 6 << 24, GPRAM);
- return(1);
+#ifdef WANT_DEBUGGER
+   VBDBG_Init();
+#endif
+
+
+   MDFNGameInfo->nominal_width = 384;
+   MDFNGameInfo->nominal_height = 224;
+   MDFNGameInfo->fb_width = 384;
+   MDFNGameInfo->fb_height = 224;
+
+   switch(VB3DMode)
+   {
+      default: break;
+
+      case VB3DMODE_VLI:
+               MDFNGameInfo->nominal_width = 768 * prescale;
+               MDFNGameInfo->nominal_height = 224;
+               MDFNGameInfo->fb_width = 768 * prescale;
+               MDFNGameInfo->fb_height = 224;
+               break;
+
+      case VB3DMODE_HLI:
+               MDFNGameInfo->nominal_width = 384;
+               MDFNGameInfo->nominal_height = 448 * prescale;
+               MDFNGameInfo->fb_width = 384;
+               MDFNGameInfo->fb_height = 448 * prescale;
+               break;
+
+      case VB3DMODE_CSCOPE:
+               MDFNGameInfo->nominal_width = 512;
+               MDFNGameInfo->nominal_height = 384;
+               MDFNGameInfo->fb_width = 512;
+               MDFNGameInfo->fb_height = 384;
+               break;
+
+      case VB3DMODE_SIDEBYSIDE:
+               MDFNGameInfo->nominal_width = 384 * 2 + sbs_separation;
+               MDFNGameInfo->nominal_height = 224;
+               MDFNGameInfo->fb_width = 384 * 2 + sbs_separation;
+               MDFNGameInfo->fb_height = 224;
+               break;
+   }
+   MDFNGameInfo->lcm_width = MDFNGameInfo->fb_width;
+   MDFNGameInfo->lcm_height = MDFNGameInfo->fb_height;
+
+
+   MDFNMP_Init(32768, ((uint64)1 << 27) / 32768);
+   MDFNMP_AddRAM(65536, 5 << 24, WRAM);
+   if((GPRAM_Mask + 1) >= 32768)
+      MDFNMP_AddRAM(GPRAM_Mask + 1, 6 << 24, GPRAM);
+   return(1);
 }
 
 static void CloseGame(void)
 {
- // Only save cart RAM if it has been modified.
- for(unsigned int i = 0; i < GPRAM_Mask + 1; i++)
- {
-  if(GPRAM[i])
-  {
-   if(!MDFN_DumpToFile(MDFN_MakeFName(MDFNMKF_SAV, 0, "sav").c_str(), 6, GPRAM, 65536))
-   {
-
-   }
-   break;
-  }
- }
  //VIP_Kill();
  
  if(VB_VSU)
@@ -2439,35 +2403,16 @@ void MDFN_ResetMessages(void)
 }
 
 
-static MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
+static MDFNGI *MDFNI_LoadGame(const uint8_t *data, size_t size)
 {
-	std::vector<FileExtensionSpecStruct> valid_iae;
    MDFNGameInfo = &EmulatedVB;
-   MDFNFILE *GameFile = NULL;
-
-	// Construct a NULL-delimited list of known file extensions for MDFN_fopen()
-   const FileExtensionSpecStruct *curexts = KnownExtensions;
-
-   while(curexts->extension && curexts->description)
-   {
-      valid_iae.push_back(*curexts);
-      curexts++;
-   }
-
-   GameFile = file_open(name);
-
-	if(!GameFile)
-   {
-      MDFNGameInfo = NULL;
-      return 0;
-   }
 
 	// Load per-game settings
 	// Maybe we should make a "pgcfg" subdir, and automatically load all files in it?
 	// End load per-game settings
 	//
 
-   if(Load(name, GameFile) <= 0)
+   if(Load(data, size) <= 0)
       goto error;
 
 	MDFN_LoadGameCheats(NULL);
@@ -2475,13 +2420,9 @@ static MDFNGI *MDFNI_LoadGame(const char *force_module, const char *name)
 
 	MDFN_ResetMessages();	// Save state, status messages, etc.
 
-	MDFN_indent(-2);
-
    return(MDFNGameInfo);
 
 error:
-   file_close(GameFile);
-   MDFN_indent(-2);
    MDFNGameInfo = NULL;
    return NULL;
 }
@@ -2525,24 +2466,6 @@ static void hookup_ports(bool force);
 
 static bool initial_ports_hookup = false;
 
-std::string retro_base_directory;
-std::string retro_base_name;
-std::string retro_save_directory;
-
-static void set_basename(const char *path)
-{
-   const char *base = strrchr(path, '/');
-   if (!base)
-      base = strrchr(path, '\\');
-
-   if (base)
-      retro_base_name = base + 1;
-   else
-      retro_base_name = path;
-
-   retro_base_name = retro_base_name.substr(0, retro_base_name.find_last_of('.'));
-}
-
 #define MEDNAFEN_CORE_NAME_MODULE "vb"
 #define MEDNAFEN_CORE_NAME "Mednafen VB"
 #define MEDNAFEN_CORE_VERSION "v0.9.36.1"
@@ -2570,6 +2493,9 @@ static void check_system_specs(void)
 void retro_init(void)
 {
    struct retro_log_callback log;
+#if defined(WANT_16BPP) && defined(FRONTEND_SUPPORTS_RGB565)
+   enum retro_pixel_format rgb565 = RETRO_PIXEL_FORMAT_RGB565;
+#endif
    if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
       log_cb = log.log;
    else 
@@ -2577,50 +2503,7 @@ void retro_init(void)
 
    MDFNI_InitializeModule();
 
-   const char *dir = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
-   {
-      retro_base_directory = dir;
-      // Make sure that we don't have any lingering slashes, etc, as they break Windows.
-      size_t last = retro_base_directory.find_last_not_of("/\\");
-      if (last != std::string::npos)
-         last++;
-
-      retro_base_directory = retro_base_directory.substr(0, last);
-
-      MDFNI_Initialize(retro_base_directory.c_str());
-   }
-   else
-   {
-      /* TODO: Add proper fallback */
-      if (log_cb)
-         log_cb(RETRO_LOG_WARN, "System directory is not defined. Fallback on using same dir as ROM for system directory later ...\n");
-      failed_init = true;
-   }
-   
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir)
-   {
-	  // If save directory is defined use it, otherwise use system directory
-      // retro_save_directory = *dir ? dir : retro_base_directory;
-	  retro_save_directory = dir;
-      // Make sure that we don't have any lingering slashes, etc, as they break Windows.
-      size_t last = retro_save_directory.find_last_not_of("/\\");
-      if (last != std::string::npos)
-         last++;
-
-      retro_save_directory = retro_save_directory.substr(0, last);      
-   }
-   else
-   {
-      /* TODO: Add proper fallback */
-      if (log_cb)
-         log_cb(RETRO_LOG_WARN, "Save directory is not defined. Fallback on using SYSTEM directory ...\n");
-	  retro_save_directory = retro_base_directory;
-   }      
-
 #if defined(WANT_16BPP) && defined(FRONTEND_SUPPORTS_RGB565)
-   enum retro_pixel_format rgb565 = RETRO_PIXEL_FORMAT_RGB565;
    if (environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565) && log_cb)
       log_cb(RETRO_LOG_INFO, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
 #endif
@@ -2753,11 +2636,9 @@ bool retro_load_game(const struct retro_game_info *info)
    overscan = false;
    environ_cb(RETRO_ENVIRONMENT_GET_OVERSCAN, &overscan);
 
-   set_basename(info->path);
-
    check_variables();
 
-   game = MDFNI_LoadGame(MEDNAFEN_CORE_NAME_MODULE, info->path);
+   game = MDFNI_LoadGame((const uint8_t*)info->data, info->size);
    if (!game)
       return false;
 
@@ -2897,7 +2778,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #define GIT_VERSION ""
 #endif
    info->library_version  = MEDNAFEN_CORE_VERSION GIT_VERSION;
-   info->need_fullpath    = true;
+   info->need_fullpath    = false;
    info->valid_extensions = MEDNAFEN_CORE_EXTENSIONS;
    info->block_extract    = false;
 }
@@ -2944,7 +2825,6 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 
 void retro_set_environment(retro_environment_t cb)
 {
-   struct retro_vfs_interface_info vfs_iface_info;
    environ_cb = cb;
 
    static const struct retro_variable vars[] = {
@@ -2953,11 +2833,6 @@ void retro_set_environment(retro_environment_t cb)
       { NULL, NULL },
    };
    cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
-
-   vfs_iface_info.required_interface_version = 1;
-   vfs_iface_info.iface                      = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_iface_info))
-	   filestream_vfs_init(&vfs_iface_info);
 }
 
 void retro_set_audio_sample(retro_audio_sample_t cb)
@@ -3082,38 +2957,6 @@ static void sanitize_path(std::string &path)
          path[i] = '\\';
 }
 #endif
-
-// Use a simpler approach to make sure that things go right for libretro.
-std::string MDFN_MakeFName(MakeFName_Type type, int id1, const char *cd1)
-{
-   char slash;
-#ifdef _WIN32
-   slash = '\\';
-#else
-   slash = '/';
-#endif
-   std::string ret;
-   switch (type)
-   {
-      case MDFNMKF_SAV:
-         ret = retro_save_directory +slash + retro_base_name +
-            std::string(".") +
-            std::string(cd1);
-         break;
-      case MDFNMKF_FIRMWARE:
-         ret = retro_base_directory + slash + std::string(cd1);
-#ifdef _WIN32
-   sanitize_path(ret); // Because Windows path handling is mongoloid.
-#endif
-         break;
-      default:	  
-         break;
-   }
-
-   if (log_cb)
-      log_cb(RETRO_LOG_INFO, "MDFN_MakeFName: %s\n", ret.c_str());
-   return ret;
-}
 
 void MDFND_DispMessage(unsigned char *str)
 {

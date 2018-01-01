@@ -24,7 +24,6 @@
 
 #include <boolean.h>
 
-#include "general.h"
 #include "mempatcher.h"
 
 #ifdef _WIN32
