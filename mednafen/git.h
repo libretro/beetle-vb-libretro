@@ -1,7 +1,7 @@
 #ifndef _GIT_H
 #define _GIT_H
 
-#include <string>
+#include <string.h>
 
 typedef struct
 {
@@ -106,13 +106,6 @@ struct CheatFormatStruct
 {
  const char *FullName;		//"Game Genie", "GameShark", "Pro Action Catplay", etc.
  const char *Description;	// Whatever?
-
- bool (*DecodeCheat)(const std::string& cheat_string, MemoryPatch* patch);	// *patch should be left as initialized by MemoryPatch::MemoryPatch(), unless this is the
-										// second(or third or whatever) part of a multipart cheat.
-										//
-										// Will throw an std::exception(or derivative) on format error.
-										//
-										// Will return true if this is part of a multipart cheat.
 };
 
 struct CheatFormatInfoStruct

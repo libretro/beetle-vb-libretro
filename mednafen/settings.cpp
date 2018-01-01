@@ -16,9 +16,7 @@
  */
 
 #include "mednafen.h"
-#include <errno.h>
 #include <string.h>
-#include <string>
 #include "settings.h"
 
 uint32_t setting_vb_lcolor=0xFF0000;
@@ -78,12 +76,6 @@ bool MDFN_GetSettingB(const char *name)
    if (!strcmp("filesys.disablesavegz", name))
       return 1;
    fprintf(stderr, "unhandled setting B: %s\n", name);
-   return 0;
-}
-
-std::string MDFN_GetSettingS(const char *name)
-{
-   fprintf(stderr, "unhandled setting S: %s\n", name);
    return 0;
 }
 
