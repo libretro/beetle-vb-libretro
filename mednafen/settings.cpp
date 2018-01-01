@@ -23,11 +23,6 @@ uint32_t setting_vb_lcolor=0xFF0000;
 uint32_t setting_vb_rcolor=0x000000;
 uint32_t setting_vb_anaglyph_preset=0;
 
-bool MDFN_SaveSettings(const char *path)
-{
-   return(1);
-}
-
 uint64 MDFN_GetSettingUI(const char *name)
 {
    if (!strcmp("vb.anaglyph.lcolor", name))
@@ -61,39 +56,10 @@ bool MDFN_GetSettingB(const char *name)
    if (!strcmp("cheats", name))
       return 0;
    /* LIBRETRO */
-   if (!strcmp("libretro.cd_load_into_ram", name))
-      return 0;
    if (!strcmp("vb.instant_display_hack", name))
       return 1;
    if (!strcmp("vb.allow_draw_skip", name))
       return 1;
-   /* CDROM */
-   if (!strcmp("cdrom.lec_eval", name))
-      return 1;
-   /* FILESYS */
-   if (!strcmp("filesys.untrusted_fip_check", name))
-      return 0;
-   if (!strcmp("filesys.disablesavegz", name))
-      return 1;
    fprintf(stderr, "unhandled setting B: %s\n", name);
    return 0;
-}
-
-bool MDFNI_SetSetting(const char *name, const char *value, bool NetplayOverride)
-{
-   return false;
-}
-
-bool MDFNI_SetSettingB(const char *name, bool value)
-{
-   return false;
-}
-
-bool MDFNI_SetSettingUI(const char *name, uint64 value)
-{
-   return false;
-}
-
-void MDFNI_DumpSettingsDef(const char *path)
-{
 }
