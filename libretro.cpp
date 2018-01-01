@@ -41,68 +41,6 @@ static MDFN_Surface *surf;
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-class PtrLengthPair
-{
- public:
-
- inline PtrLengthPair(const void *new_data, const uint64 new_length)
- {
-  data = new_data;
-  length = new_length;
- }
-
- ~PtrLengthPair() 
- { 
-
- } 
-
- INLINE const void *GetData(void) const
- {
-  return(data);
- }
-
- INLINE uint64 GetLength(void) const
- {
-  return(length);
- }
-
- private:
- const void *data;
- uint64 length;
-};
-
-static INLINE bool MDFN_DumpToFileReal(const char *filename, int compress, const std::vector<PtrLengthPair> &pearpairs)
-{
-   FILE *fp = fopen(filename, "wb");
-
-   if (!fp)
-      return 0;
-
-   for(unsigned int i = 0; i < pearpairs.size(); i++)
-   {
-      const void *data = pearpairs[i].GetData();
-      const uint64 length = pearpairs[i].GetLength();
-
-      if (fwrite(data, 1, length, fp) != length)
-      {
-         fclose(fp);
-         return 0;
-      }
-   }
-
-   if (fclose(fp) == EOF)
-      return 0;
-
-   return 1;
-}
-
-static bool MDFN_DumpToFile(const char *filename, int compress, const void *data, uint64 length)
-{
-   std::vector<PtrLengthPair> tmp_pairs;
-   tmp_pairs.push_back(PtrLengthPair(data, length));
-   return (MDFN_DumpToFileReal(filename, compress, tmp_pairs));
-}
-
 #include "mednafen/vb/vb.h"
 #include "mednafen/vb/timer.h"
 #include "mednafen/vb/vsu.h"
@@ -2451,17 +2389,6 @@ int MDFNI_Initialize(const char *basedir)
 	return(1);
 }
 
-static int curindent = 0;
-
-void MDFN_indent(int indent)
-{
- curindent += indent;
-}
-
-static uint8 lastchar = 0;
-
-static bool failed_init;
-
 static void hookup_ports(bool force);
 
 static bool initial_ports_hookup = false;
@@ -2599,7 +2526,7 @@ static void hookup_ports(bool force)
 
 bool retro_load_game(const struct retro_game_info *info)
 {
-   if (!info || failed_init)
+   if (!info)
       return false;
 
    struct retro_input_descriptor desc[] = {
@@ -2947,16 +2874,6 @@ void retro_cheat_reset(void)
 
 void retro_cheat_set(unsigned, bool, const char *)
 {}
-
-#ifdef _WIN32
-static void sanitize_path(std::string &path)
-{
-   size_t size = path.size();
-   for (size_t i = 0; i < size; i++)
-      if (path[i] == '/')
-         path[i] = '\\';
-}
-#endif
 
 void MDFND_DispMessage(unsigned char *str)
 {

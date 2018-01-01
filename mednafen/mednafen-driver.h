@@ -2,15 +2,9 @@
 #define __MDFN_MEDNAFEN_DRIVER_H
 
 #include <stdio.h>
-#include <vector>
-#include <string>
+#include <string.h>
 
 #include "settings-common.h"
-
-extern std::vector<MDFNGI *>MDFNSystems;
-
-/* Indent stdout newlines +- "indent" amount */
-void MDFN_indent(int indent);
 
 /* Displays an error.  Can block or not. */
 void MDFND_PrintError(const char *s);

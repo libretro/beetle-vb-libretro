@@ -20,7 +20,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include <vector>
 
 #include <boolean.h>
 
