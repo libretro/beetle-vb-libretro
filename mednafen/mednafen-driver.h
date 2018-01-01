@@ -30,8 +30,6 @@ int MDFNI_Initialize(const char *basedir);
    below this directory. */
 void MDFNI_SetBaseDirectory(const char *dir);
 
-uint32 MDFNI_CRC32(uint32 crc, uint8 *buf, uint32 len);
-
 // NES hackish function.  Should abstract in the future.
 int MDFNI_DatachSet(const uint8 *rcode);
 
