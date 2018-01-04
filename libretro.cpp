@@ -53,6 +53,7 @@ static MDFN_Surface *surf;
 #if 0
 #include <iconv.h>
 #endif
+#define STICK_DEADZONE 0x4000
 
 enum
 {
@@ -76,6 +77,7 @@ static const uint32 AnaglyphPreset_Colors[][2] =
  { 0xFFFF00, 0x0000FF },
 };
 
+static bool setting_vb_right_analog_to_digital;
 
 int32 VB_InDebugPeek;
 
@@ -99,7 +101,6 @@ static uint32 VSU_CycleFix;
 static uint8 WCR;
 
 static int32 next_vip_ts, next_timer_ts, next_input_ts;
-
 
 static uint32 IRQ_Asserted;
 
@@ -130,8 +131,6 @@ void VBIRQ_Assert(int source, bool assert)
  
  RecalcIntLevel();
 }
-
-
 
 static uint8 HWCTRL_Read(v810_timestamp_t &timestamp, uint32 A)
 {
@@ -2467,7 +2466,7 @@ static void check_variables(void)
 {
    struct retro_variable var = {0};
 
-    var.key = "vb_color_mode";
+   var.key = "vb_color_mode";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -2484,12 +2483,10 @@ static void check_variables(void)
       log_cb(RETRO_LOG_INFO, "[%s]: Palette changed: %s .\n", mednafen_core_str, var.value);  
    }   
    
-    var.key = "vb_anaglyph_preset";
+   var.key = "vb_anaglyph_preset";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-   
-   
       if (strcmp(var.value, "disabled") == 0)
 		setting_vb_anaglyph_preset = 0; 
       else if (strcmp(var.value, "red & blue") == 0)
@@ -2506,7 +2503,17 @@ static void check_variables(void)
          setting_vb_anaglyph_preset = 6;      
 
       log_cb(RETRO_LOG_INFO, "[%s]: Palette changed: %s .\n", mednafen_core_str, var.value);  
-   }      
+   }    
+
+   var.key = "vb_right_analog_to_digital";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "enabled") == 0)
+         setting_vb_right_analog_to_digital = true; 
+      else
+         setting_vb_right_analog_to_digital = false;
+   } 
 }
 
 #define MAX_PLAYERS 1
@@ -2545,6 +2552,8 @@ bool retro_load_game(const struct retro_game_info *info)
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
 
+      { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Right D-Pad X" },
+      { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Right D-Pad Y" },
       { 0 },
    };
 
@@ -2594,6 +2603,7 @@ void retro_unload_game()
 static void update_input(void)
 {
    input_buf[0] = 0;
+
    static unsigned map[] = {
       RETRO_DEVICE_ID_JOYPAD_A,
       RETRO_DEVICE_ID_JOYPAD_B,
@@ -2613,9 +2623,32 @@ static void update_input(void)
 
    for (unsigned j = 0; j < MAX_PLAYERS; j++)
    {
+      if (setting_vb_right_analog_to_digital)
+      {
+         int16_t analog_x = input_state_cb(j, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
+         int16_t analog_y = input_state_cb(j, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
+
+         if (abs(analog_x) > STICK_DEADZONE)
+         {
+            if (analog_x < 0)
+               input_buf[j] |= 1 << 12;
+            else
+               input_buf[j] |= 1 << 5;
+         }
+
+         if (abs(analog_y) > STICK_DEADZONE)
+         {
+            if (analog_y < 0)
+               input_buf[j] |= 1 << 4;
+            else
+               input_buf[j] |= 1 << 13;
+         }
+      }
+
       for (unsigned i = 0; i < MAX_BUTTONS; i++)
          input_buf[j] |= map[i] != -1u &&
             input_state_cb(j, RETRO_DEVICE_JOYPAD, 0, map[i]) ? (1 << i) : 0;
+         
 
 #ifdef MSB_FIRST
       union {
@@ -2626,7 +2659,6 @@ static void update_input(void)
       input_buf[j] = u.b[0] | u.b[1] << 8;
 #endif
    }
-
 }
 
 static uint64_t video_frames, audio_frames;
@@ -2757,6 +2789,7 @@ void retro_set_environment(retro_environment_t cb)
    static const struct retro_variable vars[] = {
       { "vb_anaglyph_preset", "Anaglyph preset (restart); disabled|red & blue|red & cyan|red & electric cyan|red & green|green & magenta|yellow & blue" },
       { "vb_color_mode", "Palette (restart); black & red|black & white" },
+      { "vb_right_analog_to_digital", "Right Analog to Digital; disabled|enabled" },
       { NULL, NULL },
    };
    cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
