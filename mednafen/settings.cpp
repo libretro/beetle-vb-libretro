@@ -22,6 +22,9 @@
 uint32_t setting_vb_lcolor=0xFF0000;
 uint32_t setting_vb_rcolor=0x000000;
 uint32_t setting_vb_anaglyph_preset=0;
+bool setting_vb_right_analog_to_digital=false;
+bool setting_vb_right_invert_x=false;
+bool setting_vb_right_invert_y=false;
 
 uint64 MDFN_GetSettingUI(const char *name)
 {
