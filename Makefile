@@ -169,7 +169,7 @@ else ifeq ($(platform), ctr)
    FLAGS += -mword-relocations
    FLAGS += -fomit-frame-pointer -fstrict-aliasing -ffast-math
    FLAGS += -fno-rtti
-   FLAGS += -fno-exceptions -DDISABLE_EXCEPTIONS
+   FLAGS += -fno-exceptions
    STATIC_LINKING = 1
    NEED_BPP := 16
 
@@ -187,7 +187,6 @@ else ifeq ($(platform), switch)
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
    include $(LIBTRANSISTOR_HOME)/libtransistor.mk
    STATIC_LINKING=1
-   FLAGS += -DDISABLE_EXCEPTIONS
 
 # Nintendo Game Cube / Wii / WiiU
 else ifneq (,$(filter $(platform), ngc wii wiiu))

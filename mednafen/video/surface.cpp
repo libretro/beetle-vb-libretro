@@ -18,11 +18,6 @@
 #include "../mednafen.h"
 #include "surface.h"
 
-#ifdef DISABLE_EXCEPTIONS
-#define throw  (void)0,
-#endif
-
-
 MDFN_PixelFormat::MDFN_PixelFormat()
 {
    bpp = 0;
@@ -79,7 +74,7 @@ void MDFN_Surface::Init(void *const p_pixels, const uint32 p_width, const uint32
 #endif
 
    if(!(rpix = calloc(1, p_pitchinpix * p_height * (nf.bpp / 8))))
-      throw(1);
+      return;
 
 #if defined(WANT_8BPP)
    //if(nf.bpp == 8)
