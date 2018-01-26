@@ -79,7 +79,7 @@ static inline void Endian_A32_Swap(void *src, uint32_t nelements)
    }
 }
 
-void Endian_A16_Swap(void *src, uint32_t nelements)
+static void Endian_A16_Swap(void *src, uint32_t nelements)
 {
    uint32_t i;
    uint8_t *nsrc = (uint8_t *)src;
@@ -116,7 +116,7 @@ static inline void FlipByteOrder(uint8_t *src, uint32_t count)
 }
 #endif
 
-int32_t smem_read(StateMem *st, void *buffer, uint32_t len)
+static int32_t smem_read(StateMem *st, void *buffer, uint32_t len)
 {
    if ((len + st->loc) > st->len)
       return 0;
@@ -127,7 +127,7 @@ int32_t smem_read(StateMem *st, void *buffer, uint32_t len)
    return(len);
 }
 
-int32_t smem_write(StateMem *st, void *buffer, uint32_t len)
+static int32_t smem_write(StateMem *st, void *buffer, uint32_t len)
 {
    if ((len + st->loc) > st->malloced)
    {
@@ -147,7 +147,7 @@ int32_t smem_write(StateMem *st, void *buffer, uint32_t len)
    return(len);
 }
 
-int32_t smem_putc(StateMem *st, int value)
+static int32_t smem_putc(StateMem *st, int value)
 {
    uint8_t tmpval = value;
    if(smem_write(st, &tmpval, 1) != 1)
@@ -155,7 +155,7 @@ int32_t smem_putc(StateMem *st, int value)
    return(1);
 }
 
-int32_t smem_seek(StateMem *st, uint32_t offset, int whence)
+static int32_t smem_seek(StateMem *st, uint32_t offset, int whence)
 {
    switch(whence)
    {
@@ -179,7 +179,7 @@ int32_t smem_seek(StateMem *st, uint32_t offset, int whence)
    return(0);
 }
 
-int smem_write32le(StateMem *st, uint32_t b)
+static int smem_write32le(StateMem *st, uint32_t b)
 {
    uint8_t s[4];
    s[0]=b;
@@ -189,7 +189,7 @@ int smem_write32le(StateMem *st, uint32_t b)
    return((smem_write(st, s, 4)<4)?0:4);
 }
 
-int smem_read32le(StateMem *st, uint32_t *b)
+static int smem_read32le(StateMem *st, uint32_t *b)
 {
    uint8_t s[4];
 
