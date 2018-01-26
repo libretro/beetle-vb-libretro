@@ -182,6 +182,13 @@ else ifeq ($(platform), xenon)
    ENDIANNESS_DEFINES += -D__LIBXENON__ -m32 -D__ppc__ -DMSB_FIRST
    STATIC_LINKING = 1
 
+# Nintendo Switch (libtransistor)
+else ifeq ($(platform), switch)
+   TARGET := $(TARGET_NAME)_libretro_$(platform).a
+   include $(LIBTRANSISTOR_HOME)/libtransistor.mk
+   STATIC_LINKING=1
+   FLAGS += -DDISABLE_EXCEPTIONS
+
 # Nintendo Game Cube / Wii / WiiU
 else ifneq (,$(filter $(platform), ngc wii wiiu))
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
