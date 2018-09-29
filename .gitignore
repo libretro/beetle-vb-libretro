@@ -3,4 +3,4 @@
 *.dll
 *.dylib
 /old
-
+*.a
