@@ -3,6 +3,7 @@
 #include <libretro.h>
 
 #include "mednafen/mednafen.h"
+#include "mednafen/math_ops.h"
 #include "mednafen/mempatcher.h"
 #include "mednafen/git.h"
 

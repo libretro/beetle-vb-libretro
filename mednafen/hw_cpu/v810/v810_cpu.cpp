@@ -45,6 +45,7 @@ found freely through public domain sources.
 
 #include "../../mednafen.h"
 #include "../../masmem.h"
+#include "../../math_ops.h"
 
 //#include "pcfx.h"
 //#include "debug.h"

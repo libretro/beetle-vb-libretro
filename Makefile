@@ -455,7 +455,6 @@ else
 endif
 
 $(TARGET): $(OBJECTS)
-	@echo "** BUILDING $(TARGET) FOR PLATFORM $(platform) **"
 ifeq ($(platform), emscripten)
 	$(CXX) $(CXXFLAGS) $(OBJOUT)$@ $^
 else ifeq ($(STATIC_LINKING), 1)
@@ -463,7 +462,6 @@ else ifeq ($(STATIC_LINKING), 1)
 else
 	$(LD) $(LINKOUT)$@ $^ $(LDFLAGS)
 endif
-	@echo "** BUILD SUCCESSFUL! GG NO RE **"
 
 
 %.o: %.cpp

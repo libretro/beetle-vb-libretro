@@ -17,6 +17,7 @@
 
 #include "vb.h"
 #include "vip.h"
+#include "../math_ops.h"
 #include <math.h>
 
 static inline void VIP_DBGMSG(const char *format, ...)

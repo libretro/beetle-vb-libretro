@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "math_ops.h"
 #include "git.h"
 
 #ifdef _WIN32
