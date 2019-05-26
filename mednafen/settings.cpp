@@ -25,6 +25,7 @@ uint32_t setting_vb_anaglyph_preset=0;
 bool setting_vb_right_analog_to_digital=false;
 bool setting_vb_right_invert_x=false;
 bool setting_vb_right_invert_y=false;
+uint32_t setting_vb_cpu_emulation=0;
 
 uint64 MDFN_GetSettingUI(const char *name)
 {
@@ -44,6 +45,8 @@ int64 MDFN_GetSettingI(const char *name)
 {
    if (!strcmp("vb.anaglyph.preset", name))
       return setting_vb_anaglyph_preset;
+   if (!strcmp("vb.cpu_emulation", name))
+      return setting_vb_cpu_emulation;
    fprintf(stderr, "unhandled setting I: %s\n", name);
    return 0;
 }
