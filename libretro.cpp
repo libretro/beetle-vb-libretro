@@ -2542,6 +2542,13 @@ static void check_variables(void)
       else
          setting_vb_right_analog_to_digital = false;
    } 
+	
+   var.key = "vb_cpu_emulation";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      setting_vb_cpu_emulation = !strcmp(var.value, "accurate") ? V810_EMU_MODE_ACCURATE : V810_EMU_MODE_FAST;
+   }
 }
 
 #define MAX_PLAYERS 1
@@ -2806,6 +2813,7 @@ void retro_set_environment(retro_environment_t cb)
       { "vb_anaglyph_preset", "Anaglyph preset (restart); disabled|red & blue|red & cyan|red & electric cyan|red & green|green & magenta|yellow & blue" },
       { "vb_color_mode", "Palette (restart); black & red|black & white" },
       { "vb_right_analog_to_digital", "Right analog to digital; disabled|enabled|invert x|invert y|invert both" },
+      { "vb_cpu_emulation", "CPU emulation (restart); accurate|fast" },
       { NULL, NULL },
    };
    cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
