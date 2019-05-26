@@ -475,7 +475,7 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 	INCLUDE := $(shell IFS=$$'\n'; cygpath -w "$(VcCompilerToolsDir)/include")
 	LIB := $(shell IFS=$$'\n'; cygpath -w "$(VcCompilerToolsDir)/lib/$(TargetArchMoniker)")
 	ifneq (,$(findstring uwp,$(PlatformSuffix)))
-		LIB := $(shell IFS=$$'\n'; cygpath -w "$(LIB)/store")
+		LIB := $(LIB)/store;$(LIB)
 	endif
     
 	export INCLUDE := $(INCLUDE);$(WindowsSDKSharedIncludeDir);$(WindowsSDKUCRTIncludeDir);$(WindowsSDKUMIncludeDir)
