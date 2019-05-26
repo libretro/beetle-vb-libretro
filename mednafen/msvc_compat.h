@@ -19,6 +19,7 @@
 #ifdef _MSC_VER
 
 #undef UNICODE // Do not bother with UNICODE at this time.
+#undef _UNICODE // Do not bother with UNICODE at this time.
 #include <stddef.h>
 #include <io.h>
 #include <math.h>
