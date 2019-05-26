@@ -32,10 +32,14 @@ typedef uint64_t uint64;
   #define MDFN_NOWARN_UNUSED __attribute__((unused))
 
 #elif defined(_MSC_VER)
-#define roundf(in) (in >= 0.0f ? floorf(in + 0.5f) : ceilf(in - 0.5f))
+/* roundf and va_copy is available since MSVC 2013 */
+  #if _MSC_VER < 1800
+    #define roundf(in) (in >= 0.0f ? floorf(in + 0.5f) : ceilf(in - 0.5f))
+  #endif
+
   #define NO_INLINE
-#define MDFN_LIKELY(n) ((n) != 0)
-#define MDFN_UNLIKELY(n) ((n) != 0)
+  #define MDFN_LIKELY(n) ((n) != 0)
+  #define MDFN_UNLIKELY(n) ((n) != 0)
 
   #define MDFN_FASTCALL
 

@@ -53,7 +53,10 @@ typedef int ssize_t;
 #pragma warning(disable : 4146)
 #pragma warning(disable : 4267)
 
-#define roundf(in) (in >= 0.0f ? floorf(in + 0.5f) : ceilf(in - 0.5f))
+/* roundf and va_copy is available since MSVC 2013 */
+#if _MSC_VER < 1800
+  #define roundf(in) (in >= 0.0f ? floorf(in + 0.5f) : ceilf(in - 0.5f))
+#endif
 
 #ifndef PATH_MAX
 #define PATH_MAX MAX_PATH
