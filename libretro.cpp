@@ -2403,11 +2403,11 @@ static bool initial_ports_hookup = false;
 #define MEDNAFEN_CORE_TIMING_FPS 50.27
 #define MEDNAFEN_CORE_GEOMETRY_BASE_W (game->nominal_width)
 #define MEDNAFEN_CORE_GEOMETRY_BASE_H (game->nominal_height)
-#define MEDNAFEN_CORE_GEOMETRY_MAX_W 384
-#define MEDNAFEN_CORE_GEOMETRY_MAX_H 224
+#define MEDNAFEN_CORE_GEOMETRY_MAX_W 384 * 2
+#define MEDNAFEN_CORE_GEOMETRY_MAX_H 224 * 2
 #define MEDNAFEN_CORE_GEOMETRY_ASPECT_RATIO (12.0 / 7.0)
-#define FB_WIDTH 384
-#define FB_HEIGHT 224
+#define FB_WIDTH 384 * 2
+#define FB_HEIGHT 224 * 2
 
 
 #define FB_MAX_HEIGHT FB_HEIGHT
@@ -2470,29 +2470,30 @@ static void check_variables(void)
 {
    struct retro_variable var = {0};
 
-   var.key = "vb_color_mode";
+   var.key = "vb_3dmode";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (strcmp(var.value, "black & red") == 0)
-	  {
-         setting_vb_lcolor = 0xFF0000;
-		 setting_vb_rcolor = 0x000000;
-	  }
-      else if (strcmp(var.value, "black & white") == 0)
-	  {
-         setting_vb_lcolor = 0xFFFFFF;      
-		 setting_vb_rcolor = 0x000000;
-	  }
-      log_cb(RETRO_LOG_INFO, "[%s]: Palette changed: %s .\n", mednafen_core_str, var.value);  
-   }   
-   
+      if (strcmp(var.value, "anaglyph") == 0)
+        setting_vb_3dmode = VB3DMODE_ANAGLYPH; 
+      else if (strcmp(var.value, "cyberscope") == 0)
+        setting_vb_3dmode = VB3DMODE_CSCOPE;
+      else if (strcmp(var.value, "side-by-side") == 0)
+        setting_vb_3dmode = VB3DMODE_SIDEBYSIDE;
+      else if (strcmp(var.value, "vli") == 0)    
+        setting_vb_3dmode = VB3DMODE_VLI;
+      else if (strcmp(var.value, "hli") == 0)
+        setting_vb_3dmode = VB3DMODE_HLI;
+
+      log_cb(RETRO_LOG_INFO, "[%s]: 3D mode changed: %s .\n", mednafen_core_str, var.value);  
+   }
+
    var.key = "vb_anaglyph_preset";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (strcmp(var.value, "disabled") == 0)
-		setting_vb_anaglyph_preset = 0; 
+		 setting_vb_anaglyph_preset = 0; 
       else if (strcmp(var.value, "red & blue") == 0)
          setting_vb_anaglyph_preset = 1;      
       else if (strcmp(var.value, "red & cyan") == 0)
@@ -2508,6 +2509,54 @@ static void check_variables(void)
 
       log_cb(RETRO_LOG_INFO, "[%s]: Palette changed: %s .\n", mednafen_core_str, var.value);  
    }    
+
+   var.key = "vb_color_mode";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "black & red") == 0)
+      {
+         setting_vb_lcolor = 0xFF0000;
+         setting_vb_rcolor = 0x000000;
+      }
+      else if (strcmp(var.value, "black & white") == 0)
+      {
+         setting_vb_lcolor = 0xFFFFFF;      
+         setting_vb_rcolor = 0x000000;
+      }
+      else if (strcmp(var.value, "black & blue") == 0)
+      {
+         setting_vb_lcolor = 0x0000FF;      
+         setting_vb_rcolor = 0x000000;
+      }
+      else if (strcmp(var.value, "black & cyan") == 0)
+      {
+         setting_vb_lcolor = 0x00B7EB;      
+         setting_vb_rcolor = 0x000000;
+      }
+      else if (strcmp(var.value, "black & electric cyan") == 0)
+      {
+         setting_vb_lcolor = 0x00FFFF;      
+         setting_vb_rcolor = 0x000000;
+      }
+      else if (strcmp(var.value, "black & green") == 0)
+      {
+         setting_vb_lcolor = 0x00FF00;      
+         setting_vb_rcolor = 0x000000;
+      }
+      else if (strcmp(var.value, "black & magenta") == 0)
+      {
+         setting_vb_lcolor = 0xFF00FF;      
+         setting_vb_rcolor = 0x000000;
+      }
+      else if (strcmp(var.value, "black & yellow") == 0)
+      {
+         setting_vb_lcolor = 0xFFFF00;      
+         setting_vb_rcolor = 0x000000;
+      }
+	  setting_vb_default_color = setting_vb_lcolor;
+      log_cb(RETRO_LOG_INFO, "[%s]: Palette changed: %s .\n", mednafen_core_str, var.value);  
+   }   
 
    var.key = "vb_right_analog_to_digital";
 
@@ -2684,6 +2733,22 @@ static void update_input(void)
    }
 }
 
+static void update_geometry(unsigned width, unsigned height)
+{
+   struct retro_system_av_info info;
+
+   memset(&info, 0, sizeof(info));
+   info.timing.fps            = MEDNAFEN_CORE_TIMING_FPS;
+   info.timing.sample_rate    = 44100;
+   info.geometry.base_width   = width;
+   info.geometry.base_height  = height;
+   info.geometry.max_width    = MEDNAFEN_CORE_GEOMETRY_MAX_W;
+   info.geometry.max_height   = MEDNAFEN_CORE_GEOMETRY_MAX_H;
+   info.geometry.aspect_ratio = (float) width / (float) height;
+
+   environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info);
+}
+
 static uint64_t video_frames, audio_frames;
 
 void retro_run(void)
@@ -2696,6 +2761,8 @@ void retro_run(void)
 
    static int16_t sound_buf[0x10000];
    static MDFN_Rect rects[FB_MAX_HEIGHT];
+   static unsigned width = 0, height = 0;
+   bool resolution_changed = false;
    rects[0].w = ~0;
 
    EmulateSpecStruct spec = {0};
@@ -2731,8 +2798,11 @@ void retro_run(void)
 
    spec.SoundBufSize = spec.SoundBufSizeALMS + SoundBufSize;
 
-   unsigned width  = spec.DisplayRect.w;
-   unsigned height = spec.DisplayRect.h;
+   if (width != spec.DisplayRect.w || height != spec.DisplayRect.h)
+      resolution_changed = true;
+
+   width  = spec.DisplayRect.w;
+   height = spec.DisplayRect.h;
 
 #if defined(WANT_32BPP)
    const uint32_t *pix = surf->pixels;
@@ -2750,6 +2820,9 @@ void retro_run(void)
    bool updated = false;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       check_variables();
+
+   if (resolution_changed)
+      update_geometry(width, height);
 }
 
 void retro_get_system_info(struct retro_system_info *info)
@@ -2810,8 +2883,9 @@ void retro_set_environment(retro_environment_t cb)
    environ_cb = cb;
 
    static const struct retro_variable vars[] = {
+      { "vb_3dmode", "3D mode (restart); anaglyph|cyberscope|side-by-side|vli|hli"},
       { "vb_anaglyph_preset", "Anaglyph preset (restart); disabled|red & blue|red & cyan|red & electric cyan|red & green|green & magenta|yellow & blue" },
-      { "vb_color_mode", "Palette (restart); black & red|black & white" },
+      { "vb_color_mode", "Palette (restart); black & red|black & white|black & blue|black & cyan|black & electric cyan|black & green|black & magenta|black & yellow" },
       { "vb_right_analog_to_digital", "Right analog to digital; disabled|enabled|invert x|invert y|invert both" },
       { "vb_cpu_emulation", "CPU emulation (restart); accurate|fast" },
       { NULL, NULL },

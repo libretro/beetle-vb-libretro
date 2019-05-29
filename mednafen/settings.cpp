@@ -26,6 +26,9 @@ bool setting_vb_right_analog_to_digital=false;
 bool setting_vb_right_invert_x=false;
 bool setting_vb_right_invert_y=false;
 uint32_t setting_vb_cpu_emulation=0;
+uint32_t setting_vb_3dmode=0;
+uint32_t setting_vb_liprescale=1;
+uint32_t setting_vb_default_color=0xFFFFFF;
 
 uint64 MDFN_GetSettingUI(const char *name)
 {
@@ -36,6 +39,12 @@ uint64 MDFN_GetSettingUI(const char *name)
    }
    if (!strcmp("vb.anaglyph.rcolor", name))
       return setting_vb_rcolor;
+   if (!strcmp("vb.3dmode", name))
+      return setting_vb_3dmode;
+   if (!strcmp("vb.liprescale", name))
+      return setting_vb_liprescale;
+   if (!strcmp("vb.default_color", name))
+      return setting_vb_default_color;
 
    fprintf(stderr, "unhandled setting UI: %s\n", name);
    return 0;
