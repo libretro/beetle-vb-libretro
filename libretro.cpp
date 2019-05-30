@@ -149,15 +149,15 @@ static uint8 HWCTRL_Read(v810_timestamp_t &timestamp, uint32 A)
  switch(A & 0xFF)
  {
   default: printf("Unknown HWCTRL Read: %08x\n", A);
-	   break;
+       break;
 
   case 0x18:
   case 0x1C:
   case 0x20: ret = TIMER_Read(timestamp, A);
-	     break;
+         break;
 
   case 0x24: ret = WCR | 0xFC;
-	     break;
+         break;
 
   case 0x10:
   case 0x14:
@@ -185,15 +185,15 @@ static void HWCTRL_Write(v810_timestamp_t &timestamp, uint32 A, uint8 V)
   case 0x18:
   case 0x1C:
   case 0x20: TIMER_Write(timestamp, A, V);
-	     break;
+         break;
 
   case 0x24: WCR = V & 0x3;
-	     break;
+         break;
 
   case 0x10:
   case 0x14:
   case 0x28: VBINPUT_Write(timestamp, A, V);
-	     break;
+         break;
  }
 }
 
@@ -208,27 +208,27 @@ uint8 MDFN_FASTCALL MemRead8(v810_timestamp_t &timestamp, uint32 A)
  switch(A >> 24)
  {
   case 0: ret = VIP_Read8(timestamp, A);
-	  break;
+      break;
 
   case 1: break;
 
   case 2: ret = HWCTRL_Read(timestamp, A);
-	  break;
+      break;
 
   case 3: break;
   case 4: break;
 
   case 5: ret = WRAM[A & 0xFFFF];
-	  break;
+      break;
 
   case 6: if(GPRAM)
-	   ret = GPRAM[A & GPRAM_Mask];
-	  else
-	   printf("GPRAM(Unmapped) Read: %08x\n", A);
-	  break;
+       ret = GPRAM[A & GPRAM_Mask];
+      else
+       printf("GPRAM(Unmapped) Read: %08x\n", A);
+      break;
 
   case 7: ret = GPROM[A & GPROM_Mask];
-	  break;
+      break;
  }
  return(ret);
 }
@@ -246,27 +246,27 @@ uint16 MDFN_FASTCALL MemRead16(v810_timestamp_t &timestamp, uint32 A)
  switch(A >> 24)
  {
   case 0: ret = VIP_Read16(timestamp, A);
-	  break;
+      break;
 
   case 1: break;
 
   case 2: ret = HWCTRL_Read(timestamp, A);
-	  break;
+      break;
 
   case 3: break;
 
   case 4: break;
 
   case 5: ret = LoadU16_LE((uint16 *)&WRAM[A & 0xFFFF]);
-	  break;
+      break;
 
   case 6: if(GPRAM)
            ret = LoadU16_LE((uint16 *)&GPRAM[A & GPRAM_Mask]);
-	  else printf("GPRAM(Unmapped) Read: %08x\n", A);
-	  break;
+      else printf("GPRAM(Unmapped) Read: %08x\n", A);
+      break;
 
   case 7: ret = LoadU16_LE((uint16 *)&GPROM[A & GPROM_Mask]);
-	  break;
+      break;
  }
  return(ret);
 }
@@ -443,24 +443,25 @@ static void VB_Power(void)
  WCR = 0;
 
 
- ForceEventUpdates(0);	//VB_V810->v810_timestamp);
+ ForceEventUpdates(0);  //VB_V810->v810_timestamp);
 }
 
 static void SettingChanged(const char *name)
 {
  if(!strcasecmp(name, "vb.3dmode"))
  {
-  // FIXME, TODO (complicated)
-  //VB3DMode = MDFN_GetSettingUI("vb.3dmode");
-  //VIP_Set3DMode(VB3DMode);
+  VB3DMode = MDFN_GetSettingUI("vb.3dmode");
+  uint32 prescale = MDFN_GetSettingUI("vb.liprescale");
+  uint32 sbs_separation = MDFN_GetSettingUI("vb.sidebyside.separation");
+
+  VIP_Set3DMode(VB3DMode, MDFN_GetSettingUI("vb.3dreverse"), prescale, sbs_separation);
  }
  else if(!strcasecmp(name, "vb.disable_parallax"))
  {
   VIP_SetParallaxDisable(MDFN_GetSettingB("vb.disable_parallax"));
  }
  else if(!strcasecmp(name, "vb.anaglyph.lcolor") || !strcasecmp(name, "vb.anaglyph.rcolor") ||
-	!strcasecmp(name, "vb.anaglyph.preset") || !strcasecmp(name, "vb.default_color"))
-
+         !strcasecmp(name, "vb.anaglyph.preset") || !strcasecmp(name, "vb.default_color"))
  {
   uint32 lcolor = MDFN_GetSettingUI("vb.anaglyph.lcolor"), rcolor = MDFN_GetSettingUI("vb.anaglyph.rcolor");
   int preset = MDFN_GetSettingI("vb.anaglyph.preset");
@@ -1831,7 +1832,7 @@ static const struct VBGameEntry VBGames[] =
        0x07000c40,
  } },
 
-  { { 0x82a95e51, 0x742298d1 /*[b1]*/  }, "Waterworld (US)", { 	// Apparently has complex wait loop.
+  { { 0x82a95e51, 0x742298d1 /*[b1]*/  }, "Waterworld (US)", {  // Apparently has complex wait loop.
        0x070008fc,
        0x0700090e,
        0x0700209e,
@@ -1971,7 +1972,7 @@ static int Load(const uint8_t *data, size_t size)
    VIP_Set3DMode(VB3DMode, MDFN_GetSettingUI("vb.3dreverse"), prescale, sbs_separation);
 
 
-   //SettingChanged("vb.3dmode");
+   SettingChanged("vb.3dmode");
    SettingChanged("vb.disable_parallax");
    SettingChanged("vb.anaglyph.lcolor");
    SettingChanged("vb.anaglyph.rcolor");
@@ -2004,32 +2005,32 @@ static int Load(const uint8_t *data, size_t size)
       default: break;
 
       case VB3DMODE_VLI:
-               MDFNGameInfo->nominal_width = 768 * prescale;
-               MDFNGameInfo->nominal_height = 224;
-               MDFNGameInfo->fb_width = 768 * prescale;
-               MDFNGameInfo->fb_height = 224;
-               break;
+         MDFNGameInfo->nominal_width = 768 * prescale;
+         MDFNGameInfo->nominal_height = 224;
+         MDFNGameInfo->fb_width = 768 * prescale;
+         MDFNGameInfo->fb_height = 224;
+         break;
 
       case VB3DMODE_HLI:
-               MDFNGameInfo->nominal_width = 384;
-               MDFNGameInfo->nominal_height = 448 * prescale;
-               MDFNGameInfo->fb_width = 384;
-               MDFNGameInfo->fb_height = 448 * prescale;
-               break;
+         MDFNGameInfo->nominal_width = 384;
+         MDFNGameInfo->nominal_height = 448 * prescale;
+         MDFNGameInfo->fb_width = 384;
+         MDFNGameInfo->fb_height = 448 * prescale;
+         break;
 
       case VB3DMODE_CSCOPE:
-               MDFNGameInfo->nominal_width = 512;
-               MDFNGameInfo->nominal_height = 384;
-               MDFNGameInfo->fb_width = 512;
-               MDFNGameInfo->fb_height = 384;
-               break;
+         MDFNGameInfo->nominal_width = 512;
+         MDFNGameInfo->nominal_height = 384;
+         MDFNGameInfo->fb_width = 512;
+         MDFNGameInfo->fb_height = 384;
+         break;
 
       case VB3DMODE_SIDEBYSIDE:
-               MDFNGameInfo->nominal_width = 384 * 2 + sbs_separation;
-               MDFNGameInfo->nominal_height = 224;
-               MDFNGameInfo->fb_width = 384 * 2 + sbs_separation;
-               MDFNGameInfo->fb_height = 224;
-               break;
+         MDFNGameInfo->nominal_width = 384 * 2 + sbs_separation;
+         MDFNGameInfo->nominal_height = 224;
+         MDFNGameInfo->fb_width = 384 * 2 + sbs_separation;
+         MDFNGameInfo->fb_height = 224;
+         break;
    }
    MDFNGameInfo->lcm_width = MDFNGameInfo->fb_width;
    MDFNGameInfo->lcm_height = MDFNGameInfo->fb_height;
@@ -2142,14 +2143,14 @@ static DebuggerInfoStruct DBGInfo =
  VBDBG_MemPeek,
  VBDBG_Disassemble,
  NULL,
- NULL,	//ForceIRQ,
+ NULL,  //ForceIRQ,
  NULL,
  VBDBG_FlushBreakPoints,
  VBDBG_AddBreakPoint,
  VBDBG_SetCPUCallback,
  VBDBG_EnableBranchTrace,
  VBDBG_GetBranchTrace,
- NULL, 	//KING_SetGraphicsDecode,
+ NULL,  //KING_SetGraphicsDecode,
  VBDBG_SetLogFunc,
 };
 #endif
@@ -2324,11 +2325,11 @@ MDFNGI EmulatedVB =
  0,   // lcm_height
  NULL,  // Dummy
 
- 384,	// Nominal width
- 224,	// Nominal height
+ 384,   // Nominal width
+ 224,   // Nominal height
 
- 384,	// Framebuffer width
- 256,	// Framebuffer height
+ 384,   // Framebuffer width
+ 256,   // Framebuffer height
 
  2,     // Number of output sound channels
 };
@@ -2348,18 +2349,18 @@ static MDFNGI *MDFNI_LoadGame(const uint8_t *data, size_t size)
 {
    MDFNGameInfo = &EmulatedVB;
 
-	// Load per-game settings
-	// Maybe we should make a "pgcfg" subdir, and automatically load all files in it?
-	// End load per-game settings
-	//
+    // Load per-game settings
+    // Maybe we should make a "pgcfg" subdir, and automatically load all files in it?
+    // End load per-game settings
+    //
 
    if(Load(data, size) <= 0)
       goto error;
 
-	MDFN_LoadGameCheats(NULL);
-	MDFNMP_InstallReadPatches();
+    MDFN_LoadGameCheats(NULL);
+    MDFNMP_InstallReadPatches();
 
-	MDFN_ResetMessages();	// Save state, status messages, etc.
+    MDFN_ResetMessages();   // Save state, status messages, etc.
 
    return(MDFNGameInfo);
 
@@ -2389,7 +2390,7 @@ bool MDFNI_InitializeModule(void)
 
 int MDFNI_Initialize(const char *basedir)
 {
-	return(1);
+    return(1);
 }
 
 static void hookup_ports(bool force);
@@ -2474,46 +2475,62 @@ static void check_variables(void)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (strcmp(var.value, "anaglyph") == 0)
-        setting_vb_3dmode = VB3DMODE_ANAGLYPH; 
-      else if (strcmp(var.value, "cyberscope") == 0)
-        setting_vb_3dmode = VB3DMODE_CSCOPE;
-      else if (strcmp(var.value, "side-by-side") == 0)
-        setting_vb_3dmode = VB3DMODE_SIDEBYSIDE;
-      else if (strcmp(var.value, "vli") == 0)    
-        setting_vb_3dmode = VB3DMODE_VLI;
-      else if (strcmp(var.value, "hli") == 0)
-        setting_vb_3dmode = VB3DMODE_HLI;
+      unsigned old_3dmode = setting_vb_3dmode;
 
-      log_cb(RETRO_LOG_INFO, "[%s]: 3D mode changed: %s .\n", mednafen_core_str, var.value);  
+      if (strcmp(var.value, "anaglyph") == 0)
+         setting_vb_3dmode = VB3DMODE_ANAGLYPH;
+      else if (strcmp(var.value, "cyberscope") == 0)
+         setting_vb_3dmode = VB3DMODE_CSCOPE;
+      else if (strcmp(var.value, "side-by-side") == 0)
+         setting_vb_3dmode = VB3DMODE_SIDEBYSIDE;
+      else if (strcmp(var.value, "vli") == 0)
+         setting_vb_3dmode = VB3DMODE_VLI;
+      else if (strcmp(var.value, "hli") == 0)
+         setting_vb_3dmode = VB3DMODE_HLI;
+
+      if (old_3dmode != setting_vb_3dmode)
+      {
+         SettingChanged("vb.3dmode");
+
+         log_cb(RETRO_LOG_INFO, "[%s]: 3D mode changed: %s .\n", mednafen_core_str, var.value);  
+      }
    }
 
    var.key = "vb_anaglyph_preset";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (strcmp(var.value, "disabled") == 0)
-		 setting_vb_anaglyph_preset = 0; 
-      else if (strcmp(var.value, "red & blue") == 0)
-         setting_vb_anaglyph_preset = 1;      
-      else if (strcmp(var.value, "red & cyan") == 0)
-         setting_vb_anaglyph_preset = 2;      
-	  else if (strcmp(var.value, "red & electric cyan") == 0)	 
-         setting_vb_anaglyph_preset = 3;      
-      else if (strcmp(var.value, "red & green") == 0)
-         setting_vb_anaglyph_preset = 4;      
-      else if (strcmp(var.value, "green & magenta") == 0)
-         setting_vb_anaglyph_preset = 5;      
-      else if (strcmp(var.value, "yellow & blue") == 0)
-         setting_vb_anaglyph_preset = 6;      
+      unsigned old_preset = setting_vb_anaglyph_preset;
 
-      log_cb(RETRO_LOG_INFO, "[%s]: Palette changed: %s .\n", mednafen_core_str, var.value);  
-   }    
+      if (strcmp(var.value, "disabled") == 0)
+         setting_vb_anaglyph_preset = 0;
+      else if (strcmp(var.value, "red & blue") == 0)
+         setting_vb_anaglyph_preset = 1;
+      else if (strcmp(var.value, "red & cyan") == 0)
+         setting_vb_anaglyph_preset = 2;
+      else if (strcmp(var.value, "red & electric cyan") == 0)    
+         setting_vb_anaglyph_preset = 3;
+      else if (strcmp(var.value, "red & green") == 0)
+         setting_vb_anaglyph_preset = 4;
+      else if (strcmp(var.value, "green & magenta") == 0)
+         setting_vb_anaglyph_preset = 5;
+      else if (strcmp(var.value, "yellow & blue") == 0)
+         setting_vb_anaglyph_preset = 6;
+
+      if (old_preset != setting_vb_anaglyph_preset)
+      {
+         SettingChanged("vb.anaglyph.preset");
+
+         log_cb(RETRO_LOG_INFO, "[%s]: Palette changed: %s .\n", mednafen_core_str, var.value);  
+      }
+   }
 
    var.key = "vb_color_mode";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
+      unsigned old_color = setting_vb_default_color;
+
       if (strcmp(var.value, "black & red") == 0)
       {
          setting_vb_lcolor = 0xFF0000;
@@ -2554,8 +2571,14 @@ static void check_variables(void)
          setting_vb_lcolor = 0xFFFF00;      
          setting_vb_rcolor = 0x000000;
       }
-	  setting_vb_default_color = setting_vb_lcolor;
-      log_cb(RETRO_LOG_INFO, "[%s]: Palette changed: %s .\n", mednafen_core_str, var.value);  
+      setting_vb_default_color = setting_vb_lcolor;
+
+      if (old_color != setting_vb_default_color)
+      {
+         SettingChanged("vb.default_color");
+
+         log_cb(RETRO_LOG_INFO, "[%s]: Palette changed: %s .\n", mednafen_core_str, var.value);  
+      }
    }   
 
    var.key = "vb_right_analog_to_digital";
@@ -2590,8 +2613,8 @@ static void check_variables(void)
       }
       else
          setting_vb_right_analog_to_digital = false;
-   } 
-	
+   }
+
    var.key = "vb_cpu_emulation";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -2620,7 +2643,7 @@ bool retro_load_game(const struct retro_game_info *info)
    if (!info)
       return false;
 
-   struct retro_input_descriptor desc[] = {
+   static struct retro_input_descriptor desc[] = {
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "Left D-Pad Left" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "Left D-Pad Up" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "Left D-Pad Down" },
@@ -2710,7 +2733,7 @@ static void update_input(void)
       for (unsigned i = 0; i < MAX_BUTTONS; i++)
          input_buf[j] |= map[i] != -1u &&
             input_state_cb(j, RETRO_DEVICE_JOYPAD, 0, map[i]) ? (1 << i) : 0;
-            
+
       if (setting_vb_right_analog_to_digital)
       {
          int16_t analog_x = input_state_cb(j, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
@@ -2883,9 +2906,9 @@ void retro_set_environment(retro_environment_t cb)
    environ_cb = cb;
 
    static const struct retro_variable vars[] = {
-      { "vb_3dmode", "3D mode (restart); anaglyph|cyberscope|side-by-side|vli|hli"},
-      { "vb_anaglyph_preset", "Anaglyph preset (restart); disabled|red & blue|red & cyan|red & electric cyan|red & green|green & magenta|yellow & blue" },
-      { "vb_color_mode", "Palette (restart); black & red|black & white|black & blue|black & cyan|black & electric cyan|black & green|black & magenta|black & yellow" },
+      { "vb_3dmode", "3D mode; anaglyph|cyberscope|side-by-side|vli|hli"},
+      { "vb_anaglyph_preset", "Anaglyph preset; disabled|red & blue|red & cyan|red & electric cyan|red & green|green & magenta|yellow & blue" },
+      { "vb_color_mode", "Palette; black & red|black & white|black & blue|black & cyan|black & electric cyan|black & green|black & magenta|black & yellow" },
       { "vb_right_analog_to_digital", "Right analog to digital; disabled|enabled|invert x|invert y|invert both" },
       { "vb_cpu_emulation", "CPU emulation (restart); accurate|fast" },
       { NULL, NULL },
