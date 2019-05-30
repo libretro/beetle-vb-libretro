@@ -874,8 +874,6 @@ void VIP_StartFrame(EmulateSpecStruct *espec)
    {
       MakeColorLUT(espec->surface->format);
       Recalc3DModeStuff(espec->surface->format.colorspace != MDFN_COLORSPACE_RGB);
-
-      VidSettingsDirty = false;
    }
 
    espec->DisplayRect.x = 0;
@@ -911,6 +909,17 @@ void VIP_StartFrame(EmulateSpecStruct *espec)
 
    surface = espec->surface;
    skip = espec->skip;
+   
+   if(VidSettingsDirty)
+   {
+#if defined(WANT_32BPP)
+	  memset(surface->pixels, 0, 768 * 448 * 4);
+#elif defined(WANT_16BPP)
+	  memset(surface->pixels, 0, 768 * 448 * 2);
+#endif
+
+      VidSettingsDirty = false;
+   }
 }
 
 void VIP_ResetTS(void)
