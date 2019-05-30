@@ -31,7 +31,7 @@ else
 endif
 
 
-NEED_BPP = 16
+NEED_BPP = 32
 NEED_BLIP = 1
 
 prefix := /usr
