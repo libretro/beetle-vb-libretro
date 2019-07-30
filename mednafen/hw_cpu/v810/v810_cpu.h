@@ -170,8 +170,6 @@ class V810
 
  INLINE void ResetTS(v810_timestamp_t new_base_timestamp)
  {
-  assert(next_event_ts > v810_timestamp);
-
   next_event_ts -= (v810_timestamp - new_base_timestamp);
   v810_timestamp = new_base_timestamp;
  }

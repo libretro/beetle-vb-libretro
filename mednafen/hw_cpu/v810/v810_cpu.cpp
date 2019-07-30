@@ -356,8 +356,6 @@ void V810::Kill(void)
 
 void V810::SetInt(int level)
 {
- assert(level >= -1 && level <= 15);
-
  ilevel = level;
  RecalcIPendingCache();
 }
@@ -366,16 +364,8 @@ uint8 *V810::SetFastMap(uint32 addresses[], uint32 length, unsigned int num_addr
 {
  uint8 *ret = NULL;
 
- for(unsigned int i = 0; i < num_addresses; i++)
- {
-  assert((addresses[i] & (V810_FAST_MAP_PSIZE - 1)) == 0);
- }
- assert((length & (V810_FAST_MAP_PSIZE - 1)) == 0);
-
  if(!(ret = (uint8 *)malloc(length + V810_FAST_MAP_TRAMPOLINE_SIZE)))
- {
   return(NULL);
- }
 
  for(unsigned int i = length; i < length + V810_FAST_MAP_TRAMPOLINE_SIZE; i += 2)
  {
@@ -763,31 +753,22 @@ void V810::SetPC(uint32 new_pc)
 
 uint32 V810::GetPR(const unsigned int which)
 {
- assert(which <= 0x1F);
-
-
  return(which ? P_REG[which] : 0);
 }
 
 void V810::SetPR(const unsigned int which, uint32 value)
 {
- assert(which <= 0x1F);
-
  if(which)
   P_REG[which] = value;
 }
 
 uint32 V810::GetSR(const unsigned int which)
 {
- assert(which <= 0x1F);
-
  return(GetSREG(which));
 }
 
 void V810::SetSR(const unsigned int which, uint32 value)
 {
- assert(which <= 0x1F);
-
 // SetSREG(timestamp, which, value);
 }
 
