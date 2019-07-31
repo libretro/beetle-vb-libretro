@@ -55,6 +55,8 @@ static MDFN_Surface *surf;
 #include <iconv.h>
 #endif
 
+#include "libretro_core_options.h"
+
 enum
 {
  ANAGLYPH_PRESET_DISABLED = 0,
@@ -2904,16 +2906,7 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 void retro_set_environment(retro_environment_t cb)
 {
    environ_cb = cb;
-
-   static const struct retro_variable vars[] = {
-      { "vb_3dmode", "3D mode; anaglyph|cyberscope|side-by-side|vli|hli"},
-      { "vb_anaglyph_preset", "Anaglyph preset; disabled|red & blue|red & cyan|red & electric cyan|red & green|green & magenta|yellow & blue" },
-      { "vb_color_mode", "Palette; black & red|black & white|black & blue|black & cyan|black & electric cyan|black & green|black & magenta|black & yellow" },
-      { "vb_right_analog_to_digital", "Right analog to digital; disabled|enabled|invert x|invert y|invert both" },
-      { "vb_cpu_emulation", "CPU emulation (restart); accurate|fast" },
-      { NULL, NULL },
-   };
-   cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
+   libretro_set_core_options(environ_cb);
 }
 
 void retro_set_audio_sample(retro_audio_sample_t cb)
