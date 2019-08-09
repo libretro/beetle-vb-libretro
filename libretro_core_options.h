@@ -139,6 +139,81 @@ struct retro_core_option_definition option_defs_us[] = {
 
 /* RETRO_LANGUAGE_TURKISH */
 
+struct retro_core_option_definition option_defs_tr[] = {
+   {
+      "vb_3dmode",
+      "3B modu",
+      "3B modunu seçin. Anaglif - klasik çift lens renkli camlarla birlikte kullanılır. Cyberscope - CyberScope ile kullanılmak üzere tasarlanan 3B cihaz. sidebyside - sol göz resmi solda ve sağ göz resmi sağda görüntülenir. vli - Dikey çizgiler sol ve sağ görünüm arasında değişir. hli - Yatay çizgiler sol ve sağ görünüm arasında değişir.",
+      {
+         { "anaglyph",  "Anaglif" },
+         { "cyberscope",  NULL },
+         { "side-by-side",  NULL },
+         { "vli", NULL},
+         { "hli", NULL},
+         { NULL, NULL },
+      },
+      "anaglyph",
+   },
+   {
+      "vb_anaglyph_preset",
+      "Anaglif Ön ayarı",
+      "Anaglif önceden ayarlanmış renkler.",
+      {
+         { "disabled",     "devre dışı" },
+         { "red & blue",     NULL },
+         { "red & cyan",     NULL },
+         { "red & electric cyan",     NULL },
+         { "green & magenta",     NULL },
+         { "yellow & blue",     NULL },
+         { NULL, NULL},
+      },
+      "disabled",
+   },
+   {
+      "vb_color_mode",
+      "Palet",
+      "",
+      {
+         { "black & red", NULL },
+         { "black & white",  NULL },
+         { "black & blue",  NULL },
+         { "black & cyan",  NULL },
+         { "black & electric cyan",  NULL },
+         { "black & green",  NULL },
+         { "black & magenta",  NULL },
+         { "black & yellow",  NULL },
+         { NULL, NULL},
+      },
+      "black & red",
+   },
+   {
+      "vb_right_analog_to_digital",
+      "Dijital sağ analog",
+      "",
+      {
+         { "disabled",  "devre dışı" },
+         { "enabled",  "etkin" },
+         { "invert x",  NULL },
+         { "invert y",  NULL },
+         { "invert both",  NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
+      "vb_cpu_emulation",
+      "CPU emülasyonu (Yeniden başlatma gerekir)",
+      "Daha hızlı ve doğru (daha yavaş) emülasyon arasında seçim yapın.",
+      {
+         { "accurate",      "doğru" },
+         { "fast",      "hızlı" },
+         { NULL, NULL},
+      },
+      "disabled",
+   },
+   { NULL, NULL, NULL, { NULL, NULL }, NULL },
+};
+
 /*
  ********************************
  * Language Mapping
@@ -164,7 +239,7 @@ struct retro_core_option_definition *option_defs_intl[RETRO_LANGUAGE_LAST] = {
    NULL,           /* RETRO_LANGUAGE_VIETNAMESE */
    NULL,           /* RETRO_LANGUAGE_ARABIC */
    NULL,           /* RETRO_LANGUAGE_GREEK */
-   NULL,           /* RETRO_LANGUAGE_TURKISH */
+   option_defs_tr, /* RETRO_LANGUAGE_TURKISH */
 };
 
 /*
