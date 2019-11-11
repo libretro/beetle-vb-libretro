@@ -20,11 +20,11 @@
 
     // Macro test taken from http://gcc.gnu.org/viewcvs/trunk/gcc/testsuite/gcc.dg/20020919-1.c?view=markup&pathrev=142696
     //#if defined (__powerpc__) || defined (__PPC__) || defined (__ppc__)	|| defined (__POWERPC__) || defined (PPC) || defined (_IBMR2) 
-    //	register v810_timestamp_t timestamp_rl asm("15") = v810_timestamp;
+    // v810_timestamp_t timestamp_rl asm("15") = v810_timestamp;
     //#elif defined(__x86_64__)
-    //	register v810_timestamp_t timestamp_rl asm("r11") = v810_timestamp;
+    // v810_timestamp_t timestamp_rl asm("r11") = v810_timestamp;
     //#else
-	register v810_timestamp_t timestamp_rl = v810_timestamp;
+	v810_timestamp_t timestamp_rl = v810_timestamp;
     //#endif
 
     uint32 opcode;
@@ -42,6 +42,8 @@
      uint32 old_PC = RB_GETPC();
      #endif
      uint32 tmpop;
+
+     //assert(timestamp_rl <= next_event_ts);
 
      if(!IPendingCache)
      {
@@ -80,17 +82,55 @@
        	 opcode = (tmpop >> 9) | IPendingCache;
 
 	 //printf("%02x\n", opcode >> 1);
+#if HAVE_COMPUTED_GOTO
+	 #define CGBEGIN static const void *const op_goto_table[256] = {
+	 #define CGE(l) &&l,
+	 #define CGEND }; goto *op_goto_table[opcode];
+#else
+	 /* (uint8) cast for cheaper alternative to generated branch+compare bounds check instructions, but still more
+ 	    expensive than computed goto which needs no masking nor bounds checking.
+         */
+	 #define CGBEGIN { enum { CGESB = 1 + __COUNTER__ }; switch((uint8)opcode) {
+	 #define CGE(l) case __COUNTER__ - CGESB: goto l;
+	 #define CGEND } }
+#endif
 
-          #ifdef _MSC_VER
-             #include "v810_op_table_msvc.inc"
-          #else
-             static const void *const op_goto_table[256] =
-             {
-                #include "v810_op_table.inc"
-             };
+	 CGBEGIN
+		CGE(op_MOV)   CGE(op_MOV)   CGE(op_ADD)   CGE(op_ADD)   CGE(op_SUB)     CGE(op_SUB)     CGE(op_CMP)     CGE(op_CMP) 
+		CGE(op_SHL)   CGE(op_SHL)   CGE(op_SHR)   CGE(op_SHR)   CGE(op_JMP)     CGE(op_JMP)     CGE(op_SAR)     CGE(op_SAR) 
+		CGE(op_MUL)   CGE(op_MUL)   CGE(op_DIV)   CGE(op_DIV)   CGE(op_MULU)    CGE(op_MULU)    CGE(op_DIVU)    CGE(op_DIVU)
+		CGE(op_OR)    CGE(op_OR)    CGE(op_AND)   CGE(op_AND)   CGE(op_XOR)     CGE(op_XOR)     CGE(op_NOT)     CGE(op_NOT)
+		CGE(op_MOV_I) CGE(op_MOV_I) CGE(op_ADD_I) CGE(op_ADD_I) CGE(op_SETF)    CGE(op_SETF)    CGE(op_CMP_I)   CGE(op_CMP_I)
+		CGE(op_SHL_I) CGE(op_SHL_I) CGE(op_SHR_I) CGE(op_SHR_I) CGE(op_EI)      CGE(op_EI)      CGE(op_SAR_I)   CGE(op_SAR_I)
+		CGE(op_TRAP)  CGE(op_TRAP)  CGE(op_RETI)  CGE(op_RETI)  CGE(op_HALT)    CGE(op_HALT)    CGE(op_INVALID) CGE(op_INVALID)
+		CGE(op_LDSR)  CGE(op_LDSR)  CGE(op_STSR)  CGE(op_STSR)  CGE(op_DI)      CGE(op_DI)      CGE(op_BSTR)    CGE(op_BSTR)
+		CGE(op_BV)    CGE(op_BL)    CGE(op_BE)    CGE(op_BNH)   CGE(op_BN)      CGE(op_BR)      CGE(op_BLT)     CGE(op_BLE)
+		CGE(op_BNV)   CGE(op_BNL)   CGE(op_BNE)   CGE(op_BH)    CGE(op_BP)      CGE(op_NOP)     CGE(op_BGE)     CGE(op_BGT)
+		CGE(op_MOVEA) CGE(op_MOVEA) CGE(op_ADDI)  CGE(op_ADDI)  CGE(op_JR)      CGE(op_JR)      CGE(op_JAL)     CGE(op_JAL)
+		CGE(op_ORI)   CGE(op_ORI)   CGE(op_ANDI)  CGE(op_ANDI)  CGE(op_XORI)    CGE(op_XORI)    CGE(op_MOVHI)   CGE(op_MOVHI)
+		CGE(op_LD_B)  CGE(op_LD_B)  CGE(op_LD_H)  CGE(op_LD_H)  CGE(op_INVALID) CGE(op_INVALID) CGE(op_LD_W)    CGE(op_LD_W)
+		CGE(op_ST_B)  CGE(op_ST_B)  CGE(op_ST_H)  CGE(op_ST_H)  CGE(op_INVALID) CGE(op_INVALID) CGE(op_ST_W)    CGE(op_ST_W) 
+		CGE(op_IN_B)  CGE(op_IN_B)  CGE(op_IN_H)  CGE(op_IN_H)  CGE(op_CAXI)    CGE(op_CAXI)    CGE(op_IN_W)    CGE(op_IN_W)
+		CGE(op_OUT_B) CGE(op_OUT_B) CGE(op_OUT_H) CGE(op_OUT_H) CGE(op_FPP)     CGE(op_FPP)     CGE(op_OUT_W)   CGE(op_OUT_W)
 
-             goto *op_goto_table[opcode];
-             #endif
+		CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID)
+		CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) 
+		CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID)
+		CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID)
+		CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID)
+		CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID)
+		CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID)
+		CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID)
+
+		CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID)
+		CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID)
+		CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID)
+		CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID)
+		CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID)
+		CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID)
+		CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID)
+		CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INVALID) CGE(op_INT_HANDLER)
+	 CGEND
 
 	// Bit string subopcodes
         #define DO_AM_BSTR()							\
@@ -200,7 +240,7 @@
 
             // set CY before we destroy the regisrer info....
             SetFlag(PSW_CY, (val != 0) && ((P_REG[arg2] >> (32 - val))&0x01) );
-	    SetFlag(PSW_OV, false);
+	    SetFlag(PSW_OV, FALSE);
             SetPREG(arg2, P_REG[arg2] << val);
 	    SetSZ(P_REG[arg2]);            
 	END_OP();
@@ -210,7 +250,7 @@
             val = P_REG[arg1] & 0x1F;
             // set CY before we destroy the regisrer info....
             SetFlag(PSW_CY, (val) && ((P_REG[arg2] >> (val-1))&0x01));
-	    SetFlag(PSW_OV, false);
+	    SetFlag(PSW_OV, FALSE);
 	    SetPREG(arg2, P_REG[arg2] >> val);
 	    SetSZ(P_REG[arg2]);
 	END_OP();
@@ -233,7 +273,7 @@
             val = P_REG[arg1] & 0x1F;
 			
 	    SetFlag(PSW_CY, (val) && ((P_REG[arg2]>>(val-1))&0x01) );
-	    SetFlag(PSW_OV, false);
+	    SetFlag(PSW_OV, FALSE);
 
 	    SetPREG(arg2, (uint32) ((int32)P_REG[arg2] >> val));
             
@@ -243,28 +283,28 @@
 	BEGIN_OP(OR);
             ADDCLOCK(1);
             SetPREG(arg2, P_REG[arg1] | P_REG[arg2]);
-	    SetFlag(PSW_OV, false);
+	    SetFlag(PSW_OV, FALSE);
 	    SetSZ(P_REG[arg2]);
 	END_OP();
 
 	BEGIN_OP(AND);
             ADDCLOCK(1);
             SetPREG(arg2, P_REG[arg1] & P_REG[arg2]);
-	    SetFlag(PSW_OV, false);
+	    SetFlag(PSW_OV, FALSE);
 	    SetSZ(P_REG[arg2]);
 	END_OP();
 
 	BEGIN_OP(XOR);
             ADDCLOCK(1);
 	    SetPREG(arg2, P_REG[arg1] ^ P_REG[arg2]);
-	    SetFlag(PSW_OV, false);
+	    SetFlag(PSW_OV, FALSE);
 	    SetSZ(P_REG[arg2]);
 	END_OP();
 
 	BEGIN_OP(NOT);
             ADDCLOCK(1);
 	    SetPREG(arg2, ~P_REG[arg1]);
-	    SetFlag(PSW_OV, false);
+	    SetFlag(PSW_OV, FALSE);
 	    SetSZ(P_REG[arg2]);
 	END_OP();
 
@@ -357,7 +397,7 @@
 	    SetFlag(PSW_CY, arg1 && ((P_REG[arg2] >> (arg1-1))&0x01) );
             // set CY before we destroy the regisrer info....
             SetPREG(arg2, P_REG[arg2] >> arg1);
-	    SetFlag(PSW_OV, false);
+	    SetFlag(PSW_OV, FALSE);
 	    SetSZ(P_REG[arg2]);
 	END_OP();
 
@@ -367,7 +407,7 @@
             // set CY before we destroy the regisrer info....
 
             SetPREG(arg2, P_REG[arg2] << arg1);
-	    SetFlag(PSW_OV, false);
+	    SetFlag(PSW_OV, FALSE);
 	    SetSZ(P_REG[arg2]);
 	END_OP();
 
@@ -377,7 +417,7 @@
 
             SetPREG(arg2, (uint32) ((int32)P_REG[arg2] >> arg1));
 
-	    SetFlag(PSW_OV, false);
+	    SetFlag(PSW_OV, FALSE);
 	    SetSZ(P_REG[arg2]);
 	END_OP();
 
@@ -470,7 +510,7 @@
 	END_OP();
 
 	BEGIN_OP(BR);
-          	COND_BRANCH(true);
+          	COND_BRANCH(TRUE);
 	END_OP();
 
 	BEGIN_OP(BLT);
@@ -549,21 +589,21 @@
 	BEGIN_OP(ORI);
             ADDCLOCK(1);
             SetPREG(arg3, arg1 | P_REG[arg2]);
-	    SetFlag(PSW_OV, false);
+	    SetFlag(PSW_OV, FALSE);
 	    SetSZ(P_REG[arg3]);
 	END_OP();
 
 	BEGIN_OP(ANDI);
             ADDCLOCK(1);
             SetPREG(arg3, (arg1 & P_REG[arg2]));
-	    SetFlag(PSW_OV, false);
+	    SetFlag(PSW_OV, FALSE);
 	    SetSZ(P_REG[arg3]);
 	END_OP();
 
 	BEGIN_OP(XORI);
             ADDCLOCK(1);
 	    SetPREG(arg3, arg1 ^ P_REG[arg2]);
-	    SetFlag(PSW_OV, false);
+	    SetFlag(PSW_OV, FALSE);
 	    SetSZ(P_REG[arg3]);
 	END_OP();
 
@@ -640,7 +680,12 @@
 			}
 			else
 			{
-                         SetPREG(arg3, MemRead16(timestamp, tmp2) | (MemRead16(timestamp, tmp2 | 2) << 16));
+			 uint32 rv;
+
+			 rv = MemRead16(timestamp, tmp2);
+			 rv |= MemRead16(timestamp, tmp2 | 2) << 16;
+			
+                         SetPREG(arg3, rv);
 
                          if(lastop >= 0)
                          {
@@ -739,9 +784,14 @@
 	     else
 	     {
 	      uint32 eff_addr = (sign_16(arg1) + P_REG[arg2]) & 0xFFFFFFFC;
+	      uint32 rv;
 
 	      ADDCLOCK(5);
-              SetPREG(arg3, IORead16(timestamp, eff_addr) | ((IORead16(timestamp, eff_addr | 2) << 16)));
+
+	      rv = IORead16(timestamp, eff_addr);
+	      rv |= IORead16(timestamp, eff_addr | 2) << 16;
+
+              SetPREG(arg3, rv);
 	     }
 	     lastop = LASTOP_IN;
 	END_OP_SKIPLO();
@@ -866,7 +916,7 @@
 	     SetPREG(30, remainder);
              SetPREG(arg2, quotient);
 
-	     SetFlag(PSW_OV, false);
+	     SetFlag(PSW_OV, FALSE);
 	     SetSZ(quotient);
             }
 	    lastop = -1;
@@ -889,7 +939,7 @@
 	    {
                 if((P_REG[arg2]==0x80000000)&&(P_REG[arg1]==0xFFFFFFFF)) 
 		{
-			SetFlag(PSW_OV, true);
+			SetFlag(PSW_OV, TRUE);
 			P_REG[30]=0;
 	                SetPREG(arg2, 0x80000000);
 	                SetSZ(P_REG[arg2]);
@@ -903,7 +953,7 @@
 	             SetPREG(30, remainder);
 	             SetPREG(arg2, quotient);
 
-	             SetFlag(PSW_OV, false);
+	             SetFlag(PSW_OV, FALSE);
 	             SetSZ(quotient);
 		}
 	    }
@@ -926,13 +976,13 @@
             if(bstr_subop(timestamp, arg2, arg1))
 	    {
 	     RB_DECPCBY2();
-             in_bstr = true;
+             in_bstr = TRUE;
              in_bstr_to = tmpop;
 	    }
 	    else
 	    {
-	     in_bstr = false;
-	     have_src_cache = have_dst_cache = false;
+	     in_bstr = FALSE;
+	     have_src_cache = have_dst_cache = FALSE;
 	    }
 	END_OP();
 
@@ -970,7 +1020,10 @@
 	     if(MemReadBus32[addr >> 24])
 	      tmp = MemRead32(timestamp, addr);
 	     else
-	      tmp = MemRead16(timestamp, addr) | (MemRead16(timestamp, addr | 2) << 16);
+	     {
+	      tmp = MemRead16(timestamp, addr);
+	      tmp |= MemRead16(timestamp, addr | 2) << 16;
+	     }
 
              compare_temp = P_REG[arg3] - tmp;
 
@@ -1030,9 +1083,9 @@
 	 Halted = HALT_NONE;
 
 	 // Invalidate our bitstring state(forces the instruction to be re-read, and the r/w buffers reloaded).
-	 in_bstr = false;
-	 have_src_cache = false;
-	 have_dst_cache = false;
+	 in_bstr = FALSE;
+	 have_src_cache = FALSE;
+	 have_dst_cache = FALSE;
 
 	 IPendingCache = 0;
 

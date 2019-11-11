@@ -1,19 +1,23 @@
-/* Mednafen - Multi-system Emulator
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
+/******************************************************************************/
+/* Mednafen Virtual Boy Emulation Module                                      */
+/******************************************************************************/
+/* input.cpp:
+**  Copyright (C) 2010-2016 Mednafen Team
+**
+** This program is free software; you can redistribute it and/or
+** modify it under the terms of the GNU General Public License
+** as published by the Free Software Foundation; either version 2
+** of the License, or (at your option) any later version.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software Foundation, Inc.,
+** 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 
 #include "vb.h"
 #include "input.h"
@@ -22,7 +26,7 @@ static bool InstantReadHack;
 
 static bool IntPending;
 
-static uint8 *data_ptr;
+static uint8 *data_ptr[2];
 
 static uint16 PadData;
 static uint16 PadLatched;
@@ -53,36 +57,46 @@ void VBINPUT_SetInstantReadHack(bool enabled)
    InstantReadHack = enabled;
 }
 
-void VBINPUT_SetInput(int port, const char *type, void *ptr)
+
+void VBINPUT_SetInput(unsigned port, const char *type, uint8 *ptr)
 {
-   data_ptr = (uint8 *)ptr;
+   //assert(port < 2);
+   data_ptr[port] = (uint8 *)ptr;
 }
 
 uint8 VBINPUT_Read(v810_timestamp_t &timestamp, uint32 A)
 {
-   uint8_t ret = 0;
+   uint8 ret = 0;
+
 
    VBINPUT_Update(timestamp);
 
+   //if(((A & 0xFF) == 0x10 || (A & 0xFF) == 0x14))
+   // printf("Read %d\n", timestamp);
+
+   //if(((A & 0xFF) == 0x10 || (A & 0xFF) == 0x14) && ReadCounter > 0)
+   //{
+   // printf("Input port read during hardware transfer: %08x %d\n", A, timestamp);
+   //}
+  
    switch(A & 0xFF)
    {
-      case 0x10:
-         if(InstantReadHack)
-            ret = PadData;
-         else
-            ret = SDR & 0xFF;
-         break;
-      case 0x14:
-         if(InstantReadHack)
-            ret = PadData >> 8;
-         else
-            ret = SDR >> 8;
-         break;
-      case 0x28:
-         ret = SCR | (0x40 | 0x08 | SCR_HW_SI);
-         if(ReadCounter > 0)
-            ret |= SCR_SI_STAT;
-         break;
+      case 0x10: if(InstantReadHack)
+                    ret = PadData;
+                 else
+                    ret = SDR & 0xFF;
+                 break;
+
+      case 0x14: if(InstantReadHack)
+                    ret = PadData >> 8;
+                 else
+                    ret = SDR >> 8;
+                 break;
+
+      case 0x28: ret = SCR | (0x40 | 0x08 | SCR_HW_SI);
+                 if(ReadCounter > 0)
+                    ret |= SCR_SI_STAT;
+                 break;
    }
 
    // printf("Input Read: %08x %02x\n", A, ret);
@@ -126,14 +140,9 @@ void VBINPUT_Write(v810_timestamp_t &timestamp, uint32 A, uint8 V)
    VB_SetEvent(VB_EVENT_INPUT, (ReadCounter > 0) ? (timestamp + ReadCounter) : VB_EVENT_NONONO);
 }
 
-static inline uint16_t MDFN_de16lsb(const uint8_t *morp)
-{
-   return(morp[0] | (morp[1] << 8));
-}
-
 void VBINPUT_Frame(void)
 {
-   PadData = (MDFN_de16lsb(data_ptr) << 2) | 0x2;
+   PadData = (MDFN_de16lsb(data_ptr[0]) << 2) | 0x2 | (*data_ptr[1] & 0x1);
 }
 
 v810_timestamp_t VBINPUT_Update(const v810_timestamp_t timestamp)
@@ -192,7 +201,7 @@ void VBINPUT_Power(void)
    VBIRQ_Assert(VBIRQ_SOURCE_INPUT, 0);
 }
 
-int VBINPUT_StateAction(StateMem *sm, int load, int data_only)
+int VBINPUT_StateAction(StateMem *sm, const unsigned load, const bool data_only)
 {
    SFORMAT StateRegs[] =
    {

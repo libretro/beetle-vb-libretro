@@ -1,37 +1,38 @@
-/* Mednafen - Multi-system Emulator
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
+/******************************************************************************/
+/* Mednafen Virtual Boy Emulation Module                                      */
+/******************************************************************************/
+/* vsu.cpp:
+**  Copyright (C) 2010-2016 Mednafen Team
+**
+** This program is free software; you can redistribute it and/or
+** modify it under the terms of the GNU General Public License
+** as published by the Free Software Foundation; either version 2
+** of the License, or (at your option) any later version.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software Foundation, Inc.,
+** 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 
 #include "vb.h"
 #include "vsu.h"
 
 static const unsigned int Tap_LUT[8] = { 15 - 1, 11 - 1, 14 - 1, 5 - 1, 9 - 1, 7 - 1, 10 - 1, 12 - 1 };
 
-VSU::VSU(Blip_Buffer *bb_l, Blip_Buffer *bb_r)
+VSU::VSU()
 {
-   unsigned ch, lr;
+   Synth.volume(1.0 / 6 / 2);
 
-   sbuf[0] = bb_l;
-   sbuf[1] = bb_r;
-
-   Blip_Synth_set_volume(&Synth, 1.0 / 6 / 2, 0x400);
-
-   for(ch = 0; ch < 6; ch++)
-      for(lr = 0; lr < 2; lr++)
+   for(int ch = 0; ch < 6; ch++)
+   {
+      for(int lr = 0; lr < 2; lr++)
          last_output[ch][lr] = 0;
+   }
 }
 
 VSU::~VSU()
@@ -39,15 +40,23 @@ VSU::~VSU()
 
 }
 
+void VSU::SetSoundRate(double rate)
+{
+   for(int y = 0; y < 2; y++)
+   {
+      sbuf[y].set_sample_rate(rate ? rate : 44100, 50);
+      sbuf[y].clock_rate((long)(VB_MASTER_CLOCK / 4));
+      sbuf[y].bass_freq(20);
+   }
+}
+
 void VSU::Power(void)
 {
-   unsigned ch;
-
    SweepControl = 0;
    SweepModCounter = 0;
    SweepModClockDivider = 1;
 
-   for(ch = 0; ch < 6; ch++)
+   for(int ch = 0; ch < 6; ch++)
    {
       IntlControl[ch] = 0;
       LeftLevel[ch] = 0;
@@ -59,9 +68,9 @@ void VSU::Power(void)
       EffFreq[ch] = 0;
       Envelope[ch] = 0;
       WavePos[ch] = 0;
-      FreqCounter[ch] = 0;
+      FreqCounter[ch] = 1;
       IntervalCounter[ch] = 0;
-      EnvelopeCounter[ch] = 0;
+      EnvelopeCounter[ch] = 1;
 
       EffectsClockDivider[ch] = 4800;
       IntervalClockDivider[ch] = 4;
@@ -115,101 +124,95 @@ void VSU::Write(int32 timestamp, uint32 A, uint8 V)
       else
          switch((A >> 2) & 0xF)
          {
-            case 0x0:
-               IntlControl[ch] = V & ~0x40;
+            case 0x0: IntlControl[ch] = V & ~0x40;
 
-               if(V & 0x80)
-               {
-                  EffFreq[ch] = Frequency[ch];
-                  if(ch == 5)
-                     FreqCounter[ch] = 10 * (2048 - EffFreq[ch]);
-                  else
-                     FreqCounter[ch] = 2048 - EffFreq[ch];
-                  IntervalCounter[ch] = (V & 0x1F) + 1;
-                  EnvelopeCounter[ch] = (EnvControl[ch] & 0x7) + 1;
+                      if(V & 0x80)
+                      {
+                         EffFreq[ch] = Frequency[ch];
+                         if(ch == 5)
+                            FreqCounter[ch] = 10 * (2048 - EffFreq[ch]);
+                         else
+                            FreqCounter[ch] = 2048 - EffFreq[ch];
+                         IntervalCounter[ch] = (V & 0x1F) + 1;
+                         EnvelopeCounter[ch] = (EnvControl[ch] & 0x7) + 1;
 
-                  if(ch == 4)
-                  {
-                     SweepModCounter = (SweepControl >> 4) & 7;
-                     SweepModClockDivider = (SweepControl & 0x80) ? 8 : 1;
-                     ModWavePos = 0;
-                  }
+                         if(ch == 4)
+                         {
+                            SweepModCounter = (SweepControl >> 4) & 7;
+                            SweepModClockDivider = (SweepControl & 0x80) ? 8 : 1;
+                            ModWavePos = 0;
+                         }
 
-                  WavePos[ch] = 0;
+                         WavePos[ch] = 0;
 
-                  if(ch == 5)	// Not sure if this is correct.
-                     lfsr = 1;
+                         if(ch == 5)	// Not sure if this is correct.
+                            lfsr = 1;
 
-                  //if(!(IntlControl[ch] & 0x80))
-                  // Envelope[ch] = (EnvControl[ch] >> 4) & 0xF;
+                         //if(!(IntlControl[ch] & 0x80))
+                         // Envelope[ch] = (EnvControl[ch] >> 4) & 0xF;
 
-                  EffectsClockDivider[ch] = 4800;
-                  IntervalClockDivider[ch] = 4;
-                  EnvelopeClockDivider[ch] = 4;
-               }
-               break;
+                         EffectsClockDivider[ch] = 4800;
+                         IntervalClockDivider[ch] = 4;
+                         EnvelopeClockDivider[ch] = 4;
+                      }
+                      break;
 
-            case 0x1:
-               LeftLevel[ch] = (V >> 4) & 0xF;
-               RightLevel[ch] = (V >> 0) & 0xF;
-               break;
+            case 0x1: LeftLevel[ch] = (V >> 4) & 0xF;
+                      RightLevel[ch] = (V >> 0) & 0xF;
+                      break;
 
-            case 0x2:
-               Frequency[ch] &= 0xFF00;
-               Frequency[ch] |= V << 0;
-               EffFreq[ch] &= 0xFF00;
-               EffFreq[ch] |= V << 0;
-               break;
+            case 0x2: Frequency[ch] &= 0xFF00;
+                      Frequency[ch] |= V << 0;
+                      EffFreq[ch] &= 0xFF00;
+                      EffFreq[ch] |= V << 0;
+                      break;
 
-            case 0x3:
-               Frequency[ch] &= 0x00FF;
-               Frequency[ch] |= (V & 0x7) << 8;
-               EffFreq[ch] &= 0x00FF;
-               EffFreq[ch] |= (V & 0x7) << 8;
-               break;
+            case 0x3: Frequency[ch] &= 0x00FF;
+                      Frequency[ch] |= (V & 0x7) << 8;
+                      EffFreq[ch] &= 0x00FF;
+                      EffFreq[ch] |= (V & 0x7) << 8;
+                      break;
 
-            case 0x4:
-               EnvControl[ch] &= 0xFF00;
-               EnvControl[ch] |= V << 0;
+            case 0x4: EnvControl[ch] &= 0xFF00;
+                      EnvControl[ch] |= V << 0;
 
-               Envelope[ch] = (V >> 4) & 0xF;
-               break;
+                      Envelope[ch] = (V >> 4) & 0xF;
+                      break;
 
-            case 0x5:
-               EnvControl[ch] &= 0x00FF;
-               if(ch == 4)
-                  EnvControl[ch] |= (V & 0x73) << 8;
-               else if(ch == 5)
-               {
-                  EnvControl[ch] |= (V & 0x73) << 8;
-                  lfsr = 1;
-               }
-               else
-                  EnvControl[ch] |= (V & 0x03) << 8;
-               break;
+            case 0x5: EnvControl[ch] &= 0x00FF;
+                      if(ch == 4)
+                         EnvControl[ch] |= (V & 0x73) << 8;
+                      else if(ch == 5)
+                      {
+                         EnvControl[ch] |= (V & 0x73) << 8;
+                         lfsr = 1;
+                      }
+                      else
+                         EnvControl[ch] |= (V & 0x03) << 8;
+                      break;
 
-            case 0x6:
-               RAMAddress[ch] = V & 0xF;
-               break;
+            case 0x6: RAMAddress[ch] = V & 0xF;
+                      break;
 
-            case 0x7:
-               if(ch == 4)
-                  SweepControl = V;
-               break;
+            case 0x7: if(ch == 4)
+                      {
+                         SweepControl = V;
+                      }
+                      break;
          }
    }
 }
 
 INLINE void VSU::CalcCurrentOutput(int ch, int &left, int &right)
 {
-   int WD;
-   int l_ol, r_ol;
-
    if(!(IntlControl[ch] & 0x80))
    {
       left = right = 0;
       return;
    }
+
+   int WD;
+   int l_ol, r_ol;
 
    if(ch == 5)
       WD = NoiseLatcher;	//(NoiseLatcher << 6) - NoiseLatcher;
@@ -240,18 +243,18 @@ INLINE void VSU::CalcCurrentOutput(int ch, int &left, int &right)
 
 void VSU::Update(int32 timestamp)
 {
+   //puts("VSU Start");
    int left, right;
-   unsigned ch;
 
-   for(ch = 0; ch < 6; ch++)
+   for(int ch = 0; ch < 6; ch++)
    {
       int32 clocks = timestamp - last_ts;
       int32 running_timestamp = last_ts;
 
       // Output sound here
       CalcCurrentOutput(ch, left, right);
-      Blip_Synth_offset(&Synth, running_timestamp, left - last_output[ch][0], sbuf[0]);
-      Blip_Synth_offset(&Synth, running_timestamp, right - last_output[ch][1], sbuf[1]);
+      Synth.offset_inline(running_timestamp, left - last_output[ch][0], &sbuf[0]);
+      Synth.offset_inline(running_timestamp, right - last_output[ch][1], &sbuf[1]);
       last_output[ch][0] = left;
       last_output[ch][1] = right;
 
@@ -429,55 +432,68 @@ void VSU::Update(int32 timestamp)
 
          // Output sound here too.
          CalcCurrentOutput(ch, left, right);
-         Blip_Synth_offset(&Synth, running_timestamp, left - last_output[ch][0], sbuf[0]);
-         Blip_Synth_offset(&Synth, running_timestamp, right - last_output[ch][1], sbuf[1]);
+         Synth.offset_inline(running_timestamp, left - last_output[ch][0], &sbuf[0]);
+         Synth.offset_inline(running_timestamp, right - last_output[ch][1], &sbuf[1]);
          last_output[ch][0] = left;
          last_output[ch][1] = right;
       }
    }
-
    last_ts = timestamp;
+   //puts("VSU End");
 }
 
-void VSU::EndFrame(int32 timestamp)
+int32 VSU::EndFrame(int32 timestamp, int16* SoundBuf, int32 SoundBufMaxSize)
 {
+   int32 ret = 0;
+
    Update(timestamp);
    last_ts = 0;
+
+   if(SoundBuf)
+   {
+      for(int y = 0; y < 2; y++)
+      {
+         sbuf[y].end_frame(timestamp);
+         ret = sbuf[y].read_samples(SoundBuf + y, SoundBufMaxSize, 1);
+      }
+   }
+
+   return ret;
 }
 
-int VSU::StateAction(StateMem *sm, int load, int data_only)
+int VSU::StateAction(StateMem *sm, const unsigned load, const bool data_only)
 {
    SFORMAT StateRegs[] =
    {
-      SFARRAY(IntlControl, 6),
-      SFARRAY(LeftLevel, 6),
-      SFARRAY(RightLevel, 6),
+      SFVAR(IntlControl),
+      SFVAR(LeftLevel),
+      SFVAR(RightLevel),
 
-      SFARRAY16(Frequency, 6),
-      SFARRAY16(EnvControl, 6),
-      SFARRAY(RAMAddress, 6),
+      SFVAR(Frequency),
+      SFVAR(EnvControl),
+      SFVAR(RAMAddress),
       SFVAR(SweepControl),
 
-      SFARRAY(&WaveData[0][0], 5 * 0x20),
-      SFARRAY(ModData, 0x20),
+      SFVARN(WaveData, "&WaveData[0][0]"),
+      SFVAR(ModData),
 
-      SFARRAY32(EffFreq, 6),
-      SFARRAY32(Envelope, 6),
+      SFVAR(EffFreq),
+      SFVAR(Envelope),
 
-      SFARRAY32(WavePos, 6),
+      SFVAR(WavePos),
 
       SFVAR(ModWavePos),
 
-      SFARRAY32(LatcherClockDivider, 6),
-      SFARRAY32(FreqCounter, 6),
-      SFARRAY32(IntervalCounter, 6),
-      SFARRAY32(EnvelopeCounter, 6),
+      SFVAR(LatcherClockDivider),
+      SFVAR(FreqCounter),
+      SFVAR(IntervalCounter),
+      SFVAR(EnvelopeCounter),
 
       SFVAR(SweepModCounter),
 
-      SFARRAY32(EffectsClockDivider, 6),
-      SFARRAY32(IntervalClockDivider, 6),
-      SFARRAY32(EnvelopeClockDivider, 6),
+      SFVAR(EffectsClockDivider),
+      SFVAR(IntervalClockDivider),
+      SFVAR(EnvelopeClockDivider),
 
       SFVAR(SweepModClockDivider),
 
@@ -489,18 +505,61 @@ int VSU::StateAction(StateMem *sm, int load, int data_only)
 
    int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "VSU", false);
 
-
    if(load)
    {
+      for(int ch = 0; ch < 6; ch++)
+      {
+         WavePos[ch] &= 0x1F;
 
+         LeftLevel[ch] &= 0xF;
+         RightLevel[ch] &= 0xF;
+
+         Frequency[ch] &= 0x07FF;
+         EffFreq[ch] &= 0x07FF;
+         Envelope[ch] &= 0xF;
+         EnvControl[ch] &= ((ch >= 4) ? 0x73FF : 0x03FF);
+
+         RAMAddress[ch] &= 0xF;
+         //
+         //
+         if(FreqCounter[ch] < 1)
+            FreqCounter[ch] = 1;
+
+         if(IntervalCounter[ch] <= 0)
+            IntlControl[ch] &= ~0x80;
+         else
+            IntervalCounter[ch] = MIN(0x20, IntervalCounter[ch]);
+      
+         EnvelopeCounter[ch] = MAX(0x1, MIN(0x8, EnvelopeCounter[ch]));
+
+         if(EffectsClockDivider[ch] < 1)
+            EffectsClockDivider[ch] = 1;
+
+         if(IntervalClockDivider[ch] < 1)
+            IntervalClockDivider[ch] = 1;
+
+         if(EnvelopeClockDivider[ch] < 1)
+            EnvelopeClockDivider[ch] = 1;
+
+         if(LatcherClockDivider[ch] < 1)
+            LatcherClockDivider[ch] = 1;
+      }
+
+      if(NoiseLatcherClockDivider < 1)
+         NoiseLatcherClockDivider = 1;
+
+      SweepControl &= 0xFF;
+      SweepModCounter &= 0x7;
+
+      if(SweepModClockDivider < 1)
+         SweepModClockDivider = 1;
    }
-
    return(ret);
 }
 
 uint8 VSU::PeekWave(const unsigned int which, uint32 Address)
 {
-   assert(which <= 4);
+   //assert(which <= 4);
 
    Address &= 0x1F;
 
@@ -509,7 +568,7 @@ uint8 VSU::PeekWave(const unsigned int which, uint32 Address)
 
 void VSU::PokeWave(const unsigned int which, uint32 Address, uint8 value)
 {
-   assert(which <= 4);
+   //assert(which <= 4);
 
    Address &= 0x1F;
 

@@ -29,6 +29,7 @@ uint32_t setting_vb_cpu_emulation=0;
 uint32_t setting_vb_3dmode=0;
 uint32_t setting_vb_liprescale=1;
 uint32_t setting_vb_default_color=0xFFFFFF;
+float setting_vb_ledonscale=1.0;
 
 uint64 MDFN_GetSettingUI(const char *name)
 {
@@ -62,6 +63,8 @@ int64 MDFN_GetSettingI(const char *name)
 
 double MDFN_GetSettingF(const char *name)
 {
+   if (!strcmp("vb.ledonscale", name))
+      return setting_vb_ledonscale;
    fprintf(stderr, "unhandled setting F: %s\n", name);
    return 0;
 }

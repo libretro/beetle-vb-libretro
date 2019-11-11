@@ -7,9 +7,18 @@
 #include <string.h>
 
 #include "git.h"
+#include "file.h"
 
 #ifdef _WIN32
-#define strcasecmp _stricmp
+   #define strcasecmp _stricmp
+#endif
+
+#ifndef MAX
+   #define MAX(a,b) ((a)>(b)?(a):(b))
+#endif
+
+#ifndef MIN
+   #define MIN(a,b) ((a)<(b)?(a):(b))
 #endif
 
 extern MDFNGI *MDFNGameInfo;
@@ -23,5 +32,14 @@ void MDFN_MidSync(EmulateSpecStruct *espec);
 void MDFN_MidLineUpdate(EmulateSpecStruct *espec, int y);
 
 #include "mednafen-driver.h"
+#include "mempatcher.h"
+#include "general.h"
+#include "mednafen-endian.h"
+#include "math_ops.h"
+
+extern void MDFN_PrintError(const char *format, ...);
+extern void MDFN_Notify(const char *format, ...);
+extern void MDFN_Error(const char *format, ...);
+extern void MDFN_printf(const char *format, ...);
 
 #endif

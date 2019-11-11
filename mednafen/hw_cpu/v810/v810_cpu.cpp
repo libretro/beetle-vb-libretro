@@ -41,24 +41,19 @@ found freely through public domain sources.
 //////////////////////////////////////////////////////////
 // CPU routines
 
-#include <boolean.h>
-
-#include "../../mednafen.h"
-#include "../../masmem.h"
-#include "../../math_ops.h"
+#include "mednafen/mednafen.h"
+#include "mednafen/math_ops.h"
 
 //#include "pcfx.h"
 //#include "debug.h"
 
 #include <string.h>
 #include <errno.h>
-#include <algorithm>
+//#include <algorithm>
 
 #include "v810_opt.h"
 #include "v810_cpu.h"
 #include "v810_cpuD.h"
-
-//#include "fpu-new/softfloat.h"
 
 V810::V810()
 {
@@ -94,7 +89,7 @@ V810::V810()
 
 V810::~V810()
 {
-
+   Kill();
 }
 
 INLINE void V810::RecalcIPendingCache(void)
@@ -233,7 +228,13 @@ INLINE uint32 V810::RDCACHE(v810_timestamp_t &timestamp, uint32 addr)
    else
    {
     timestamp++;
-    Cache[CI].data[SBI] = MemRead16(timestamp, addr & ~0x3) | ((MemRead16(timestamp, (addr & ~0x3) | 0x2) << 16));
+
+    uint32 tmp;
+
+    tmp = MemRead16(timestamp, addr & ~0x3);
+    tmp |= MemRead16(timestamp, (addr & ~0x3) | 0x2) << 16;
+
+    Cache[CI].data[SBI] = tmp;
    }
    Cache[CI].data_valid[SBI] = true;
   }
@@ -248,7 +249,13 @@ INLINE uint32 V810::RDCACHE(v810_timestamp_t &timestamp, uint32 addr)
   else
   {
    timestamp++;
-   Cache[CI].data[SBI] = MemRead16(timestamp, addr & ~0x3) | ((MemRead16(timestamp, (addr & ~0x3) | 0x2) << 16));
+
+   uint32 tmp;
+
+   tmp = MemRead16(timestamp, addr & ~0x3);
+   tmp |= MemRead16(timestamp, (addr & ~0x3) | 0x2) << 16;
+
+   Cache[CI].data[SBI] = tmp;
   }
   //Cache[CI].data[SBI] = MemRead32(timestamp, addr & ~0x3);
   Cache[CI].data_valid[SBI] = true;
@@ -356,12 +363,20 @@ void V810::Kill(void)
 
 void V810::SetInt(int level)
 {
+ //assert(level >= -1 && level <= 15);
+
  ilevel = level;
  RecalcIPendingCache();
 }
 
 uint8 *V810::SetFastMap(uint32 addresses[], uint32 length, unsigned int num_addresses, const char *name)
 {
+ for(unsigned int i = 0; i < num_addresses; i++)
+ {
+  //assert((addresses[i] & (V810_FAST_MAP_PSIZE - 1)) == 0);
+ }
+ //assert((length & (V810_FAST_MAP_PSIZE - 1)) == 0);
+
  uint8 *ret = NULL;
 
  if(!(ret = (uint8 *)malloc(length + V810_FAST_MAP_TRAMPOLINE_SIZE)))
@@ -385,7 +400,7 @@ uint8 *V810::SetFastMap(uint32 addresses[], uint32 length, unsigned int num_addr
 
  FastMapAllocList.push_back(ret);
 
- return(ret);
+ return ret;
 }
 
 
@@ -594,11 +609,7 @@ INLINE uint32 V810::GetSREG(unsigned int which)
 
 // Define accurate mode defines
 #define RB_GETPC()      PC
-#ifdef _MSC_VER
-#define RB_RDOP(PC_offset) RDOP(timestamp, PC + PC_offset)
-#else
 #define RB_RDOP(PC_offset, ...) RDOP(timestamp, PC + PC_offset, ## __VA_ARGS__)
-#endif
 
 void V810::Run_Accurate(int32 MDFN_FASTCALL (*event_handler)(const v810_timestamp_t timestamp))
 {
@@ -653,9 +664,9 @@ void V810::Run_Accurate_Debug(int32 MDFN_FASTCALL (*event_handler)(const v810_ti
 #define RB_GETPC()      	((uint32)(PC_ptr - PC_base))
 
 #ifdef _MSC_VER
-#define RB_RDOP(PC_offset, b) LoadU16_LE((uint16 *)&PC_ptr[PC_offset])
+#define RB_RDOP(PC_offset, b) MDFN_de16lsb(&PC_ptr[PC_offset])
 #else
-#define RB_RDOP(PC_offset, ...) LoadU16_LE((uint16 *)&PC_ptr[PC_offset])
+#define RB_RDOP(PC_offset, ...) MDFN_de16lsb(&PC_ptr[PC_offset])
 #endif
 
 void V810::Run_Fast(int32 MDFN_FASTCALL (*event_handler)(const v810_timestamp_t timestamp))
@@ -730,6 +741,59 @@ void V810::SetCPUHook(void (*newhook)(const v810_timestamp_t timestamp, uint32 P
 }
 #endif
 
+uint32 V810::GetRegister(unsigned int which, char *special, const uint32 special_len)
+{
+ if(which >= GSREG_PR && which <= GSREG_PR + 31)
+ {
+  return GetPR(which - GSREG_PR);
+ }
+ else if(which >= GSREG_SR && which <= GSREG_SR + 31)
+ {
+  uint32 val = GetSREG(which - GSREG_SR);
+
+  if(special && which == GSREG_SR + PSW)
+  {
+   snprintf(special, special_len, "Z: %d, S: %d, OV: %d, CY: %d, ID: %d, AE: %d, EP: %d, NP: %d, IA: %2d",
+	(int)(bool)(val & PSW_Z), (int)(bool)(val & PSW_S), (int)(bool)(val & PSW_OV), (int)(bool)(val & PSW_CY),
+	(int)(bool)(val & PSW_ID), (int)(bool)(val & PSW_AE), (int)(bool)(val & PSW_EP), (int)(bool)(val & PSW_NP),
+	(val & PSW_IA) >> 16);
+  }
+
+  return val;
+ }
+ else if(which == GSREG_PC)
+ {
+  return GetPC();
+ }
+ else if(which == GSREG_TIMESTAMP)
+ {
+  return v810_timestamp;
+ }
+
+ return 0xDEADBEEF;
+}
+
+void V810::SetRegister(unsigned int which, uint32 value)
+{
+ if(which >= GSREG_PR && which <= GSREG_PR + 31)
+ {
+  if(which)
+   P_REG[which - GSREG_PR] = value;
+ }
+ else if(which >= GSREG_SR && which <= GSREG_SR + 31)
+ {
+  // SetSREG(timestamp, which - GSREG_SR, value);
+ }
+ else if(which == GSREG_PC)
+ {
+  SetPC(value & ~1);
+ }
+ else if(which == GSREG_TIMESTAMP)
+ {
+  //v810_timestamp = value;
+ }
+}
+
 uint32 V810::GetPC(void)
 {
  if(EmuMode == V810_EMU_MODE_ACCURATE)
@@ -750,28 +814,6 @@ void V810::SetPC(uint32 new_pc)
   PC_base = PC_ptr - new_pc;
  }
 }
-
-uint32 V810::GetPR(const unsigned int which)
-{
- return(which ? P_REG[which] : 0);
-}
-
-void V810::SetPR(const unsigned int which, uint32 value)
-{
- if(which)
-  P_REG[which] = value;
-}
-
-uint32 V810::GetSR(const unsigned int which)
-{
- return(GetSREG(which));
-}
-
-void V810::SetSR(const unsigned int which, uint32 value)
-{
-// SetSREG(timestamp, which, value);
-}
-
 
 #define BSTR_OP_MOV dst_cache &= ~(1 << dstoff); dst_cache |= ((src_cache >> srcoff) & 1) << dstoff;
 #define BSTR_OP_NOT dst_cache &= ~(1 << dstoff); dst_cache |= (((src_cache >> srcoff) & 1) ^ 1) << dstoff;
@@ -1079,9 +1121,10 @@ bool V810::bstr_subop(v810_timestamp_t &timestamp, int sub_op, int arg1)
  else
  {
   printf("BSTR Search: %02x\n", sub_op);
+  return(Do_BSTR_Search(timestamp, ((sub_op & 1) ? -1 : 1), (sub_op & 0x2) >> 1));
  }
-
- return(Do_BSTR_Search(timestamp, ((sub_op & 1) ? -1 : 1), (sub_op & 0x2) >> 1));
+ //assert(0);
+ return(false);
 }
 
 INLINE void V810::SetFPUOPNonFPUFlags(uint32 result)
@@ -1105,46 +1148,26 @@ INLINE void V810::SetFPUOPNonFPUFlags(uint32 result)
                  //printf("MEOW: %08x\n", S_REG[PSW] & (PSW_S | PSW_CY));
 }
 
-INLINE bool V810::CheckFPInputException(uint32 fpval)
-{
- // Zero isn't a subnormal! (OR IS IT *DUN DUN DUNNN* ;b)
- if(!(fpval & 0x7FFFFFFF))
-  return(false);
-
- switch((fpval >> 23) & 0xFF)
- {
-  case 0x00: // Subnormal		
-  case 0xFF: // NaN or infinity
-	{
-	 //puts("New FPU FRO");
-
-	 S_REG[PSW] |= PSW_FRO;
-
-	 SetPC(GetPC() - 4);
-	 Exception(FPU_HANDLER_ADDR, ECODE_FRO);
-	}
-	return(true);	// Yes, exception occurred
- }
- return(false);	// No, no exception occurred.
-}
-
 bool V810::FPU_DoesExceptionKillResult(void)
 {
- if(float_exception_flags & float_flag_invalid)
+ const uint32 float_exception_flags = fpo.get_flags();
+
+ if(float_exception_flags & V810_FP_Ops::flag_reserved)
   return(true);
 
- if(float_exception_flags & float_flag_divbyzero)
+ if(float_exception_flags & V810_FP_Ops::flag_invalid)
+  return(true);
+
+ if(float_exception_flags & V810_FP_Ops::flag_divbyzero)
   return(true);
 
 
  // Return false here, so that the result of this calculation IS put in the output register.
- // (Incidentally, to get the result of operations on overflow to match a real V810, required a bit of hacking of the SoftFloat code to "wrap" the exponent
- // on overflow,
- // rather than generating an infinity.  The wrapping behavior is specified in IEE 754 AFAIK, and is useful in cases where you divide a huge number
+ // Wrap the exponent on overflow, rather than generating an infinity.  The wrapping behavior is specified in IEE 754 AFAIK,
+ // and is useful in cases where you divide a huge number
  // by another huge number, and fix the result afterwards based on the number of overflows that occurred.  Probably requires some custom assembly code,
  // though.  And it's the kind of thing you'd see in an engineering or physics program, not in a perverted video game :b).
- // Oh, and just a note to self, FPR is NOT set when an overflow occurs.  Or it is in certain cases?
- if(float_exception_flags & float_flag_overflow)
+ if(float_exception_flags & V810_FP_Ops::flag_overflow)
   return(false);
 
  return(false);
@@ -1152,10 +1175,20 @@ bool V810::FPU_DoesExceptionKillResult(void)
 
 void V810::FPU_DoException(void)
 {
- if(float_exception_flags & float_flag_invalid)
- {
-  //puts("New FPU Invalid");
+ const uint32 float_exception_flags = fpo.get_flags();
 
+ if(float_exception_flags & V810_FP_Ops::flag_reserved)
+ {
+  S_REG[PSW] |= PSW_FRO;
+
+  SetPC(GetPC() - 4);
+  Exception(FPU_HANDLER_ADDR, ECODE_FRO);
+
+  return;
+ }
+
+ if(float_exception_flags & V810_FP_Ops::flag_invalid)
+ {
   S_REG[PSW] |= PSW_FIV;
 
   SetPC(GetPC() - 4);
@@ -1164,10 +1197,8 @@ void V810::FPU_DoException(void)
   return;
  }
 
- if(float_exception_flags & float_flag_divbyzero)
+ if(float_exception_flags & V810_FP_Ops::flag_divbyzero)
  {
-  //puts("New FPU Divide by Zero");
-
   S_REG[PSW] |= PSW_FZD;
 
   SetPC(GetPC() - 4);
@@ -1176,24 +1207,21 @@ void V810::FPU_DoException(void)
   return;
  }
 
- if(float_exception_flags & float_flag_underflow)
+ if(float_exception_flags & V810_FP_Ops::flag_underflow)
  {
-  //puts("New FPU Underflow");
-
   S_REG[PSW] |= PSW_FUD;
  }
 
- if(float_exception_flags & float_flag_inexact)
+ if(float_exception_flags & V810_FP_Ops::flag_inexact)
  {
   S_REG[PSW] |= PSW_FPR;
-  //puts("New FPU Precision Degradation");
  }
 
+ //
  // FPR can be set along with overflow, so put the overflow exception handling at the end here(for Exception() messes with PSW).
- if(float_exception_flags & float_flag_overflow)
+ //
+ if(float_exception_flags & V810_FP_Ops::flag_overflow)
  {
-  //puts("New FPU Overflow");
-
   S_REG[PSW] |= PSW_FOV;
 
   SetPC(GetPC() - 4);
@@ -1209,38 +1237,19 @@ bool V810::IsSubnormal(uint32 fpval)
  return(false);
 }
 
-INLINE void V810::FPU_Math_Template(float32 (*func)(float32, float32), uint32 arg1, uint32 arg2)
+INLINE void V810::FPU_Math_Template(uint32 (V810_FP_Ops::*func)(uint32, uint32), uint32 arg1, uint32 arg2)
 {
- if(CheckFPInputException(P_REG[arg1]) || CheckFPInputException(P_REG[arg2]))
+ uint32 result;
+
+ fpo.clear_flags();
+ result = (fpo.*func)(P_REG[arg1], P_REG[arg2]);
+
+ if(!FPU_DoesExceptionKillResult())
  {
-
+  SetFPUOPNonFPUFlags(result);
+  SetPREG(arg1, result);
  }
- else
- {
-  uint32 result;
-
-  float_exception_flags = 0;
-  result = func(P_REG[arg1], P_REG[arg2]);
-
-  if(IsSubnormal(result))
-  {
-   float_exception_flags |= float_flag_underflow;
-   float_exception_flags |= float_flag_inexact;
-  }
-
-  //printf("Result: %08x, %02x; %02x\n", result, (result >> 23) & 0xFF, float_exception_flags);
-
-  if(!FPU_DoesExceptionKillResult())
-  {
-   // Force it to +/- zero before setting S/Z based off of it(confirmed with subf.s on real V810, at least).
-   if(float_exception_flags & float_flag_underflow)
-    result &= 0x80000000;
-
-   SetFPUOPNonFPUFlags(result);
-   SetPREG(arg1, result);
-  }
-  FPU_DoException();
- }
+ FPU_DoException();
 }
 
 void V810::fpu_subop(v810_timestamp_t &timestamp, int sub_op, int arg1, int arg2)
@@ -1301,17 +1310,13 @@ void V810::fpu_subop(v810_timestamp_t &timestamp, int sub_op, int arg1, int arg2
 		{
 		 uint32 result;
 
-                 float_exception_flags = 0;
-		 result = int32_to_float32((int32)P_REG[arg2]);
+                 fpo.clear_flags();
+		 result = fpo.itof(P_REG[arg2]);
 
 		 if(!FPU_DoesExceptionKillResult())
 		 {
 		  SetPREG(arg1, result);
 		  SetFPUOPNonFPUFlags(result);
-		 }
-		 else
-		 {
-		  puts("Exception on CVT.WS?????");	// This shouldn't happen, but just in case there's a bug...
 		 }
 		 FPU_DoException();
 		}
@@ -1319,16 +1324,11 @@ void V810::fpu_subop(v810_timestamp_t &timestamp, int sub_op, int arg1, int arg2
 
 	case CVT_SW:
 		timestamp += 8;
-                if(CheckFPInputException(P_REG[arg2]))
-                {
-
-                }
-		else
 		{
 		 int32 result;
 
-                 float_exception_flags = 0;
-		 result = float32_to_int32(P_REG[arg2]);
+                 fpo.clear_flags();
+		 result = fpo.ftoi(P_REG[arg2], false);
 
 		 if(!FPU_DoesExceptionKillResult())
 		 {
@@ -1341,69 +1341,45 @@ void V810::fpu_subop(v810_timestamp_t &timestamp, int sub_op, int arg1, int arg2
 		break;	// End CVT.SW
 
 	case ADDF_S: timestamp += 8;
-		     FPU_Math_Template(float32_add, arg1, arg2);
+		     FPU_Math_Template(&V810_FP_Ops::add, arg1, arg2);
 		     break;
 
 	case SUBF_S: timestamp += 11;
-		     FPU_Math_Template(float32_sub, arg1, arg2);
+		     FPU_Math_Template(&V810_FP_Ops::sub, arg1, arg2);
 		     break;
 
         case CMPF_S: timestamp += 6;
 		     // Don't handle this like subf.s because the flags
 		     // have slightly different semantics(mostly regarding underflow/subnormal results) (confirmed on real V810).
-                     if(CheckFPInputException(P_REG[arg1]) || CheckFPInputException(P_REG[arg2]))
-                     {
-
-                     }
-		     else
+		     fpo.clear_flags();
 		     {
-		      SetFlag(PSW_OV, 0);
+		      int32 result;
 
-		      if(float32_eq(P_REG[arg1], P_REG[arg2]))
-		      {
-		       SetFlag(PSW_Z, 1);
-		       SetFlag(PSW_S, 0);
-		       SetFlag(PSW_CY, 0);
-		      }
-		      else
-		      {
-		       SetFlag(PSW_Z, 0);
+		      result = fpo.cmp(P_REG[arg1], P_REG[arg2]);
 
-		       if(float32_lt(P_REG[arg1], P_REG[arg2]))
-		       {
-		        SetFlag(PSW_S, 1);
-		        SetFlag(PSW_CY, 1);
-		       }
-		       else
-		       {
-		        SetFlag(PSW_S, 0);
-		        SetFlag(PSW_CY, 0);
-                       }
+	              if(!FPU_DoesExceptionKillResult())
+		      {
+		       SetFPUOPNonFPUFlags(result);
 		      }
-		     }	// else of if(CheckFP...
+		      FPU_DoException();
+		     }
                      break;
 
 	case MULF_S: timestamp += 7;
-		     FPU_Math_Template(float32_mul, arg1, arg2);
+		     FPU_Math_Template(&V810_FP_Ops::mul, arg1, arg2);
 		     break;
 
 	case DIVF_S: timestamp += 43;
-		     FPU_Math_Template(float32_div, arg1, arg2);
+		     FPU_Math_Template(&V810_FP_Ops::div, arg1, arg2);
 		     break;
 
 	case TRNC_SW:
                 timestamp += 7;
-
-		if(CheckFPInputException(P_REG[arg2]))
-		{
-
-		}
-		else
                 {
                  int32 result;
 
-		 float_exception_flags = 0;
-                 result = float32_to_int32_round_to_zero(P_REG[arg2]);
+		 fpo.clear_flags();
+                 result = fpo.ftoi(P_REG[arg2], true);
 
                  if(!FPU_DoesExceptionKillResult())
                  {
@@ -1477,52 +1453,21 @@ void V810::Exception(uint32 handler, uint16 eCode)
     }
 }
 
-int V810::StateAction(StateMem *sm, int load, int data_only)
+int V810::StateAction(StateMem *sm, const unsigned load, const bool data_only)
 {
- uint32 *cache_tag_temp = NULL;
- uint32 *cache_data_temp = NULL;
- bool *cache_data_valid_temp = NULL;
  uint32 PC_tmp = GetPC();
 
  if(EmuMode == V810_EMU_MODE_ACCURATE)
  {
-  cache_tag_temp = (uint32 *)malloc(sizeof(uint32 *) * 128);
-  cache_data_temp = (uint32 *)malloc(sizeof(uint32 *) * 128 * 2);
-  cache_data_valid_temp = (bool *)malloc(sizeof(bool *) * 128 * 2);
-
-  if(!cache_tag_temp || !cache_data_temp || !cache_data_valid_temp)
-  {
-   if(cache_tag_temp)
-    free(cache_tag_temp);
-
-   if(cache_data_temp)
-    free(cache_data_temp);
-
-   if(cache_data_valid_temp)
-    free(cache_data_valid_temp);
-
-   return(0);
-  }
-  if(!load)
+  // If we're loading while in "accurate" mode, go ahead and clear the cache validity bits,
+  // in case the save state was saved while in fast mode and the cache data isn't present and thus won't be loaded.
+  if(load)
   {
    for(int i = 0; i < 128; i++)
    {
-    cache_tag_temp[i] = Cache[i].tag;
-
-    cache_data_temp[i * 2 + 0] = Cache[i].data[0];
-    cache_data_temp[i * 2 + 1] = Cache[i].data[1];
-
-    cache_data_valid_temp[i * 2 + 0] = Cache[i].data_valid[0];
-    cache_data_valid_temp[i * 2 + 1] = Cache[i].data_valid[1];
+    Cache[i].data_valid[0] = false;
+    Cache[i].data_valid[1] = false;
    }
-  }
-  else // If we're loading, go ahead and clear the cache temporaries,
-       // in case the save state was saved while in fast mode
-       // and the cache data isn't present and thus won't be loaded.
-  {
-   memset(cache_tag_temp, 0, sizeof(uint32) * 128);
-   memset(cache_data_temp, 0, sizeof(uint32) * 128 * 2);
-   memset(cache_data_valid_temp, 0, sizeof(bool) * 128 * 2);
   }
  }
 
@@ -1530,16 +1475,16 @@ int V810::StateAction(StateMem *sm, int load, int data_only)
 
  SFORMAT StateRegs[] =
  {
-  SFARRAY32(P_REG, 32),
-  SFARRAY32(S_REG, 32),
+  SFVAR(P_REG),
+  SFVAR(S_REG),
   SFVARN(PC_tmp, "PC"),
   SFVAR(Halted),
 
   SFVAR(lastop),
 
-  SFARRAY32(cache_tag_temp, 128),
-  SFARRAY32(cache_data_temp, 128 * 2),
-  SFARRAYB(cache_data_valid_temp, 128 * 2),
+  SFVARN(Cache->tag, "cache_tag_temp"),
+  SFVARN(Cache->data, "cache_data_temp"),
+  SFVARN(Cache->data_valid, "cache_data_valid_temp"),
 
   SFVAR(ilevel),		// Perhaps remove in future?
   SFVAR(next_event_ts_delta),
@@ -1563,33 +1508,11 @@ int V810::StateAction(StateMem *sm, int load, int data_only)
   // std::min<int64>(0x7FF... is a sanity check and for the case where next_event_ts is set to an extremely large value to
   // denote that it's not happening anytime soon, which could cause an overflow if our current timestamp is larger
   // than what it was when the state was saved.
-  next_event_ts = std::max<int64>(v810_timestamp, std::min<int64>(0x7FFFFFFF, (int64)v810_timestamp + next_event_ts_delta));
+  next_event_ts = MAX(v810_timestamp, MIN(0x7FFFFFFF, (int64)v810_timestamp + next_event_ts_delta));
 
   RecalcIPendingCache();
 
   SetPC(PC_tmp);
-  if(EmuMode == V810_EMU_MODE_ACCURATE)
-  {
-   for(int i = 0; i < 128; i++)
-   {
-    Cache[i].tag = cache_tag_temp[i];
-
-    Cache[i].data[0] = cache_data_temp[i * 2 + 0];
-    Cache[i].data[1] = cache_data_temp[i * 2 + 1];
-
-    Cache[i].data_valid[0] = cache_data_valid_temp[i * 2 + 0];
-    Cache[i].data_valid[1] = cache_data_valid_temp[i * 2 + 1];
-
-    //printf("%d %08x %08x %08x %d %d\n", i, Cache[i].tag << 10, Cache[i].data[0], Cache[i].data[1], Cache[i].data_valid[0], Cache[i].data_valid[1]);
-   }
-  }
- }
-
- if(EmuMode == V810_EMU_MODE_ACCURATE)
- {
-  free(cache_tag_temp);
-  free(cache_data_temp);
-  free(cache_data_valid_temp);
  }
 
  return(ret);
