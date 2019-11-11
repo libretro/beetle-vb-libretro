@@ -1,5 +1,29 @@
+/******************************************************************************/
+/* Mednafen Virtual Boy Emulation Module                                      */
+/******************************************************************************/
+/* vb.h:
+**  Copyright (C) 2010-2016 Mednafen Team
+**
+** This program is free software; you can redistribute it and/or
+** modify it under the terms of the GNU General Public License
+** as published by the Free Software Foundation; either version 2
+** of the License, or (at your option) any later version.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software Foundation, Inc.,
+** 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
 #ifndef __VB_VB_H
 #define __VB_VB_H
+
+#include "mednafen/mednafen.h"
+#include "mednafen/hw_cpu/v810/v810_cpu.h"
 
 enum
 {
@@ -25,17 +49,14 @@ enum
 
 #define VB_EVENT_NONONO       0x7fffffff
 
+void VB_SetEvent(const int type, const v810_timestamp_t next_timestamp);
+
+
 #define VBIRQ_SOURCE_INPUT      0
 #define VBIRQ_SOURCE_TIMER      1
 #define VBIRQ_SOURCE_EXPANSION  2
 #define VBIRQ_SOURCE_COMM       3
 #define VBIRQ_SOURCE_VIP        4
-
-#include "../mednafen.h"
-#include "../hw_cpu/v810/v810_cpu.h"
-#include "../masmem.h"
-
-void VB_SetEvent(const int type, const v810_timestamp_t next_timestamp);
 
 void VBIRQ_Assert(int source, bool assert);
 
@@ -43,11 +64,14 @@ void VB_ExitLoop(void);
 
 void ForceEventUpdates(const v810_timestamp_t timestamp);
 
+
 uint8 MDFN_FASTCALL MemRead8(v810_timestamp_t &timestamp, uint32 A);
 uint16 MDFN_FASTCALL MemRead16(v810_timestamp_t &timestamp, uint32 A);
 
 void MDFN_FASTCALL MemWrite8(v810_timestamp_t &timestamp, uint32 A, uint8 V);
 void MDFN_FASTCALL MemWrite16(v810_timestamp_t &timestamp, uint32 A, uint16 V);
+
+
 
 extern int32 VB_InDebugPeek;
 

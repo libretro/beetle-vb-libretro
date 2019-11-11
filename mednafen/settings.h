@@ -13,6 +13,7 @@ extern uint32_t setting_vb_cpu_emulation;
 extern uint32_t setting_vb_3dmode;
 extern uint32_t setting_vb_liprescale;
 extern uint32_t setting_vb_default_color;
+extern float setting_vb_ledonscale;
 
 // This should assert() or something if the setting isn't found, since it would
 // be a totally tubular error!

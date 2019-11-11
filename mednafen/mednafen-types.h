@@ -2,6 +2,7 @@
 #define __MDFN_TYPES
 
 #include <stdint.h>
+#include <boolean.h>
 
 typedef int8_t int8;
 typedef int16_t int16;
@@ -12,6 +13,9 @@ typedef uint8_t uint8;
 typedef uint16_t uint16;
 typedef uint32_t uint32;
 typedef uint64_t uint64;
+
+#define FALSE false
+#define TRUE true
 
 #ifdef __GNUC__
 #define MDFN_UNLIKELY(n) __builtin_expect((n) != 0, 0)

@@ -120,6 +120,22 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "disabled",
    },
+   {
+      "vb_ledonscale",
+      "LED brightness",
+      "Change the screen brightness level.",
+      {
+         { "1.75",      NULL },
+         { "2.00",      NULL },
+         { "0.50",      NULL },
+         { "0.75",      NULL },
+         { "1.00",      NULL },
+         { "1.25",      NULL },
+         { "1.50",      NULL },
+         { NULL, NULL},
+      },
+      "1.75",
+   },
    { NULL, NULL, NULL, { NULL, NULL }, NULL },
 };
 

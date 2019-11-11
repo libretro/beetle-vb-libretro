@@ -1,22 +1,45 @@
+/******************************************************************************/
+/* Mednafen Virtual Boy Emulation Module                                      */
+/******************************************************************************/
+/* vsu.h:
+**  Copyright (C) 2010-2016 Mednafen Team
+**
+** This program is free software; you can redistribute it and/or
+** modify it under the terms of the GNU General Public License
+** as published by the Free Software Foundation; either version 2
+** of the License, or (at your option) any later version.
+**
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program; if not, write to the Free Software Foundation, Inc.,
+** 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
 #ifndef __VB_VSU_H
 #define __VB_VSU_H
 
-#include "../include/blip/Blip_Buffer.h"
+#include "mednafen/sound/Blip_Buffer.h"
 
 class VSU
 {
    public:
 
-      VSU(Blip_Buffer *bb_l, Blip_Buffer *bb_r) MDFN_COLD;
+      VSU() MDFN_COLD;
       ~VSU() MDFN_COLD;
+
+      void SetSoundRate(double rate) MDFN_COLD;
 
       void Power(void) MDFN_COLD;
 
       void Write(int32 timestamp, uint32 A, uint8 V);
 
-      void EndFrame(int32 timestamp);
+      int32 EndFrame(int32 timestamp, int16* SoundBuf, int32 SoundBufMaxSize);
 
-      int StateAction(StateMem *sm, int load, int data_only);
+      int StateAction(StateMem *sm, const unsigned load, const bool data_only);
 
       uint8 PeekWave(const unsigned int which, uint32 Address);
       void PokeWave(const unsigned int which, uint32 Address, uint8 value);
@@ -73,9 +96,9 @@ class VSU
       int32 last_output[6][2];
       int32 last_ts;
 
-      Blip_Buffer *sbuf[2];
-      Blip_Synth Synth;
-      Blip_Synth NoiseSynth;
+      Blip_Buffer sbuf[2];
+      Blip_Synth<blip_good_quality, 1024> Synth;
+      Blip_Synth<blip_med_quality, 1024> NoiseSynth;
 };
 
 #endif
