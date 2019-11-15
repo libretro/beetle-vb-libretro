@@ -114,11 +114,11 @@ struct retro_core_option_definition option_defs_us[] = {
       "CPU emulation  (Restart)",
       "Choose between faster and accurate (slower) emulation.",
       {
-         { "accurate",      NULL },
          { "fast",      NULL },
+         { "accurate",      NULL },
          { NULL, NULL},
       },
-      "disabled",
+      "fast",
    },
    {
       "vb_ledonscale",
