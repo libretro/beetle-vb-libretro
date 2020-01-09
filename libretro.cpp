@@ -2400,7 +2400,7 @@ static void hookup_ports(bool force);
 static bool initial_ports_hookup = false;
 
 #define MEDNAFEN_CORE_NAME_MODULE "vb"
-#define MEDNAFEN_CORE_NAME "Mednafen VB"
+#define MEDNAFEN_CORE_NAME "Beetle VB"
 #define MEDNAFEN_CORE_VERSION "v0.9.36.1"
 #define MEDNAFEN_CORE_EXTENSIONS "vb|vboy|bin"
 #define MEDNAFEN_CORE_TIMING_FPS 50.27
