@@ -915,7 +915,7 @@ void VIP_StartFrame(EmulateSpecStruct *espec)
 #if defined(WANT_32BPP)
 	  memset(surface->pixels, 0, 768 * 448 * 4);
 #elif defined(WANT_16BPP)
-	  memset(surface->pixels, 0, 768 * 448 * 2);
+	  memset(surface->pixels16, 0, 768 * 448 * 2);
 #endif
 
       VidSettingsDirty = false;
