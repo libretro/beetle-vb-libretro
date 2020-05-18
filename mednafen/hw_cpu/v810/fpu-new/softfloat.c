@@ -1040,17 +1040,20 @@ float32 float32_div( float32 a, float32 b )
 
 float32 float32_rem( float32 a, float32 b )
 {
-    flag aSign, bSign, zSign;
-    int16 aExp, bExp, expDiff;
-    bits32 aSig, bSig, q, allZero, alternateASig;
+    flag zSign;
+    int16 expDiff;
+    bits32 q, allZero, alternateASig;
     sbits32 sigMean;
 
-    aSig = extractFloat32Frac( a );
-    aExp = extractFloat32Exp( a );
-    aSign = extractFloat32Sign( a );
-    bSig = extractFloat32Frac( b );
-    bExp = extractFloat32Exp( b );
-    bSign = extractFloat32Sign( b );
+    bits32 aSig = extractFloat32Frac( a );
+    int16 aExp  = extractFloat32Exp( a );
+    flag aSign  = extractFloat32Sign( a );
+    bits32 bSig = extractFloat32Frac( b );
+    int16 bExp  = extractFloat32Exp( b );
+#if 0
+    flag bSign  = extractFloat32Sign( b );
+#endif
+
     if ( aExp == 0xFF ) {
         if ( aSig || ( ( bExp == 0xFF ) && bSig ) ) {
             return propagateFloat32NaN( a, b );
@@ -1926,21 +1929,23 @@ float64 float64_div( float64 a, float64 b )
 
 float64 float64_rem( float64 a, float64 b )
 {
-    flag aSign, bSign, zSign;
-    int16 aExp, bExp, expDiff;
-    bits32 aSig0, aSig1, bSig0, bSig1, q, term0, term1, term2;
+    flag zSign;
+    int16 expDiff;
+    bits32 q, term0, term1, term2;
     bits32 allZero, alternateASig0, alternateASig1, sigMean1;
     sbits32 sigMean0;
     float64 z;
 
-    aSig1 = extractFloat64Frac1( a );
-    aSig0 = extractFloat64Frac0( a );
-    aExp = extractFloat64Exp( a );
-    aSign = extractFloat64Sign( a );
-    bSig1 = extractFloat64Frac1( b );
-    bSig0 = extractFloat64Frac0( b );
-    bExp = extractFloat64Exp( b );
-    bSign = extractFloat64Sign( b );
+    bits32 aSig1 = extractFloat64Frac1( a );
+    bits32 aSig0 = extractFloat64Frac0( a );
+    int16 aExp   = extractFloat64Exp( a );
+    flag aSign   = extractFloat64Sign( a );
+    bits32 bSig1 = extractFloat64Frac1( b );
+    bits32 bSig0 = extractFloat64Frac0( b );
+    int16 bExp   = extractFloat64Exp( b );
+#if 0
+    flag bSign   = extractFloat64Sign( b );
+#endif
     if ( aExp == 0x7FF ) {
         if (    ( aSig0 | aSig1 )
              || ( ( bExp == 0x7FF ) && ( bSig0 | bSig1 ) ) ) {
