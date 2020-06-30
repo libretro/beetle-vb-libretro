@@ -59,11 +59,13 @@ endif
 
 ifneq ($(HAVE_GRIFFIN), 1)
 SOURCES_CXX += \
-	$(MEDNAFEN_DIR)/settings.cpp \
 	$(MEDNAFEN_DIR)/state.cpp \
 	$(MEDNAFEN_DIR)/mempatcher.cpp \
 	$(MEDNAFEN_DIR)/video/surface.cpp \
 	$(CORE_DIR)/libretro.cpp
+
+SOURCES_C   += \
+	$(MEDNAFEN_DIR)/settings.c
 
 ifneq ($(STATIC_LINKING), 1)
 SOURCES_C += \

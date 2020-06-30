@@ -15,8 +15,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "mednafen.h"
+#include <stdio.h>
+#include <stdint.h>
 #include <string.h>
+
 #include "settings.h"
 
 uint32_t setting_vb_lcolor=0xFF0000;
@@ -30,13 +32,10 @@ uint32_t setting_vb_3dmode=0;
 uint32_t setting_vb_liprescale=1;
 uint32_t setting_vb_default_color=0xFFFFFF;
 
-uint64 MDFN_GetSettingUI(const char *name)
+uint64_t MDFN_GetSettingUI(const char *name)
 {
    if (!strcmp("vb.anaglyph.lcolor", name))
-   {
-      fprintf(stderr, "Setting UI: %s=%x\n", name, setting_vb_lcolor);
       return setting_vb_lcolor;
-   }
    if (!strcmp("vb.anaglyph.rcolor", name))
       return setting_vb_rcolor;
    if (!strcmp("vb.3dmode", name))
@@ -50,7 +49,7 @@ uint64 MDFN_GetSettingUI(const char *name)
    return 0;
 }
 
-int64 MDFN_GetSettingI(const char *name)
+int64_t MDFN_GetSettingI(const char *name)
 {
    if (!strcmp("vb.anaglyph.preset", name))
       return setting_vb_anaglyph_preset;
