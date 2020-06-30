@@ -228,9 +228,6 @@ static bool SubWrite(StateMem *st, SFORMAT *sf, const char *name_prefix = NULL)
       slen = snprintf(nameo + 1, 256, "%s%s", name_prefix ? name_prefix : "", sf->name);
       nameo[0] = slen;
 
-      if(slen >= 255)
-         slen = 255;
-
       smem_write(st, nameo, 1 + nameo[0]);
       smem_write32le(st, bytesize);
 
