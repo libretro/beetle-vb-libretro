@@ -19,6 +19,8 @@ static retro_environment_t environ_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
 
+static bool libretro_supports_bitmasks = false;
+
 static bool overscan;
 static double last_sound_rate;
 static MDFN_PixelFormat last_pixel_format;
@@ -2447,6 +2449,9 @@ void retro_init(void)
       perf_get_cpu_features_cb = NULL;
 
    check_system_specs();
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))
+      libretro_supports_bitmasks = true;
 }
 
 void retro_reset(void)
@@ -2711,6 +2716,9 @@ void retro_unload_game()
 
 static void update_input(void)
 {
+   unsigned i,j;
+   int16_t joy_bits[MAX_PLAYERS] = {0};
+
    input_buf[0] = 0;
 
    static unsigned map[] = {
@@ -2730,14 +2738,23 @@ static void update_input(void)
       RETRO_DEVICE_ID_JOYPAD_L3, //right d-pad DOWN
    };
 
-   for (unsigned j = 0; j < MAX_PLAYERS; j++)
+   for (j = 0; j < MAX_PLAYERS; j++)
    {
-      for (unsigned i = 0; i < MAX_BUTTONS; i++)
-         input_buf[j] |= map[i] != -1u &&
-            input_state_cb(j, RETRO_DEVICE_JOYPAD, 0, map[i]) ? (1 << i) : 0;
-
-      if (setting_vb_right_analog_to_digital)
+      if (libretro_supports_bitmasks)
+         joy_bits[j] = input_state_cb(j, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+      else
       {
+         for (i = 0; i < (RETRO_DEVICE_ID_JOYPAD_R3+1); i++)
+            joy_bits[j] |= input_state_cb(j, RETRO_DEVICE_JOYPAD, 0, i) ? (1 << i) : 0;
+      }
+   }
+
+   for (j = 0; j < MAX_PLAYERS; j++)
+   {
+      for (i = 0; i < MAX_BUTTONS; i++)
+         input_buf[j] |= (map[i] != -1u) && (joy_bits[j] & (1 << map[i])) ? (1 << i) : 0;
+
+      if (setting_vb_right_analog_to_digital) {
          int16_t analog_x = input_state_cb(j, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
          int16_t analog_y = input_state_cb(j, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
 
@@ -2887,6 +2904,8 @@ void retro_deinit()
       log_cb(RETRO_LOG_INFO, "[%s]: Estimated FPS: %.5f\n",
             mednafen_core_str, (double)video_frames * 44100 / audio_frames);
    }
+
+   libretro_supports_bitmasks = false;
 }
 
 unsigned retro_get_region(void)
