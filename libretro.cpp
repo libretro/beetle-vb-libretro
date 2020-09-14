@@ -8,8 +8,6 @@
 #include "mednafen/git.h"
 #include "mednafen/state_inline.h"
 
-static MDFNGI *game;
-
 struct retro_perf_callback perf_cb;
 retro_get_cpu_features_t perf_get_cpu_features_cb = NULL;
 retro_log_printf_t log_cb;
@@ -2350,28 +2348,28 @@ void MDFN_ResetMessages(void)
 }
 
 
-static MDFNGI *MDFNI_LoadGame(const uint8_t *data, size_t size)
+static bool MDFNI_LoadGame(const uint8_t *data, size_t size)
 {
    MDFNGameInfo = &EmulatedVB;
 
-    // Load per-game settings
-    // Maybe we should make a "pgcfg" subdir, and automatically load all files in it?
-    // End load per-game settings
-    //
+   // Load per-game settings
+   // Maybe we should make a "pgcfg" subdir, and automatically load all files in it?
+   // End load per-game settings
+   //
 
    if(Load(data, size) <= 0)
       goto error;
 
-    MDFN_LoadGameCheats(NULL);
-    MDFNMP_InstallReadPatches();
+   MDFN_LoadGameCheats(NULL);
+   MDFNMP_InstallReadPatches();
 
-    MDFN_ResetMessages();   // Save state, status messages, etc.
+   MDFN_ResetMessages();   // Save state, status messages, etc.
 
-   return(MDFNGameInfo);
+   return true;
 
 error:
    MDFNGameInfo = NULL;
-   return NULL;
+   return false;
 }
 
 static void MDFNI_CloseGame(void)
@@ -2397,8 +2395,8 @@ static bool initial_ports_hookup = false;
 #define MEDNAFEN_CORE_VERSION "v0.9.36.1"
 #define MEDNAFEN_CORE_EXTENSIONS "vb|vboy|bin"
 #define MEDNAFEN_CORE_TIMING_FPS 50.27
-#define MEDNAFEN_CORE_GEOMETRY_BASE_W (game->nominal_width)
-#define MEDNAFEN_CORE_GEOMETRY_BASE_H (game->nominal_height)
+#define MEDNAFEN_CORE_GEOMETRY_BASE_W (EmulatedVB.nominal_width)
+#define MEDNAFEN_CORE_GEOMETRY_BASE_H (EmulatedVB.nominal_height)
 #define MEDNAFEN_CORE_GEOMETRY_MAX_W 384 * 2
 #define MEDNAFEN_CORE_GEOMETRY_MAX_H 224 * 2
 #define MEDNAFEN_CORE_GEOMETRY_ASPECT_RATIO (12.0 / 7.0)
@@ -2677,27 +2675,23 @@ bool retro_load_game(const struct retro_game_info *info)
 
    check_variables();
 
-   game = MDFNI_LoadGame((const uint8_t*)info->data, info->size);
-   if (!game)
+   if (!MDFNI_LoadGame((const uint8_t*)info->data, info->size))
       return false;
 
    MDFN_PixelFormat pix_fmt(MDFN_COLORSPACE_RGB, 16, 8, 0, 24);
    last_pixel_format = MDFN_PixelFormat();
-   
+
    surf = new MDFN_Surface(NULL, FB_WIDTH, FB_HEIGHT, FB_WIDTH, pix_fmt);
 
    hookup_ports(true);
 
    check_variables();
 
-   return game;
+   return true;
 }
 
-void retro_unload_game()
+void retro_unload_game(void)
 {
-   if (!game)
-      return;
-
    MDFNI_CloseGame();
 }
 
@@ -2784,8 +2778,6 @@ static uint64_t video_frames, audio_frames;
 
 void retro_run(void)
 {
-   MDFNGI *curgame = game;
-
    input_poll_cb();
 
    update_input();
@@ -2823,7 +2815,7 @@ void retro_run(void)
 
    Emulate(&spec);
 
-   int16 *const SoundBuf = spec.SoundBuf + spec.SoundBufSizeALMS * curgame->soundchan;
+   int16 *const SoundBuf = spec.SoundBuf + spec.SoundBufSizeALMS * EmulatedVB.soundchan;
    int32 SoundBufSize = spec.SoundBufSize - spec.SoundBufSizeALMS;
    const int32 SoundBufMaxSize = spec.SoundBufMaxSize - spec.SoundBufSizeALMS;
 
