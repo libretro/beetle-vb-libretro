@@ -6,6 +6,7 @@
 #include "mednafen/math_ops.h"
 #include "mednafen/mempatcher.h"
 #include "mednafen/git.h"
+#include "mednafen/state_inline.h"
 
 static MDFNGI *game;
 
@@ -2160,7 +2161,7 @@ static DebuggerInfoStruct DBGInfo =
 #endif
 
 
-int StateAction(StateMem *sm, int load, int data_only)
+extern "C" int StateAction(StateMem *sm, int load, int data_only)
 {
  const v810_timestamp_t timestamp = VB_V810->v810_timestamp;
  int ret = 1;
@@ -2387,16 +2388,6 @@ static void MDFNI_CloseGame(void)
    MDFNGameInfo = NULL;
 }
 
-bool MDFNI_InitializeModule(void)
-{
- return(1);
-}
-
-int MDFNI_Initialize(const char *basedir)
-{
-    return(1);
-}
-
 static void hookup_ports(bool force);
 
 static bool initial_ports_hookup = false;
@@ -2435,8 +2426,6 @@ void retro_init(void)
       log_cb = log.log;
    else 
       log_cb = NULL;
-
-   MDFNI_InitializeModule();
 
 #if defined(WANT_16BPP) && defined(FRONTEND_SUPPORTS_RGB565)
    if (environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565) && log_cb)
@@ -3042,12 +3031,6 @@ void retro_cheat_set(unsigned, bool, const char *)
 {}
 
 void MDFND_DispMessage(unsigned char *str)
-{
-   if (log_cb)
-      log_cb(RETRO_LOG_INFO, "%s\n", str);
-}
-
-void MDFND_Message(const char *str)
 {
    if (log_cb)
       log_cb(RETRO_LOG_INFO, "%s\n", str);

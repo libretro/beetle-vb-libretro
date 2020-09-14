@@ -18,8 +18,10 @@
 #include "vb.h"
 #include "timer.h"
 
+#include "../state_inline.h"
+
 #define TC_TENABLE	0x01
-#define TC_ZSTAT	0x02
+#define TC_ZSTAT	   0x02
 #define TC_ZSTATCLR	0x04
 #define TC_TIMZINT	0x08
 #define TC_TCLKSEL	0x10

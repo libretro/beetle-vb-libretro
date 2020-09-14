@@ -321,6 +321,12 @@ typedef struct
  double mouse_sensitivity;
 } MDFNGI;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int StateAction(StateMem *sm, int load, int data_only);
+#ifdef __cplusplus
+}
+#endif
 
 #endif

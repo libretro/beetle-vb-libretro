@@ -15,18 +15,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "vb.h"
-#include "vip.h"
-#include "../math_ops.h"
 #include <math.h>
 
-static inline void VIP_DBGMSG(const char *format, ...)
-{
-}
+#include "vb.h"
+#include "vip.h"
+
+#include "../math_ops.h"
+#include "../state_inline.h"
 
 static uint8 FB[2][2][0x6000];
 static uint16 CHR_RAM[0x8000 / sizeof(uint16)];
 static uint16 DRAM[0x20000 / sizeof(uint16)];
+
+static inline void VIP_DBGMSG(const char *format, ...) { }
 
 // Helper functions for the V810 VIP RAM read/write handlers.
 //  "Memory Array 16 (Write/Read) (16/8)"

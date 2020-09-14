@@ -17,6 +17,7 @@
 
 #include "vb.h"
 #include "input.h"
+#include "../state_inline.h"
 
 static bool InstantReadHack;
 
