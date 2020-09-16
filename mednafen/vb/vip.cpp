@@ -952,26 +952,77 @@ static INLINE void CopyFBColumnToTarget_Anaglyph_BASE(const bool DisplayActive_a
    const int32 pitchinpix = surface->pitchinpix;
    const uint8 *fb_source = &FB[fb][lr][64 * Column];
 
-   for(y = 56; y; y--)
+   if (DisplayActive_arg)
    {
-      uint32 source_bits = *fb_source;
-
-      for(y_sub = 4; y_sub; y_sub--)
+      if (lr)
       {
-         uint32 pixel = BrightCLUT[lr][source_bits & 3];
+         for(y = 56; y; y--)
+         {
+            uint32 source_bits = *fb_source;
 
-         if(!DisplayActive_arg)
-            pixel = 0;
+            for(y_sub = 4; y_sub; y_sub--)
+            {
+               uint32 pixel  = BrightCLUT[lr][source_bits & 3];
+               *target      |= pixel;
 
-         if(lr)
-            *target |= pixel;
-         else
-            *target = pixel;
-
-         source_bits >>= 2;
-         target += pitchinpix;
+               source_bits >>= 2;
+               target       += pitchinpix;
+            }
+            fb_source++;
+         }
       }
-      fb_source++;
+      else
+      {
+         for(y = 56; y; y--)
+         {
+            uint32 source_bits = *fb_source;
+
+            for(y_sub = 4; y_sub; y_sub--)
+            {
+               uint32 pixel  = BrightCLUT[lr][source_bits & 3];
+               *target       = pixel;
+
+               source_bits >>= 2;
+               target       += pitchinpix;
+            }
+            fb_source++;
+         }
+      }
+   }
+   else
+   {
+      if (lr)
+      {
+         for(y = 56; y; y--)
+         {
+            uint32 source_bits = *fb_source;
+
+            for(y_sub = 4; y_sub; y_sub--)
+            {
+               *target      |= 0;
+
+               source_bits >>= 2;
+               target       += pitchinpix;
+            }
+            fb_source++;
+         }
+      }
+      else
+      {
+         for(y = 56; y; y--)
+         {
+            uint32 source_bits = *fb_source;
+
+            for(y_sub = 4; y_sub; y_sub--)
+            {
+               *target       = 0;
+
+               source_bits >>= 2;
+               target       += pitchinpix;
+            }
+            fb_source++;
+         }
+      }
    }
 }
 
@@ -979,20 +1030,10 @@ static void CopyFBColumnToTarget_Anaglyph(void)
 {
    const int lr = (DisplayRegion & 2) >> 1;
 
-   if(!DisplayActive)
-   {
-      if(!lr)
-         CopyFBColumnToTarget_Anaglyph_BASE(0, 0);
-      else
-         CopyFBColumnToTarget_Anaglyph_BASE(0, 1);
-   }
+   if(!lr)
+      CopyFBColumnToTarget_Anaglyph_BASE(DisplayActive, 0);
    else
-   {
-      if(!lr)
-         CopyFBColumnToTarget_Anaglyph_BASE(1, 0);
-      else
-         CopyFBColumnToTarget_Anaglyph_BASE(1, 1);
-   }
+      CopyFBColumnToTarget_Anaglyph_BASE(DisplayActive, 1);
 }
 
 static uint32 AnaSlowBuf[384][224];
@@ -1006,30 +1047,43 @@ static INLINE void CopyFBColumnToTarget_AnaglyphSlow_BASE(const bool DisplayActi
    {
       uint32 *target = AnaSlowBuf[Column];
 
-      for(int y = 56; y; y--)
+      if (DisplayActive_arg)
       {
-         uint32 source_bits = *fb_source;
-
-         for(int y_sub = 4; y_sub; y_sub--)
+         for(int y = 56; y; y--)
          {
-            uint32 pixel = BrightnessCache[source_bits & 3];
+            uint32 source_bits = *fb_source;
 
-            if(!DisplayActive_arg)
-               pixel = 0;
-
-            *target = pixel;
-            source_bits >>= 2;
-            target++;
+            for(int y_sub = 4; y_sub; y_sub--)
+            {
+               uint32 pixel  = BrightnessCache[source_bits & 3];
+               *target       = pixel;
+               source_bits >>= 2;
+               target++;
+            }
+            fb_source++;
          }
-         fb_source++;
       }
+      else
+      {
+         for(int y = 56; y; y--)
+         {
+            uint32 source_bits = *fb_source;
 
+            for(int y_sub = 4; y_sub; y_sub--)
+            {
+               *target       = 0;
+               source_bits >>= 2;
+               target++;
+            }
+            fb_source++;
+         }
+      }
    }
    else
    {
-      uint32 *target = surface->pixels + Column;
+      uint32         *target = surface->pixels + Column;
       const uint32 *left_src = AnaSlowBuf[Column];
-      const int32 pitch32 = surface->pitch32;
+      const int32    pitch32 = surface->pitch32;
 
       for(int y = 56; y; y--)
       {
@@ -1037,12 +1091,14 @@ static INLINE void CopyFBColumnToTarget_AnaglyphSlow_BASE(const bool DisplayActi
 
          for(int y_sub = 4; y_sub; y_sub--)
          {
-            uint32 pixel = AnaSlowColorLUT[*left_src][DisplayActive_arg ? BrightnessCache[source_bits & 3] : 0];
+            uint32 pixel  = AnaSlowColorLUT
+               [*left_src]
+               [DisplayActive_arg ? BrightnessCache[source_bits & 3] : 0];
 
-            *target = pixel;
+            *target       = pixel;
 
             source_bits >>= 2;
-            target += pitch32;
+            target       += pitch32;
             left_src++;
          }
          fb_source++;
@@ -1054,48 +1110,86 @@ static void CopyFBColumnToTarget_AnaglyphSlow(void)
 {
    const int lr = (DisplayRegion & 2) >> 1;
 
-   if(!DisplayActive)
-   {
-      if(!lr)
-         CopyFBColumnToTarget_AnaglyphSlow_BASE(0, 0);
-      else
-         CopyFBColumnToTarget_AnaglyphSlow_BASE(0, 1);
-   }
+   if(!lr)
+      CopyFBColumnToTarget_AnaglyphSlow_BASE(DisplayActive, 0);
    else
-   {
-      if(!lr)
-         CopyFBColumnToTarget_AnaglyphSlow_BASE(1, 0);
-      else
-         CopyFBColumnToTarget_AnaglyphSlow_BASE(1, 1);
-   }
+      CopyFBColumnToTarget_AnaglyphSlow_BASE(DisplayActive, 1);
 }
-
 
 static void CopyFBColumnToTarget_CScope_BASE(const bool DisplayActive_arg, const int lr, const int dest_lr)
 {
    int y, y_sub;
    const int fb = DisplayFB;
-   uint32 *target = surface->pixels + (dest_lr ? 512 - 16 - 1 : 16) + (dest_lr ? Column : 383 - Column) * surface->pitch32;
    const uint8 *fb_source = &FB[fb][lr][64 * Column];
 
-   for(y = 56; y; y--)
+   if(dest_lr)
    {
-      uint32 source_bits = *fb_source;
-
-      for(y_sub = 4; y_sub; y_sub--)
+      uint32 *target = surface->pixels + (512 - 16 - 1) + (Column) 
+         * surface->pitch32;
+      if(DisplayActive_arg)
       {
-         if(DisplayActive_arg)
-            *target = BrightCLUT[lr][source_bits & 3];
-         else
-            *target = 0;
+         for(y = 56; y; y--)
+         {
+            uint32 source_bits = *fb_source;
 
-         source_bits >>= 2;
-         if(dest_lr)
-            target--;
-         else
-            target++;
+            for(y_sub = 4; y_sub; y_sub--)
+            {
+               *target       = BrightCLUT[lr][source_bits & 3];
+               source_bits >>= 2;
+               target--;
+            }
+            fb_source++;
+         }
       }
-      fb_source++;
+      else
+      {
+         for(y = 56; y; y--)
+         {
+            uint32 source_bits = *fb_source;
+
+            for(y_sub = 4; y_sub; y_sub--)
+            {
+               *target       = 0;
+               source_bits >>= 2;
+               target--;
+            }
+            fb_source++;
+         }
+      }
+   }
+   else
+   {
+      uint32 *target = surface->pixels + 16 + (383 - Column) * surface->pitch32;
+      if(DisplayActive_arg)
+      {
+         for(y = 56; y; y--)
+         {
+            uint32 source_bits = *fb_source;
+
+            for(y_sub = 4; y_sub; y_sub--)
+            {
+               *target       = BrightCLUT[lr][source_bits & 3];
+               source_bits >>= 2;
+               target++;
+            }
+            fb_source++;
+         }
+      }
+      else
+      {
+         for(y = 56; y; y--)
+         {
+            uint32 source_bits = *fb_source;
+
+            for(y_sub = 4; y_sub; y_sub--)
+            {
+               *target       = 0;
+               source_bits >>= 2;
+               target++;
+            }
+            fb_source++;
+         }
+      }
    }
 }
 
@@ -1103,20 +1197,10 @@ static void CopyFBColumnToTarget_CScope(void)
 {
    const int lr = (DisplayRegion & 2) >> 1;
 
-   if(!DisplayActive)
-   {
-      if(!lr)
-         CopyFBColumnToTarget_CScope_BASE(0, 0, 0 ^ VB3DReverse);
-      else
-         CopyFBColumnToTarget_CScope_BASE(0, 1, 1 ^ VB3DReverse);
-   }
+   if(!lr)
+      CopyFBColumnToTarget_CScope_BASE(DisplayActive, 0, 0 ^ VB3DReverse);
    else
-   {
-      if(!lr)
-         CopyFBColumnToTarget_CScope_BASE(1, 0, 0 ^ VB3DReverse);
-      else
-         CopyFBColumnToTarget_CScope_BASE(1, 1, 1 ^ VB3DReverse);
-   }
+      CopyFBColumnToTarget_CScope_BASE(DisplayActive, 1, 1 ^ VB3DReverse);
 }
 
 static void CopyFBColumnToTarget_SideBySide_BASE(const bool DisplayActive_arg, const int lr, const int dest_lr)
@@ -1126,20 +1210,35 @@ static void CopyFBColumnToTarget_SideBySide_BASE(const bool DisplayActive_arg, c
    const int32 pitch32 = surface->pitch32;
    const uint8 *fb_source = &FB[fb][lr][64 * Column];
 
-   for(int y = 56; y; y--)
+   if(DisplayActive_arg)
    {
-      uint32 source_bits = *fb_source;
-
-      for(int y_sub = 4; y_sub; y_sub--)
+      for(int y = 56; y; y--)
       {
-         if(DisplayActive_arg)
-            *target = BrightCLUT[lr][source_bits & 3];
-         else
-            *target = 0;
-         source_bits >>= 2;
-         target += pitch32;
+         uint32 source_bits = *fb_source;
+
+         for(int y_sub = 4; y_sub; y_sub--)
+         {
+            *target       = BrightCLUT[lr][source_bits & 3];
+            source_bits >>= 2;
+            target       += pitch32;
+         }
+         fb_source++;
       }
-      fb_source++;
+   }
+   else
+   {
+      for(int y = 56; y; y--)
+      {
+         uint32 source_bits = *fb_source;
+
+         for(int y_sub = 4; y_sub; y_sub--)
+         {
+            *target       = 0;
+            source_bits >>= 2;
+            target       += pitch32;
+         }
+         fb_source++;
+      }
    }
 }
 
@@ -1147,49 +1246,54 @@ static void CopyFBColumnToTarget_SideBySide(void)
 {
    const int lr = (DisplayRegion & 2) >> 1;
 
-   if(!DisplayActive)
-   {
-      if(!lr)
-         CopyFBColumnToTarget_SideBySide_BASE(0, 0, 0 ^ VB3DReverse);
-      else
-         CopyFBColumnToTarget_SideBySide_BASE(0, 1, 1 ^ VB3DReverse);
-   }
+   if(!lr)
+      CopyFBColumnToTarget_SideBySide_BASE(DisplayActive, 0, 0 ^ VB3DReverse);
    else
-   {
-      if(!lr)
-         CopyFBColumnToTarget_SideBySide_BASE(1, 0, 0 ^ VB3DReverse);
-      else
-         CopyFBColumnToTarget_SideBySide_BASE(1, 1, 1 ^ VB3DReverse);
-   }
+      CopyFBColumnToTarget_SideBySide_BASE(DisplayActive, 1, 1 ^ VB3DReverse);
 }
 
 static INLINE void CopyFBColumnToTarget_VLI_BASE(const bool DisplayActive_arg, const int lr, const int dest_lr)
 {
-   const int fb = DisplayFB;
-   uint32 *target = surface->pixels + Column * 2 * VBPrescale + dest_lr;
-   const int32 pitch32 = surface->pitch32;
+   const int fb           = DisplayFB;
+   uint32 *target         = surface->pixels + Column * 2 * VBPrescale + dest_lr;
+   const int32 pitch32    = surface->pitch32;
    const uint8 *fb_source = &FB[fb][lr][64 * Column];
 
-   for(int y = 56; y; y--)
+   if(DisplayActive_arg)
    {
-      uint32 source_bits = *fb_source;
-
-      for(int y_sub = 4; y_sub; y_sub--)
+      for(int y = 56; y; y--)
       {
-         uint32 tv;
+         uint32 source_bits = *fb_source;
 
-         if(DisplayActive_arg)
-            tv = BrightCLUT[0][source_bits & 3];
-         else
-            tv = 0;
+         for(int y_sub = 4; y_sub; y_sub--)
+         {
+            uint32 tv = BrightCLUT[0][source_bits & 3];
+            for(uint32 ps = 0; ps < VBPrescale; ps++)
+               target[ps * 2] = tv;
 
-         for(uint32 ps = 0; ps < VBPrescale; ps++)
-            target[ps * 2] = tv;
-
-         source_bits >>= 2;
-         target += pitch32;
+            source_bits >>= 2;
+            target += pitch32;
+         }
+         fb_source++;
       }
-      fb_source++;
+   }
+   else
+   {
+      for(int y = 56; y; y--)
+      {
+         uint32 source_bits = *fb_source;
+
+         for(int y_sub = 4; y_sub; y_sub--)
+         {
+            uint32 tv = 0;
+            for(uint32 ps = 0; ps < VBPrescale; ps++)
+               target[ps * 2] = tv;
+
+            source_bits >>= 2;
+            target       += pitch32;
+         }
+         fb_source++;
+      }
    }
 }
 
@@ -1197,20 +1301,10 @@ static void CopyFBColumnToTarget_VLI(void)
 {
    const int lr = (DisplayRegion & 2) >> 1;
 
-   if(!DisplayActive)
-   {
-      if(!lr)
-         CopyFBColumnToTarget_VLI_BASE(0, 0, 0 ^ VB3DReverse);
-      else
-         CopyFBColumnToTarget_VLI_BASE(0, 1, 1 ^ VB3DReverse);
-   }
+   if(!lr)
+      CopyFBColumnToTarget_VLI_BASE(DisplayActive, 0, 0 ^ VB3DReverse);
    else
-   {
-      if(!lr)
-         CopyFBColumnToTarget_VLI_BASE(1, 0, 0 ^ VB3DReverse);
-      else
-         CopyFBColumnToTarget_VLI_BASE(1, 1, 1 ^ VB3DReverse);
-   }
+      CopyFBColumnToTarget_VLI_BASE(DisplayActive, 1, 1 ^ VB3DReverse);
 }
 
 static INLINE void CopyFBColumnToTarget_HLI_BASE(const bool DisplayActive_arg, const int lr, const int dest_lr)
@@ -1264,20 +1358,10 @@ static void CopyFBColumnToTarget_HLI(void)
 {
    const int lr = (DisplayRegion & 2) >> 1;
 
-   if(!DisplayActive)
-   {
-      if(!lr)
-         CopyFBColumnToTarget_HLI_BASE(0, 0, 0 ^ VB3DReverse);
-      else
-         CopyFBColumnToTarget_HLI_BASE(0, 1, 1 ^ VB3DReverse);
-   }
+   if (!lr)
+      CopyFBColumnToTarget_HLI_BASE(DisplayActive, 0, 0 ^ VB3DReverse);
    else
-   {
-      if(!lr)
-         CopyFBColumnToTarget_HLI_BASE(1, 0, 0 ^ VB3DReverse);
-      else
-         CopyFBColumnToTarget_HLI_BASE(1, 1, 1 ^ VB3DReverse);
-   }
+      CopyFBColumnToTarget_HLI_BASE(DisplayActive, 1, 1 ^ VB3DReverse);
 }
 
 v810_timestamp_t MDFN_FASTCALL VIP_Update(const v810_timestamp_t timestamp)
