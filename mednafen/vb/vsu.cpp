@@ -488,15 +488,7 @@ int VSU::StateAction(StateMem *sm, int load, int data_only)
       SFEND
    };
 
-   int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "VSU", false);
-
-
-   if(load)
-   {
-
-   }
-
-   return(ret);
+   return MDFNSS_StateAction(sm, load, data_only, StateRegs, "VSU", false);
 }
 
 uint8 VSU::PeekWave(const unsigned int which, uint32 Address)
