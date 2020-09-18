@@ -5,15 +5,6 @@
 
 #include "video/surface.h"
 
-typedef enum
-{
- GMT_CART,	// Self-explanatory!
- GMT_ARCADE,	// VS Unisystem, PC-10...
- GMT_DISK,	// Famicom Disk System, mostly
- GMT_CDROM,	// PC Engine CD, PC-FX
- GMT_PLAYER	// Music player(NSF, HES, GSF)
-} GameMediumTypes;
-
 #include "state.h"
 
 typedef enum
@@ -174,8 +165,6 @@ typedef struct
  int rotated;
 
  int soundrate;  /* For Ogg Vorbis expansion sound wacky support.  0 for default. */
-
- GameMediumTypes GameType;
 } MDFNGI;
 
 #ifdef __cplusplus
