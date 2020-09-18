@@ -2083,7 +2083,7 @@ void VB_ExitLoop(void)
  VB_V810->Exit();
 }
 
-static void Emulate(EmulateSpecStruct *espec)
+static void Emulate(EmulateSpecStruct *espec, int16_t *sound_buf)
 {
  v810_timestamp_t v810_timestamp;
 
@@ -2110,12 +2110,12 @@ static void Emulate(EmulateSpecStruct *espec)
 
  VB_VSU->EndFrame((v810_timestamp + VSU_CycleFix) >> 2);
 
- if(espec->SoundBuf)
+ if(sound_buf)
  {
   for(int y = 0; y < 2; y++)
   {
    Blip_Buffer_end_frame(&sbuf[y], (v810_timestamp + VSU_CycleFix) >> 2);
-   espec->SoundBufSize = Blip_Buffer_read_samples(&sbuf[y], espec->SoundBuf + y, espec->SoundBufMaxSize);
+   espec->SoundBufSize = Blip_Buffer_read_samples(&sbuf[y], sound_buf + y, espec->SoundBufMaxSize);
   }
  }
 
@@ -2205,65 +2205,6 @@ static void DoSimpleCommand(int cmd)
  }
 }
 
-static const MDFNSetting_EnumList V810Mode_List[] =
-{
- { "fast", (int)V810_EMU_MODE_FAST, "Fast Mode", "Fast mode trades timing accuracy, cache emulation, and executing from hardware registers and RAM not intended for code use for performance."},
- { "accurate", (int)V810_EMU_MODE_ACCURATE, "Accurate Mode", "Increased timing accuracy, though not perfect, along with cache emulation, at the cost of decreased performance.  Additionally, even the pipeline isn't correctly and fully emulated in this mode." },
- { NULL, 0 },
-};
-
-static const MDFNSetting_EnumList VB3DMode_List[] =
-{
- { "anaglyph", VB3DMODE_ANAGLYPH, "Anaglyph", "Used in conjunction with classic dual-lens-color glasses." },
- { "cscope",  VB3DMODE_CSCOPE, "CyberScope", "Intended for use with the CyberScope 3D device." },
- { "sidebyside", VB3DMODE_SIDEBYSIDE, "Side-by-Side", "The left-eye image is displayed on the left, and the right-eye image is displayed on the right." },
-// { "overunder", VB3DMODE_OVERUNDER },
- { "vli", VB3DMODE_VLI, "Vertical Line Interlaced", "Vertical lines alternate between left view and right view." },
- { "hli", VB3DMODE_HLI, "Horizontal Line Interlaced", "Horizontal lines alternate between left view and right view." },
- { NULL, 0 },
-};
-
-static const MDFNSetting_EnumList AnaglyphPreset_List[] =
-{
- { "disabled", ANAGLYPH_PRESET_DISABLED, "Disabled", "Forces usage of custom anaglyph colors." },
- { "0", ANAGLYPH_PRESET_DISABLED },
-
- { "red_blue", ANAGLYPH_PRESET_RED_BLUE, "Red/Blue", "Classic red/blue anaglyph." },
- { "red_cyan", ANAGLYPH_PRESET_RED_CYAN, "Red/Cyan", "Improved quality red/cyan anaglyph." },
- { "red_electriccyan", ANAGLYPH_PRESET_RED_ELECTRICCYAN, "Red/Electric Cyan", "Alternate version of red/cyan" },
- { "red_green", ANAGLYPH_PRESET_RED_GREEN, "Red/Green" },
- { "green_magenta", ANAGLYPH_PRESET_GREEN_MAGENTA, "Green/Magenta" },
- { "yellow_blue", ANAGLYPH_PRESET_YELLOW_BLUE, "Yellow/Blue" },
-
- { NULL, 0 },
-};
-
-static MDFNSetting VBSettings[] =
-{
- { "vb.cpu_emulation", MDFNSF_EMU_STATE | MDFNSF_UNTRUSTED_SAFE, "CPU emulation mode.", NULL, MDFNST_ENUM, "fast", NULL, NULL, NULL, NULL, V810Mode_List },
- { "vb.input.instant_read_hack", MDFNSF_EMU_STATE | MDFNSF_UNTRUSTED_SAFE, "Input latency reduction hack.", "Reduces latency in some games by 20ms by returning the current pad state, rather than latched state, on serial port data reads.  This hack may cause some homebrew software to malfunction, but it should be relatively safe for commercial official games.", MDFNST_BOOL, "1", NULL, NULL, NULL, SettingChanged },
- 
- { "vb.instant_display_hack", MDFNSF_NOFLAGS, "Display latency reduction hack.", "Reduces latency in games by displaying the framebuffer 20ms earlier.  This hack has some potential of causing graphical glitches, so it is disabled by default.", MDFNST_BOOL, "0", NULL, NULL, NULL, SettingChanged },
- { "vb.allow_draw_skip", MDFNSF_EMU_STATE | MDFNSF_UNTRUSTED_SAFE, "Allow draw skipping.", "If vb.instant_display_hack is set to \"1\", and this setting is set to \"1\", then frame-skipping the drawing to the emulated framebuffer will be allowed.  THIS WILL CAUSE GRAPHICAL GLITCHES, AND THEORETICALLY(but unlikely) GAME CRASHES, ESPECIALLY WITH DIRECT FRAMEBUFFER DRAWING GAMES.", MDFNST_BOOL, "0", NULL, NULL, NULL, SettingChanged },
-
- // FIXME: We're going to have to set up some kind of video mode change notification for changing vb.3dmode while the game is running to work properly.
- { "vb.3dmode", MDFNSF_NOFLAGS, "3D mode.", NULL, MDFNST_ENUM, "anaglyph", NULL, NULL, NULL, /*SettingChanged*/NULL, VB3DMode_List },
- { "vb.liprescale", MDFNSF_NOFLAGS, "Line Interlaced prescale.", NULL, MDFNST_UINT, "2", "1", "10", NULL, NULL },
-
- { "vb.disable_parallax", MDFNSF_EMU_STATE | MDFNSF_UNTRUSTED_SAFE, "Disable parallax for BG and OBJ rendering.", NULL, MDFNST_BOOL, "0", NULL, NULL, NULL, SettingChanged },
- { "vb.default_color", MDFNSF_NOFLAGS, "Default maximum-brightness color to use in non-anaglyph 3D modes.", NULL, MDFNST_UINT, "0xF0F0F0", "0x000000", "0xFFFFFF", NULL, SettingChanged },
-
- { "vb.anaglyph.preset", MDFNSF_NOFLAGS, "Anaglyph preset colors.", NULL, MDFNST_ENUM, "red_blue", NULL, NULL, NULL, SettingChanged, AnaglyphPreset_List },
- { "vb.anaglyph.lcolor", MDFNSF_NOFLAGS, "Anaglyph maximum-brightness color for left view.", NULL, MDFNST_UINT, "0xffba00", "0x000000", "0xFFFFFF", NULL, SettingChanged },
- { "vb.anaglyph.rcolor", MDFNSF_NOFLAGS, "Anaglyph maximum-brightness color for right view.", NULL, MDFNST_UINT, "0x00baff", "0x000000", "0xFFFFFF", NULL, SettingChanged },
-
- { "vb.sidebyside.separation", MDFNSF_NOFLAGS, "Number of pixels to separate L/R views by.", "This setting refers to pixels before vb.xscale(fs) scaling is taken into consideration.  For example, a value of \"100\" here will result in a separation of 300 screen pixels if vb.xscale(fs) is set to \"3\".", MDFNST_UINT, /*"96"*/"0", "0", "1024", NULL, NULL },
-
- { "vb.3dreverse", MDFNSF_NOFLAGS, "Reverse left/right 3D views.", NULL, MDFNST_BOOL, "0", NULL, NULL, NULL, SettingChanged },
- { NULL }
-};
-
-
 static const InputDeviceInputInfoStruct IDII[] =
 {
  { "a", "A", 7, IDIT_BUTTON_CAN_RAPID,  NULL },
@@ -2309,24 +2250,13 @@ static InputInfoStruct InputInfo =
  PortInfo
 };
 
-
-static const FileExtensionSpecStruct KnownExtensions[] =
-{
- { ".vb", "Nintendo Virtual Boy" },
- { ".vboy", "Nintendo Virtual Boy" },
- { NULL, NULL }
-};
-
 MDFNGI EmulatedVB =
 {
- VBSettings,
  MDFN_MASTERCLOCK_FIXED(VB_MASTER_CLOCK),
  0,
- false, // Multires possible?
 
  0,   // lcm_width
  0,   // lcm_height
- NULL,  // Dummy
 
  384,   // Nominal width
  224,   // Nominal height
@@ -2791,11 +2721,8 @@ void retro_run(void)
    EmulateSpecStruct spec = {0};
    spec.surface = surf;
    spec.SoundRate = 44100;
-   spec.SoundBuf = sound_buf;
    spec.LineWidths = rects;
    spec.SoundBufMaxSize = sizeof(sound_buf) / 2;
-   spec.SoundVolume = 1.0;
-   spec.soundmultiplier = 1.0;
    spec.SoundBufSize = 0;
    spec.VideoFormatChanged = false;
    spec.SoundFormatChanged = false;
@@ -2813,9 +2740,9 @@ void retro_run(void)
       last_sound_rate = spec.SoundRate;
    }
 
-   Emulate(&spec);
+   Emulate(&spec, sound_buf);
 
-   int16 *const SoundBuf = spec.SoundBuf + spec.SoundBufSizeALMS * EmulatedVB.soundchan;
+   int16 *const SoundBuf = sound_buf + spec.SoundBufSizeALMS * EmulatedVB.soundchan;
    int32 SoundBufSize = spec.SoundBufSize - spec.SoundBufSizeALMS;
    const int32 SoundBufMaxSize = spec.SoundBufMaxSize - spec.SoundBufSizeALMS;
 
@@ -2838,7 +2765,7 @@ void retro_run(void)
    video_frames++;
    audio_frames += spec.SoundBufSize;
 
-   audio_batch_cb(spec.SoundBuf, spec.SoundBufSize);
+   audio_batch_cb(sound_buf, spec.SoundBufSize);
 
    bool updated = false;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
