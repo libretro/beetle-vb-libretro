@@ -42,25 +42,6 @@ inline void blargg_dprintf_( const char*, ... ) { }
 #undef min
 #undef max
 
-// using const references generates crappy code, and I am currenly only using these
-// for built-in types, so they take arguments by value
-
-template<class T>
-inline T min( T x, T y )
-{
-	if ( x < y )
-		return x;
-	return y;
-}
-
-template<class T>
-inline T max( T x, T y )
-{
-	if ( x < y )
-		return y;
-	return x;
-}
-
 // TODO: good idea? bad idea?
 #undef byte
 #define byte byte_
