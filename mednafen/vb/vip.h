@@ -1,6 +1,9 @@
 #ifndef __VB_VIP_H
 #define __VB_VIP_H
 
+#include "../git.h"
+#include "../state.h"
+
 enum
 {
  VIP_GSREG_IPENDING = 0,	// Current pending interrupt(bits)

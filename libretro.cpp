@@ -2,11 +2,15 @@
 
 #include <libretro.h>
 
-#include "mednafen/mednafen.h"
 #include "mednafen/math_ops.h"
 #include "mednafen/mempatcher.h"
 #include "mednafen/git.h"
 #include "mednafen/state_inline.h"
+#include "mednafen/settings.h"
+
+/* Forward declarations */
+void MDFN_LoadGameCheats(void *override);
+void MDFN_FlushGameCheats(int nosave);
 
 struct retro_perf_callback perf_cb;
 retro_get_cpu_features_t perf_get_cpu_features_cb = NULL;
@@ -111,6 +115,26 @@ static int32 next_vip_ts, next_timer_ts, next_input_ts;
 
 static uint32 IRQ_Asserted;
 
+MDFNGI EmulatedVB =
+{
+ MDFN_MASTERCLOCK_FIXED(VB_MASTER_CLOCK),
+ 0,
+
+ 0,   // lcm_width
+ 0,   // lcm_height
+
+ 384,   // Nominal width
+ 224,   // Nominal height
+
+ 384,   // Framebuffer width
+ 256,   // Framebuffer height
+
+ 2,     // Number of output sound channels
+};
+
+MDFNGI *MDFNGameInfo = &EmulatedVB;
+
+
 static INLINE void RecalcIntLevel(void)
 {
  int ilevel = -1;
@@ -143,15 +167,16 @@ static uint8 HWCTRL_Read(v810_timestamp_t &timestamp, uint32 A)
 {
  uint8 ret = 0;
 
+ /* HWCtrl Bogus Read? */
  if(A & 0x3)
- { 
-  puts("HWCtrl Bogus Read?");
   return(ret);
- }
 
  switch(A & 0xFF)
  {
-  default: printf("Unknown HWCTRL Read: %08x\n", A);
+  default:
+#if 0
+	printf("Unknown HWCTRL Read: %08x\n", A);
+#endif
        break;
 
   case 0x18:
@@ -174,16 +199,15 @@ static uint8 HWCTRL_Read(v810_timestamp_t &timestamp, uint32 A)
 
 static void HWCTRL_Write(v810_timestamp_t &timestamp, uint32 A, uint8 V)
 {
+ /* HWCtrl Bogus Write? */
  if(A & 0x3)
- {
-  puts("HWCtrl Bogus Write?");
   return;
- }
 
  switch(A & 0xFF)
  {
-  default: printf("Unknown HWCTRL Write: %08x %02x\n", A, V);
-           break;
+  default:
+	  //printf("Unknown HWCTRL Write: %08x %02x\n", A, V);
+	  break;
 
   case 0x18:
   case 0x1C:
@@ -226,8 +250,10 @@ uint8 MDFN_FASTCALL MemRead8(v810_timestamp_t &timestamp, uint32 A)
 
   case 6: if(GPRAM)
        ret = GPRAM[A & GPRAM_Mask];
+#if 0
       else
        printf("GPRAM(Unmapped) Read: %08x\n", A);
+#endif
       break;
 
   case 7: ret = GPROM[A & GPROM_Mask];
@@ -265,7 +291,9 @@ uint16 MDFN_FASTCALL MemRead16(v810_timestamp_t &timestamp, uint32 A)
 
   case 6: if(GPRAM)
            ret = LoadU16_LE((uint16 *)&GPRAM[A & GPRAM_Mask]);
+#if 0
       else printf("GPRAM(Unmapped) Read: %08x\n", A);
+#endif
       break;
 
   case 7: ret = LoadU16_LE((uint16 *)&GPROM[A & GPROM_Mask]);
@@ -1884,23 +1912,17 @@ static int Load(const uint8_t *data, size_t size)
 
    cpu_mode = (V810_Emu_Mode)MDFN_GetSettingI("vb.cpu_emulation");
 
+   /* VB ROM image size is not a power of 2??? */
    if(size != round_up_pow2(size))
-   {
-      puts("VB ROM image size is not a power of 2???");
       return(0);
-   }
 
+   /* VB ROM image size is too small?? */
    if(size < 256)
-   {
-      puts("VB ROM image size is too small??");
       return(0);
-   }
 
+   /* VB ROM image size is too large?? */
    if(size > (1 << 24))
-   {
-      puts("VB ROM image size is too large??");
       return(0);
-   }
 
    VB_HeaderInfo hinfo;
 
@@ -2266,25 +2288,6 @@ static InputInfoStruct InputInfo =
  sizeof(PortInfo) / sizeof(InputPortInfoStruct),
  PortInfo
 };
-
-MDFNGI EmulatedVB =
-{
- MDFN_MASTERCLOCK_FIXED(VB_MASTER_CLOCK),
- 0,
-
- 0,   // lcm_width
- 0,   // lcm_height
-
- 384,   // Nominal width
- 224,   // Nominal height
-
- 384,   // Framebuffer width
- 256,   // Framebuffer height
-
- 2,     // Number of output sound channels
-};
-
-MDFNGI *MDFNGameInfo = &EmulatedVB;
 
 /* forward declarations */
 extern void MDFND_DispMessage(unsigned char *str);

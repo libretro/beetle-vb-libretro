@@ -1,6 +1,8 @@
 #ifndef __MDFN_SURFACE_H
 #define __MDFN_SURFACE_H
 
+#include "../mednafen-types.h"
+
 #if defined(WANT_32BPP)
 #define RED_SHIFT 16
 #define GREEN_SHIFT 8

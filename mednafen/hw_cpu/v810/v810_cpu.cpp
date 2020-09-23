@@ -43,7 +43,6 @@ found freely through public domain sources.
 
 #include <boolean.h>
 
-#include "../../mednafen.h"
 #include "../../masmem.h"
 #include "../../math_ops.h"
 #include "../../state_inline.h"

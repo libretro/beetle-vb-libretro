@@ -1,6 +1,8 @@
 #ifndef __MDFN_PSX_MASMEM_H
 #define __MDFN_PSX_MASMEM_H
 
+#include "mednafen-types.h"
+
 // TODO, WIP (big-endian stores and loads not fully supported yet)
 
 static INLINE uint16 LoadU16_RBO(const uint16 *a)

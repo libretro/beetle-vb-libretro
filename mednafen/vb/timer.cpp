@@ -94,10 +94,7 @@ uint8 TIMER_Read(const v810_timestamp_t &timestamp, uint32 A)
 void TIMER_Write(const v810_timestamp_t &timestamp, uint32 A, uint8 V)
 {
    if(A & 0x3)
-   {
-      puts("HWCtrl Bogus Write?");
       return;
-   }
 
    TIMER_Update(timestamp);
 
@@ -121,10 +118,8 @@ void TIMER_Write(const v810_timestamp_t &timestamp, uint32 A, uint8 V)
       case 0x20:
          if(V & TC_ZSTATCLR)
          {
-            if((TimerControl & TC_TENABLE) && TimerCounter == 0)
-            {
-               //puts("Faulty Z-Stat-Clr");
-            }
+            /* Faulty Z-Stat-Clr */
+            if((TimerControl & TC_TENABLE) && TimerCounter == 0) { }
             else
                TimerStatus = false;
             TimerStatusShadow = false;

@@ -34,6 +34,8 @@ these four paragraphs for those parts of this code that are retained.
 extern "C" {
 #endif
 
+#include "../../../mednafen-types.h"
+
 /*----------------------------------------------------------------------------
 | Software IEC/IEEE floating-point types.
 *----------------------------------------------------------------------------*/

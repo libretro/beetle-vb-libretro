@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "fpu-new/softfloat.h"
+#include "../../state.h"
 
 typedef int32 v810_timestamp_t;
 
