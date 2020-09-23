@@ -163,13 +163,13 @@ int TIMER_StateAction(StateMem *sm, int load, int data_only)
 {
    SFORMAT StateRegs[] =
    {
-      SFVAR(TimerCounter),
-      SFVAR(TimerReloadValue),
-      SFVAR(TimerDivider),
-      SFVAR(TimerStatus),
-      SFVAR(TimerStatusShadow),
-      SFVAR(TimerControl),
-      SFVAR(ReloadPending),
+      SFVARN(TimerCounter, "TimerCounter"),
+      SFVARN(TimerReloadValue, "TimerReloadValue"),
+      SFVARN(TimerDivider, "TimerDivider"),
+      SFVARN(TimerStatus, "TimerStatus"),
+      SFVARN(TimerStatusShadow, "TimerStatusShadow"),
+      SFVARN(TimerControl, "TimerControl"),
+      SFVARN(ReloadPending, "ReloadPending"),
       SFEND
    };
 
