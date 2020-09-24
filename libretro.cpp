@@ -479,7 +479,7 @@ static void VB_Power(void)
 
 static void SettingChanged(const char *name)
 {
- if(!strcasecmp(name, "vb.3dmode"))
+ if(!strcmp(name, "vb.3dmode"))
  {
   VB3DMode = MDFN_GetSettingUI("vb.3dmode");
   uint32 prescale = MDFN_GetSettingUI("vb.liprescale");
@@ -487,12 +487,12 @@ static void SettingChanged(const char *name)
 
   VIP_Set3DMode(VB3DMode, MDFN_GetSettingUI("vb.3dreverse"), prescale, sbs_separation);
  }
- else if(!strcasecmp(name, "vb.disable_parallax"))
+ else if(!strcmp(name, "vb.disable_parallax"))
  {
   VIP_SetParallaxDisable(MDFN_GetSettingB("vb.disable_parallax"));
  }
- else if(!strcasecmp(name, "vb.anaglyph.lcolor") || !strcasecmp(name, "vb.anaglyph.rcolor") ||
-         !strcasecmp(name, "vb.anaglyph.preset") || !strcasecmp(name, "vb.default_color"))
+ else if(!strcmp(name, "vb.anaglyph.lcolor") || !strcmp(name, "vb.anaglyph.rcolor") ||
+         !strcmp(name, "vb.anaglyph.preset") || !strcmp(name, "vb.default_color"))
  {
   uint32 lcolor = MDFN_GetSettingUI("vb.anaglyph.lcolor"), rcolor = MDFN_GetSettingUI("vb.anaglyph.rcolor");
   int preset = MDFN_GetSettingI("vb.anaglyph.preset");
@@ -505,13 +505,13 @@ static void SettingChanged(const char *name)
   VIP_SetAnaglyphColors(lcolor, rcolor);
   VIP_SetDefaultColor(MDFN_GetSettingUI("vb.default_color"));
  }
- else if(!strcasecmp(name, "vb.input.instant_read_hack"))
+ else if(!strcmp(name, "vb.input.instant_read_hack"))
  {
   VBINPUT_SetInstantReadHack(MDFN_GetSettingB("vb.input.instant_read_hack"));
  }
- else if(!strcasecmp(name, "vb.instant_display_hack"))
+ else if(!strcmp(name, "vb.instant_display_hack"))
   VIP_SetInstantDisplayHack(MDFN_GetSettingB("vb.instant_display_hack"));
- else if(!strcasecmp(name, "vb.allow_draw_skip"))
+ else if(!strcmp(name, "vb.allow_draw_skip"))
   VIP_SetAllowDrawSkip(MDFN_GetSettingB("vb.allow_draw_skip"));
  else
   abort();
