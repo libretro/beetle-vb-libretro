@@ -40,6 +40,10 @@ found freely through public domain sources.
 
 //////////////////////////////////////////////////////////
 // CPU routines
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <algorithm>
 
 #include <boolean.h>
 
@@ -50,9 +54,6 @@ found freely through public domain sources.
 //#include "pcfx.h"
 //#include "debug.h"
 
-#include <string.h>
-#include <errno.h>
-#include <algorithm>
 
 #include "v810_opt.h"
 #include "v810_cpu.h"
