@@ -203,7 +203,7 @@ int VBINPUT_StateAction(StateMem *sm, int load, int data_only)
       SFVARN(SDR, "SDR"),
       SFVARN(ReadBitPos, "ReadBitPos"),
       SFVARN(ReadCounter, "ReadCounter"),
-      SFVARN(IntPending, "IntPending"),
+      SFVARN_BOOL(IntPending, "IntPending"),
       SFEND
    };
 
