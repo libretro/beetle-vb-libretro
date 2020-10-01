@@ -459,7 +459,7 @@ int VSU::StateAction(StateMem *sm, int load, int data_only)
       SFARRAY16(Frequency, 6),
       SFARRAY16(EnvControl, 6),
       SFARRAY(RAMAddress, 6),
-      SFVAR(SweepControl),
+      SFVARN(SweepControl, "SweepControl"),
 
       SFARRAY(&WaveData[0][0], 5 * 0x20),
       SFARRAY(ModData, 0x20),
@@ -469,24 +469,24 @@ int VSU::StateAction(StateMem *sm, int load, int data_only)
 
       SFARRAY32(WavePos, 6),
 
-      SFVAR(ModWavePos),
+      SFVARN(ModWavePos, "ModWavePos"),
 
       SFARRAY32(LatcherClockDivider, 6),
       SFARRAY32(FreqCounter, 6),
       SFARRAY32(IntervalCounter, 6),
       SFARRAY32(EnvelopeCounter, 6),
 
-      SFVAR(SweepModCounter),
+      SFVARN(SweepModCounter, "SweepModCounter"),
 
       SFARRAY32(EffectsClockDivider, 6),
       SFARRAY32(IntervalClockDivider, 6),
       SFARRAY32(EnvelopeClockDivider, 6),
 
-      SFVAR(SweepModClockDivider),
+      SFVARN(SweepModClockDivider, "SweepModClockDivider"),
 
-      SFVAR(NoiseLatcherClockDivider),
-      SFVAR(NoiseLatcher),
-      SFVAR(lfsr),
+      SFVARN(NoiseLatcherClockDivider, "NoiseLatcherClockDivider"),
+      SFVARN(NoiseLatcher, "NoiseLatcher"),
+      SFVARN(lfsr, "lfsr"),
       SFEND
    };
 

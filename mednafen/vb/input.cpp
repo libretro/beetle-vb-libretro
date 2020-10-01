@@ -197,13 +197,13 @@ int VBINPUT_StateAction(StateMem *sm, int load, int data_only)
 {
    SFORMAT StateRegs[] =
    {
-      SFVAR(PadData),
-      SFVAR(PadLatched),
-      SFVAR(SCR),
-      SFVAR(SDR),
-      SFVAR(ReadBitPos),
-      SFVAR(ReadCounter),
-      SFVAR(IntPending),
+      SFVARN(PadData, "PadData"),
+      SFVARN(PadLatched, "PadLatched"),
+      SFVARN(SCR, "SCR"),
+      SFVARN(SDR, "SDR"),
+      SFVARN(ReadBitPos, "ReadBitPos"),
+      SFVARN(ReadCounter, "ReadCounter"),
+      SFVARN(IntPending, "IntPending"),
       SFEND
    };
 

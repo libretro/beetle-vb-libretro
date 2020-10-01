@@ -2207,9 +2207,9 @@ extern "C" int StateAction(StateMem *sm, int load, int data_only)
  {
   SFARRAY(WRAM, 65536),
   SFARRAY(GPRAM, GPRAM_Mask ? (GPRAM_Mask + 1) : 0),
-  SFVAR(WCR),
-  SFVAR(IRQ_Asserted),
-  SFVAR(VSU_CycleFix),
+  SFVARN(WCR, "WCR"),
+  SFVARN(IRQ_Asserted, "IRQ_Asserted"),
+  SFVARN(VSU_CycleFix, "VSU_CycleFix"),
   SFEND
  };
 

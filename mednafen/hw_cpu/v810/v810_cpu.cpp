@@ -1534,24 +1534,24 @@ int V810::StateAction(StateMem *sm, int load, int data_only)
   SFARRAY32(P_REG, 32),
   SFARRAY32(S_REG, 32),
   SFVARN(PC_tmp, "PC"),
-  SFVAR(Halted),
+  SFVARN(Halted, "Halted"),
 
-  SFVAR(lastop),
+  SFVARN(lastop, "lastop"),
 
   SFARRAY32(cache_tag_temp, 128),
   SFARRAY32(cache_data_temp, 128 * 2),
   SFARRAYB(cache_data_valid_temp, 128 * 2),
 
-  SFVAR(ilevel),		// Perhaps remove in future?
-  SFVAR(next_event_ts_delta),
+  SFVARN(ilevel, "ilevel"),		// Perhaps remove in future?
+  SFVARN(next_event_ts_delta, "next_event_ts_delta"),
 
   // Bitstring stuff:
-  SFVAR(src_cache),
-  SFVAR(dst_cache),
-  SFVAR(have_src_cache),
-  SFVAR(have_dst_cache),
-  SFVAR(in_bstr),
-  SFVAR(in_bstr_to),
+  SFVARN(src_cache, "src_cache"),
+  SFVARN(dst_cache, "dst_cache"),
+  SFVARN(have_src_cache, "have_src_cache"),
+  SFVARN(have_dst_cache, "have_dst_cache"),
+  SFVARN(in_bstr, "in_bstr"),
+  SFVARN(in_bstr_to, "in_bstr_to"),
 
   SFEND
  };
