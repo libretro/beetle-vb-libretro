@@ -3,6 +3,8 @@
 
 #include "../include/blip/Blip_Buffer.h"
 
+#include "../state.h"
+
 class VSU
 {
    public:

@@ -1,6 +1,8 @@
 #ifndef __MDFN_VB_TIMER_H
 #define __MDFN_VB_TIMER_H
 
+#include "../state.h"
+
 enum
 {
    TIMER_GSREG_TCR,

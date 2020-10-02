@@ -1,6 +1,8 @@
 #ifndef __VB_INPUT_H
 #define __VB_INPUT_H
 
+#include "../state.h"
+
 void VBINPUT_Init(void);
 void VBINPUT_SetInstantReadHack(bool);
 

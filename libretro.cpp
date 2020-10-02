@@ -59,6 +59,7 @@ static MDFN_Surface *surf;
 #if 0
 #include <iconv.h>
 #endif
+#include "mednafen/hw_cpu/v810/v810_cpu.h"
 
 #include "libretro_core_options.h"
 

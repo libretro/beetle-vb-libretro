@@ -31,7 +31,6 @@ enum
 #define VBIRQ_SOURCE_COMM       3
 #define VBIRQ_SOURCE_VIP        4
 
-#include "../hw_cpu/v810/v810_cpu.h"
 #include "../masmem.h"
 
 void VB_SetEvent(const int type, const v810_timestamp_t next_timestamp);
