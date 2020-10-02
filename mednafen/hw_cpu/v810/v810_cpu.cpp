@@ -1548,9 +1548,9 @@ int V810::StateAction(StateMem *sm, int load, int data_only)
   // Bitstring stuff:
   SFVARN(src_cache, "src_cache"),
   SFVARN(dst_cache, "dst_cache"),
-  SFVARN(have_src_cache, "have_src_cache"),
-  SFVARN(have_dst_cache, "have_dst_cache"),
-  SFVARN(in_bstr, "in_bstr"),
+  SFVARN_BOOL(have_src_cache, "have_src_cache"),
+  SFVARN_BOOL(have_dst_cache, "have_dst_cache"),
+  SFVARN_BOOL(in_bstr, "in_bstr"),
   SFVARN(in_bstr_to, "in_bstr_to"),
 
   SFEND

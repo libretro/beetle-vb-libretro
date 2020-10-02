@@ -166,10 +166,10 @@ int TIMER_StateAction(StateMem *sm, int load, int data_only)
       SFVARN(TimerCounter, "TimerCounter"),
       SFVARN(TimerReloadValue, "TimerReloadValue"),
       SFVARN(TimerDivider, "TimerDivider"),
-      SFVARN(TimerStatus, "TimerStatus"),
-      SFVARN(TimerStatusShadow, "TimerStatusShadow"),
+      SFVARN_BOOL(TimerStatus, "TimerStatus"),
+      SFVARN_BOOL(TimerStatusShadow, "TimerStatusShadow"),
       SFVARN(TimerControl, "TimerControl"),
-      SFVARN(ReloadPending, "ReloadPending"),
+      SFVARN_BOOL(ReloadPending, "ReloadPending"),
       SFEND
    };
 
