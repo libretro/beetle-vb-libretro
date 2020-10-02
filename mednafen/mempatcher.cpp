@@ -23,6 +23,8 @@
 
 #include <boolean.h>
 
+#include <vector>
+
 #include "mednafen-types.h"
 
 #include "mempatcher.h"
