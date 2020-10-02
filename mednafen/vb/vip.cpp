@@ -21,7 +21,7 @@
 #include "vip.h"
 
 #include "../math_ops.h"
-#include "../state_inline.h"
+#include "../state_helpers.h"
 
 static uint8 FB[2][2][0x6000];
 static uint16 CHR_RAM[0x8000 / sizeof(uint16)];

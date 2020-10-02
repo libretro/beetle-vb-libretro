@@ -49,7 +49,7 @@ found freely through public domain sources.
 
 #include "../../masmem.h"
 #include "../../math_ops.h"
-#include "../../state_inline.h"
+#include "../../state_helpers.h"
 
 //#include "pcfx.h"
 //#include "debug.h"

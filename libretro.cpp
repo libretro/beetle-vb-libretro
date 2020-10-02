@@ -5,7 +5,7 @@
 #include "mednafen/math_ops.h"
 #include "mednafen/mempatcher.h"
 #include "mednafen/git.h"
-#include "mednafen/state_inline.h"
+#include "mednafen/state_helpers.h"
 #include "mednafen/settings.h"
 
 /* Forward declarations */

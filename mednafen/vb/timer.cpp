@@ -18,7 +18,7 @@
 #include "vb.h"
 #include "timer.h"
 
-#include "../state_inline.h"
+#include "../state_helpers.h"
 
 #define TC_TENABLE	0x01
 #define TC_ZSTAT	   0x02

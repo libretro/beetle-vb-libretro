@@ -19,7 +19,7 @@
 
 #include "vb.h"
 #include "vsu.h"
-#include "../state_inline.h"
+#include "../state_helpers.h"
 
 static const unsigned int Tap_LUT[8] = { 15 - 1, 11 - 1, 14 - 1, 5 - 1, 9 - 1, 7 - 1, 10 - 1, 12 - 1 };
 
