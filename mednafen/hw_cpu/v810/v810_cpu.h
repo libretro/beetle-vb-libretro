@@ -7,9 +7,8 @@
 #include <vector>
 
 #include "fpu-new/softfloat.h"
+#include "../../mednafen-types.h"
 #include "../../state.h"
-
-typedef int32 v810_timestamp_t;
 
 #define V810_FAST_MAP_SHIFT	16
 #define V810_FAST_MAP_PSIZE     (1 << V810_FAST_MAP_SHIFT)

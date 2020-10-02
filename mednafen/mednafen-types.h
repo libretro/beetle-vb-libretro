@@ -65,4 +65,6 @@ typedef uint64_t uint64;
 
 #define MDFN_COLD
 
+typedef int32 v810_timestamp_t;
+
 #endif
