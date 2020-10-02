@@ -179,7 +179,9 @@ INLINE uint32 V810::CacheOpMemLoad(v810_timestamp_t &timestamp, uint32 A)
 
 void V810::CacheDump(v810_timestamp_t &timestamp, const uint32 SA)
 {
+#if 0
  printf("Cache dump: %08x\n", SA);
+#endif
 
  for(int i = 0; i < 128; i++)
  {
@@ -198,7 +200,9 @@ void V810::CacheDump(v810_timestamp_t &timestamp, const uint32 SA)
 
 void V810::CacheRestore(v810_timestamp_t &timestamp, const uint32 SA)
 {
+#if 0
  printf("Cache restore: %08x\n", SA);
+#endif
 
  for(int i = 0; i < 128; i++)
  {
@@ -1261,7 +1265,9 @@ void V810::fpu_subop(v810_timestamp_t &timestamp, int sub_op, int arg1, int arg2
 
    // Does REV use arg1 or arg2 for the source register?
    case REV: timestamp++;	// Unknown
+#if 0
 		printf("Revvie bits\n");
+#endif
 	     {
 	      // Public-domain code snippet from: http://graphics.stanford.edu/~seander/bithacks.html#ReverseParallel
       	      uint32 v = P_REG[arg2]; // 32-bit word to reverse bit order
@@ -1435,7 +1441,9 @@ void V810::Exception(uint32 handler, uint16 eCode)
  }
 #endif
 
+#if 0
     printf("Exception: %08x %04x\n", handler, eCode);
+#endif
 
     // Invalidate our bitstring state(forces the instruction to be re-read, and the r/w buffers reloaded).
     in_bstr = false;
@@ -1444,7 +1452,9 @@ void V810::Exception(uint32 handler, uint16 eCode)
 
     if(S_REG[PSW] & PSW_NP) // Fatal exception
     {
+#if 0
      printf("Fatal exception; Code: %08x, ECR: %08x, PSW: %08x, PC: %08x\n", eCode, S_REG[ECR], S_REG[PSW], PC);
+#endif
      Halted = HALT_FATAL_EXCEPTION;
      IPendingCache = 0;
      return;
