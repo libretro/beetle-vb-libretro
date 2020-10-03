@@ -117,149 +117,148 @@ static uint32 IRQ_Asserted;
 
 MDFNGI EmulatedVB =
 {
- MDFN_MASTERCLOCK_FIXED(VB_MASTER_CLOCK),
- 0,
+   MDFN_MASTERCLOCK_FIXED(VB_MASTER_CLOCK),
+   0,
 
- 0,   // lcm_width
- 0,   // lcm_height
+   0,   // lcm_width
+   0,   // lcm_height
 
- 384,   // Nominal width
- 224,   // Nominal height
+   384,   // Nominal width
+   224,   // Nominal height
 
- 384,   // Framebuffer width
- 256,   // Framebuffer height
+   384,   // Framebuffer width
+   256,   // Framebuffer height
 
- 2,     // Number of output sound channels
+   2,     // Number of output sound channels
 };
 
 MDFNGI *MDFNGameInfo = &EmulatedVB;
 
-
 static INLINE void RecalcIntLevel(void)
 {
- int ilevel = -1;
+   int ilevel = -1;
 
- for(int i = 4; i >= 0; i--)
- {
-  if(IRQ_Asserted & (1 << i))
-  {
-   ilevel = i;
-   break;
-  }
- }
+   for(int i = 4; i >= 0; i--)
+   {
+      if(IRQ_Asserted & (1 << i))
+      {
+         ilevel = i;
+         break;
+      }
+   }
 
- VB_V810->SetInt(ilevel);
+   VB_V810->SetInt(ilevel);
 }
 
 void VBIRQ_Assert(int source, bool assert)
 {
- assert(source >= 0 && source <= 4);
+   assert(source >= 0 && source <= 4);
 
- IRQ_Asserted &= ~(1 << source);
+   IRQ_Asserted &= ~(1 << source);
 
- if(assert)
-  IRQ_Asserted |= 1 << source;
- 
- RecalcIntLevel();
+   if(assert)
+      IRQ_Asserted |= 1 << source;
+
+   RecalcIntLevel();
 }
 
 static uint8 HWCTRL_Read(v810_timestamp_t &timestamp, uint32 A)
 {
- uint8 ret = 0;
+   uint8 ret = 0;
 
- /* HWCtrl Bogus Read? */
- if(A & 0x3)
-  return(ret);
+   /* HWCtrl Bogus Read? */
+   if(A & 0x3)
+      return(ret);
 
- switch(A & 0xFF)
- {
-  default:
+   switch(A & 0xFF)
+   {
+      default:
 #if 0
-	printf("Unknown HWCTRL Read: %08x\n", A);
+         printf("Unknown HWCTRL Read: %08x\n", A);
 #endif
-       break;
-
-  case 0x18:
-  case 0x1C:
-  case 0x20: ret = TIMER_Read(timestamp, A);
          break;
 
-  case 0x24: ret = WCR | 0xFC;
-         break;
+      case 0x18:
+      case 0x1C:
+      case 0x20: ret = TIMER_Read(timestamp, A);
+                 break;
 
-  case 0x10:
-  case 0x14:
-  case 0x28: ret = VBINPUT_Read(timestamp, A);
-             break;
+      case 0x24: ret = WCR | 0xFC;
+                 break;
 
- }
+      case 0x10:
+      case 0x14:
+      case 0x28: ret = VBINPUT_Read(timestamp, A);
+                 break;
 
- return(ret);
+   }
+
+   return(ret);
 }
 
 static void HWCTRL_Write(v810_timestamp_t &timestamp, uint32 A, uint8 V)
 {
- /* HWCtrl Bogus Write? */
- if(A & 0x3)
-  return;
+   /* HWCtrl Bogus Write? */
+   if(A & 0x3)
+      return;
 
- switch(A & 0xFF)
- {
-  default:
-	  //printf("Unknown HWCTRL Write: %08x %02x\n", A, V);
-	  break;
-
-  case 0x18:
-  case 0x1C:
-  case 0x20: TIMER_Write(timestamp, A, V);
+   switch(A & 0xFF)
+   {
+      default:
+         //printf("Unknown HWCTRL Write: %08x %02x\n", A, V);
          break;
 
-  case 0x24: WCR = V & 0x3;
-         break;
+      case 0x18:
+      case 0x1C:
+      case 0x20: TIMER_Write(timestamp, A, V);
+                 break;
 
-  case 0x10:
-  case 0x14:
-  case 0x28: VBINPUT_Write(timestamp, A, V);
-         break;
- }
+      case 0x24: WCR = V & 0x3;
+                 break;
+
+      case 0x10:
+      case 0x14:
+      case 0x28: VBINPUT_Write(timestamp, A, V);
+                 break;
+   }
 }
 
 uint8 MDFN_FASTCALL MemRead8(v810_timestamp_t &timestamp, uint32 A)
 {
- uint8 ret = 0;
- A &= (1 << 27) - 1;
+   uint8 ret = 0;
+   A &= (1 << 27) - 1;
 
- //if((A >> 24) <= 2)
- // printf("Read8: %d %08x\n", timestamp, A);
+   //if((A >> 24) <= 2)
+   // printf("Read8: %d %08x\n", timestamp, A);
 
- switch(A >> 24)
- {
-  case 0: ret = VIP_Read8(timestamp, A);
-      break;
+   switch(A >> 24)
+   {
+      case 0: ret = VIP_Read8(timestamp, A);
+              break;
 
-  case 1: break;
+      case 1: break;
 
-  case 2: ret = HWCTRL_Read(timestamp, A);
-      break;
+      case 2: ret = HWCTRL_Read(timestamp, A);
+              break;
 
-  case 3: break;
-  case 4: break;
+      case 3: break;
+      case 4: break;
 
-  case 5: ret = WRAM[A & 0xFFFF];
-      break;
+      case 5: ret = WRAM[A & 0xFFFF];
+              break;
 
-  case 6: if(GPRAM)
-       ret = GPRAM[A & GPRAM_Mask];
+      case 6: if(GPRAM)
+                 ret = GPRAM[A & GPRAM_Mask];
 #if 0
-      else
-       printf("GPRAM(Unmapped) Read: %08x\n", A);
+              else
+                 printf("GPRAM(Unmapped) Read: %08x\n", A);
 #endif
-      break;
+              break;
 
-  case 7: ret = GPROM[A & GPROM_Mask];
-      break;
- }
- return(ret);
+      case 7: ret = GPROM[A & GPROM_Mask];
+              break;
+   }
+   return(ret);
 }
 
 uint16 MDFN_FASTCALL MemRead16(v810_timestamp_t &timestamp, uint32 A)
@@ -404,167 +403,162 @@ static INLINE int32 CalcNextTS(void)
 
 static void RebaseTS(const v810_timestamp_t timestamp)
 {
- //printf("Rebase: %08x %08x %08x\n", timestamp, next_vip_ts, next_timer_ts);
+   //printf("Rebase: %08x %08x %08x\n", timestamp, next_vip_ts, next_timer_ts);
 
- assert(next_vip_ts > timestamp);
- assert(next_timer_ts > timestamp);
- assert(next_input_ts > timestamp);
+   assert(next_vip_ts > timestamp);
+   assert(next_timer_ts > timestamp);
+   assert(next_input_ts > timestamp);
 
- next_vip_ts -= timestamp;
- next_timer_ts -= timestamp;
- next_input_ts -= timestamp;
+   next_vip_ts -= timestamp;
+   next_timer_ts -= timestamp;
+   next_input_ts -= timestamp;
 }
 
 void VB_SetEvent(const int type, const v810_timestamp_t next_timestamp)
 {
- //assert(next_timestamp > VB_V810->v810_timestamp);
+   //assert(next_timestamp > VB_V810->v810_timestamp);
 
- if(type == VB_EVENT_VIP)
-  next_vip_ts = next_timestamp;
- else if(type == VB_EVENT_TIMER)
-  next_timer_ts = next_timestamp;
- else if(type == VB_EVENT_INPUT)
-  next_input_ts = next_timestamp;
+   if(type == VB_EVENT_VIP)
+      next_vip_ts = next_timestamp;
+   else if(type == VB_EVENT_TIMER)
+      next_timer_ts = next_timestamp;
+   else if(type == VB_EVENT_INPUT)
+      next_input_ts = next_timestamp;
 
- if(next_timestamp < VB_V810->GetEventNT())
-  VB_V810->SetEventNT(next_timestamp);
+   if(next_timestamp < VB_V810->GetEventNT())
+      VB_V810->SetEventNT(next_timestamp);
 }
-
 
 static int32 MDFN_FASTCALL EventHandler(const v810_timestamp_t timestamp)
 {
- if(timestamp >= next_vip_ts)
-  next_vip_ts = VIP_Update(timestamp);
+   if(timestamp >= next_vip_ts)
+      next_vip_ts = VIP_Update(timestamp);
 
- if(timestamp >= next_timer_ts)
-  next_timer_ts = TIMER_Update(timestamp);
+   if(timestamp >= next_timer_ts)
+      next_timer_ts = TIMER_Update(timestamp);
 
- if(timestamp >= next_input_ts)
-  next_input_ts = VBINPUT_Update(timestamp);
+   if(timestamp >= next_input_ts)
+      next_input_ts = VBINPUT_Update(timestamp);
 
- return(CalcNextTS());
+   return(CalcNextTS());
 }
 
 // Called externally from debug.cpp in some cases.
 void ForceEventUpdates(const v810_timestamp_t timestamp)
 {
- next_vip_ts = VIP_Update(timestamp);
- next_timer_ts = TIMER_Update(timestamp);
- next_input_ts = VBINPUT_Update(timestamp);
+   next_vip_ts = VIP_Update(timestamp);
+   next_timer_ts = TIMER_Update(timestamp);
+   next_input_ts = VBINPUT_Update(timestamp);
 
- VB_V810->SetEventNT(CalcNextTS());
- //printf("FEU: %d %d %d\n", next_vip_ts, next_timer_ts, next_input_ts);
+   VB_V810->SetEventNT(CalcNextTS());
+   //printf("FEU: %d %d %d\n", next_vip_ts, next_timer_ts, next_input_ts);
 }
 
 static void VB_Power(void)
 {
- memset(WRAM, 0, 65536);
+   memset(WRAM, 0, 65536);
 
- VIP_Power();
- VB_VSU->Power();
- TIMER_Power();
- VBINPUT_Power();
+   VIP_Power();
+   VB_VSU->Power();
+   TIMER_Power();
+   VBINPUT_Power();
 
- EventReset();
- IRQ_Asserted = 0;
- RecalcIntLevel();
- VB_V810->Reset();
+   EventReset();
+   IRQ_Asserted = 0;
+   RecalcIntLevel();
+   VB_V810->Reset();
 
- VSU_CycleFix = 0;
- WCR = 0;
+   VSU_CycleFix = 0;
+   WCR = 0;
 
 
- ForceEventUpdates(0);  //VB_V810->v810_timestamp);
+   ForceEventUpdates(0);  //VB_V810->v810_timestamp);
 }
 
 static void SettingChanged(const char *name)
 {
- if(!strcmp(name, "vb.3dmode"))
- {
-  VB3DMode = MDFN_GetSettingUI("vb.3dmode");
-  uint32 prescale = MDFN_GetSettingUI("vb.liprescale");
-  uint32 sbs_separation = MDFN_GetSettingUI("vb.sidebyside.separation");
+   if(!strcmp(name, "vb.3dmode"))
+   {
+      VB3DMode = MDFN_GetSettingUI("vb.3dmode");
+      uint32 prescale = MDFN_GetSettingUI("vb.liprescale");
+      uint32 sbs_separation = MDFN_GetSettingUI("vb.sidebyside.separation");
 
-  VIP_Set3DMode(VB3DMode, MDFN_GetSettingUI("vb.3dreverse"), prescale, sbs_separation);
- }
- else if(!strcmp(name, "vb.disable_parallax"))
- {
-  VIP_SetParallaxDisable(MDFN_GetSettingB("vb.disable_parallax"));
- }
- else if(!strcmp(name, "vb.anaglyph.lcolor") || !strcmp(name, "vb.anaglyph.rcolor") ||
+      VIP_Set3DMode(VB3DMode, MDFN_GetSettingUI("vb.3dreverse"), prescale, sbs_separation);
+   }
+   else if(!strcmp(name, "vb.disable_parallax"))
+   {
+      VIP_SetParallaxDisable(MDFN_GetSettingB("vb.disable_parallax"));
+   }
+   else if(!strcmp(name, "vb.anaglyph.lcolor") || !strcmp(name, "vb.anaglyph.rcolor") ||
          !strcmp(name, "vb.anaglyph.preset") || !strcmp(name, "vb.default_color"))
- {
-  uint32 lcolor = MDFN_GetSettingUI("vb.anaglyph.lcolor"), rcolor = MDFN_GetSettingUI("vb.anaglyph.rcolor");
-  int preset = MDFN_GetSettingI("vb.anaglyph.preset");
+   {
+      uint32 lcolor = MDFN_GetSettingUI("vb.anaglyph.lcolor"), rcolor = MDFN_GetSettingUI("vb.anaglyph.rcolor");
+      int preset = MDFN_GetSettingI("vb.anaglyph.preset");
 
-  if(preset != ANAGLYPH_PRESET_DISABLED)
-  {
-   lcolor = AnaglyphPreset_Colors[preset][0];
-   rcolor = AnaglyphPreset_Colors[preset][1];
-  }
-  VIP_SetAnaglyphColors(lcolor, rcolor);
-  VIP_SetDefaultColor(MDFN_GetSettingUI("vb.default_color"));
- }
- else if(!strcmp(name, "vb.input.instant_read_hack"))
- {
-  VBINPUT_SetInstantReadHack(MDFN_GetSettingB("vb.input.instant_read_hack"));
- }
- else if(!strcmp(name, "vb.instant_display_hack"))
-  VIP_SetInstantDisplayHack(MDFN_GetSettingB("vb.instant_display_hack"));
- else if(!strcmp(name, "vb.allow_draw_skip"))
-  VIP_SetAllowDrawSkip(MDFN_GetSettingB("vb.allow_draw_skip"));
- else
-  abort();
-
-
+      if(preset != ANAGLYPH_PRESET_DISABLED)
+      {
+         lcolor = AnaglyphPreset_Colors[preset][0];
+         rcolor = AnaglyphPreset_Colors[preset][1];
+      }
+      VIP_SetAnaglyphColors(lcolor, rcolor);
+      VIP_SetDefaultColor(MDFN_GetSettingUI("vb.default_color"));
+   }
+   else if(!strcmp(name, "vb.input.instant_read_hack"))
+   {
+      VBINPUT_SetInstantReadHack(MDFN_GetSettingB("vb.input.instant_read_hack"));
+   }
+   else if(!strcmp(name, "vb.instant_display_hack"))
+      VIP_SetInstantDisplayHack(MDFN_GetSettingB("vb.instant_display_hack"));
+   else if(!strcmp(name, "vb.allow_draw_skip"))
+      VIP_SetAllowDrawSkip(MDFN_GetSettingB("vb.allow_draw_skip"));
 }
 
 struct VB_HeaderInfo
 {
- char game_title[256];
- uint32 game_code;
- uint16 manf_code;
- uint8 version;
+   char game_title[256];
+   uint32 game_code;
+   uint16 manf_code;
+   uint8 version;
 };
 
 static void ReadHeader(const uint8_t *data, size_t size, VB_HeaderInfo *hi)
 {
 #if 0
- iconv_t sjis_ict = iconv_open("UTF-8", "shift_jis");
+   iconv_t sjis_ict = iconv_open("UTF-8", "shift_jis");
 
- if(sjis_ict != (iconv_t)-1)
- {
-  char *in_ptr, *out_ptr;
-  size_t ibl, obl;
+   if(sjis_ict != (iconv_t)-1)
+   {
+      char *in_ptr, *out_ptr;
+      size_t ibl, obl;
 
-  ibl = 20;
-  obl = sizeof(hi->game_title) - 1;
+      ibl = 20;
+      obl = sizeof(hi->game_title) - 1;
 
-  in_ptr = (char*)data + (0xFFFFFDE0 & (size - 1));
-  out_ptr = hi->game_title;
+      in_ptr = (char*)data + (0xFFFFFDE0 & (size - 1));
+      out_ptr = hi->game_title;
 
-  iconv(sjis_ict, (ICONV_CONST char **)&in_ptr, &ibl, &out_ptr, &obl);
-  iconv_close(sjis_ict);
+      iconv(sjis_ict, (ICONV_CONST char **)&in_ptr, &ibl, &out_ptr, &obl);
+      iconv_close(sjis_ict);
 
-  *out_ptr = 0;
+      *out_ptr = 0;
 
-  MDFN_RemoveControlChars(hi->game_title);
-  MDFN_trim(hi->game_title);
- }
- else
-  hi->game_title[0] = 0;
+      MDFN_RemoveControlChars(hi->game_title);
+      MDFN_trim(hi->game_title);
+   }
+   else
+      hi->game_title[0] = 0;
 
- hi->game_code = MDFN_de32lsb(data + (0xFFFFFDFB & (size - 1)));
- hi->manf_code = MDFN_de16lsb(data + (0xFFFFFDF9 & (size - 1)));
- hi->version = data[0xFFFFFDFF & (size - 1)];
+   hi->game_code = MDFN_de32lsb(data + (0xFFFFFDFB & (size - 1)));
+   hi->manf_code = MDFN_de16lsb(data + (0xFFFFFDF9 & (size - 1)));
+   hi->version = data[0xFFFFFDFF & (size - 1)];
 #endif
 }
 
 struct VBGameEntry
 {
- uint32 checksums[16];
- const char *title;
- uint32 patch_address[512];
+   uint32 checksums[16];
+   const char *title;
+   uint32 patch_address[512];
 };
 
 static const struct VBGameEntry VBGames[] =
@@ -2047,32 +2041,32 @@ static int Load(const uint8_t *data, size_t size)
       default: break;
 
       case VB3DMODE_VLI:
-         MDFNGameInfo->nominal_width = 768 * prescale;
-         MDFNGameInfo->nominal_height = 224;
-         MDFNGameInfo->fb_width = 768 * prescale;
-         MDFNGameInfo->fb_height = 224;
-         break;
+               MDFNGameInfo->nominal_width = 768 * prescale;
+               MDFNGameInfo->nominal_height = 224;
+               MDFNGameInfo->fb_width = 768 * prescale;
+               MDFNGameInfo->fb_height = 224;
+               break;
 
       case VB3DMODE_HLI:
-         MDFNGameInfo->nominal_width = 384;
-         MDFNGameInfo->nominal_height = 448 * prescale;
-         MDFNGameInfo->fb_width = 384;
-         MDFNGameInfo->fb_height = 448 * prescale;
-         break;
+               MDFNGameInfo->nominal_width = 384;
+               MDFNGameInfo->nominal_height = 448 * prescale;
+               MDFNGameInfo->fb_width = 384;
+               MDFNGameInfo->fb_height = 448 * prescale;
+               break;
 
       case VB3DMODE_CSCOPE:
-         MDFNGameInfo->nominal_width = 512;
-         MDFNGameInfo->nominal_height = 384;
-         MDFNGameInfo->fb_width = 512;
-         MDFNGameInfo->fb_height = 384;
-         break;
+               MDFNGameInfo->nominal_width = 512;
+               MDFNGameInfo->nominal_height = 384;
+               MDFNGameInfo->fb_width = 512;
+               MDFNGameInfo->fb_height = 384;
+               break;
 
       case VB3DMODE_SIDEBYSIDE:
-         MDFNGameInfo->nominal_width = 384 * 2 + sbs_separation;
-         MDFNGameInfo->nominal_height = 224;
-         MDFNGameInfo->fb_width = 384 * 2 + sbs_separation;
-         MDFNGameInfo->fb_height = 224;
-         break;
+               MDFNGameInfo->nominal_width = 384 * 2 + sbs_separation;
+               MDFNGameInfo->nominal_height = 224;
+               MDFNGameInfo->fb_width = 384 * 2 + sbs_separation;
+               MDFNGameInfo->fb_height = 224;
+               break;
    }
    MDFNGameInfo->lcm_width = MDFNGameInfo->fb_width;
    MDFNGameInfo->lcm_height = MDFNGameInfo->fb_height;
@@ -2087,161 +2081,159 @@ static int Load(const uint8_t *data, size_t size)
 
 static void CloseGame(void)
 {
- //VIP_Kill();
- 
- if(VB_VSU)
- {
-  delete VB_VSU;
-  VB_VSU = NULL;
- }
+   //VIP_Kill();
 
- /*
- if(GPRAM)
- {
-  MDFN_free(GPRAM);
-  GPRAM = NULL;
- }
+   if(VB_VSU)
+   {
+      delete VB_VSU;
+      VB_VSU = NULL;
+   }
 
- if(GPROM)
- {
-  MDFN_free(GPROM);
-  GPROM = NULL;
- }
- */
+   /*
+      if(GPRAM)
+      {
+      MDFN_free(GPRAM);
+      GPRAM = NULL;
+      }
 
- if(VB_V810)
- {
-  VB_V810->Kill();
-  delete VB_V810;
-  VB_V810 = NULL;
- }
+      if(GPROM)
+      {
+      MDFN_free(GPROM);
+      GPROM = NULL;
+      }
+      */
+
+   if(VB_V810)
+   {
+      VB_V810->Kill();
+      delete VB_V810;
+      VB_V810 = NULL;
+   }
 }
 
 void VB_ExitLoop(void)
 {
- VB_V810->Exit();
+   VB_V810->Exit();
 }
 
 static void Emulate(EmulateSpecStruct *espec, int16_t *sound_buf)
 {
- v810_timestamp_t v810_timestamp;
+   v810_timestamp_t v810_timestamp;
 
- MDFNMP_ApplyPeriodicCheats();
+   MDFNMP_ApplyPeriodicCheats();
 
- VBINPUT_Frame();
+   VBINPUT_Frame();
 
- if(espec->SoundFormatChanged)
- {
-  for(int y = 0; y < 2; y++)
-  {
-   Blip_Buffer_set_sample_rate(&sbuf[y], espec->SoundRate ? espec->SoundRate : 44100, 50);
-   Blip_Buffer_set_clock_rate(&sbuf[y], (long)(VB_MASTER_CLOCK / 4));
-   Blip_Buffer_bass_freq(&sbuf[y], 20);
-  }
- }
+   if(espec->SoundFormatChanged)
+   {
+      for(int y = 0; y < 2; y++)
+      {
+         Blip_Buffer_set_sample_rate(&sbuf[y], espec->SoundRate ? espec->SoundRate : 44100, 50);
+         Blip_Buffer_set_clock_rate(&sbuf[y], (long)(VB_MASTER_CLOCK / 4));
+         Blip_Buffer_bass_freq(&sbuf[y], 20);
+      }
+   }
 
- VIP_StartFrame(espec);
+   VIP_StartFrame(espec);
 
- v810_timestamp = VB_V810->Run(EventHandler);
+   v810_timestamp = VB_V810->Run(EventHandler);
 
- FixNonEvents();
- ForceEventUpdates(v810_timestamp);
+   FixNonEvents();
+   ForceEventUpdates(v810_timestamp);
 
- VB_VSU->EndFrame((v810_timestamp + VSU_CycleFix) >> 2);
+   VB_VSU->EndFrame((v810_timestamp + VSU_CycleFix) >> 2);
 
- if(sound_buf)
- {
-  for(int y = 0; y < 2; y++)
-  {
-   Blip_Buffer_end_frame(&sbuf[y], (v810_timestamp + VSU_CycleFix) >> 2);
-   espec->SoundBufSize = Blip_Buffer_read_samples(&sbuf[y], sound_buf + y, espec->SoundBufMaxSize);
-  }
- }
+   if(sound_buf)
+   {
+      for(int y = 0; y < 2; y++)
+      {
+         Blip_Buffer_end_frame(&sbuf[y], (v810_timestamp + VSU_CycleFix) >> 2);
+         espec->SoundBufSize = Blip_Buffer_read_samples(&sbuf[y], sound_buf + y, espec->SoundBufMaxSize);
+      }
+   }
 
- VSU_CycleFix = (v810_timestamp + VSU_CycleFix) & 3;
+   VSU_CycleFix = (v810_timestamp + VSU_CycleFix) & 3;
 
- espec->MasterCycles = v810_timestamp;
+   espec->MasterCycles = v810_timestamp;
 
- TIMER_ResetTS();
- VBINPUT_ResetTS();
- VIP_ResetTS();
+   TIMER_ResetTS();
+   VBINPUT_ResetTS();
+   VIP_ResetTS();
 
- RebaseTS(v810_timestamp);
+   RebaseTS(v810_timestamp);
 
- VB_V810->ResetTS(0);
+   VB_V810->ResetTS(0);
 }
 
 #ifdef WANT_DEBUGGER
 static DebuggerInfoStruct DBGInfo =
 {
- "shift_jis",
- 4,
- 2,             // Instruction alignment(bytes)
- 32,
- 32,
- 0x00000000,
- ~0U,
+   "shift_jis",
+   4,
+   2,             // Instruction alignment(bytes)
+   32,
+   32,
+   0x00000000,
+   ~0U,
 
- VBDBG_MemPeek,
- VBDBG_Disassemble,
- NULL,
- NULL,  //ForceIRQ,
- NULL,
- VBDBG_FlushBreakPoints,
- VBDBG_AddBreakPoint,
- VBDBG_SetCPUCallback,
- VBDBG_EnableBranchTrace,
- VBDBG_GetBranchTrace,
- NULL,  //KING_SetGraphicsDecode,
- VBDBG_SetLogFunc,
+   VBDBG_MemPeek,
+   VBDBG_Disassemble,
+   NULL,
+   NULL,  //ForceIRQ,
+   NULL,
+   VBDBG_FlushBreakPoints,
+   VBDBG_AddBreakPoint,
+   VBDBG_SetCPUCallback,
+   VBDBG_EnableBranchTrace,
+   VBDBG_GetBranchTrace,
+   NULL,  //KING_SetGraphicsDecode,
+   VBDBG_SetLogFunc,
 };
 #endif
 
-
 extern "C" int StateAction(StateMem *sm, int load, int data_only)
 {
- const v810_timestamp_t timestamp = VB_V810->v810_timestamp;
- int ret = 1;
+   const v810_timestamp_t timestamp = VB_V810->v810_timestamp;
+   int ret = 1;
 
- SFORMAT StateRegs[] =
- {
-  SFARRAY(WRAM, 65536),
-  SFARRAY(GPRAM, GPRAM_Mask ? (GPRAM_Mask + 1) : 0),
-  SFVARN(WCR, "WCR"),
-  SFVARN(IRQ_Asserted, "IRQ_Asserted"),
-  SFVARN(VSU_CycleFix, "VSU_CycleFix"),
-  SFEND
- };
+   SFORMAT StateRegs[] =
+   {
+      SFARRAY(WRAM, 65536),
+      SFARRAY(GPRAM, GPRAM_Mask ? (GPRAM_Mask + 1) : 0),
+      SFVARN(WCR, "WCR"),
+      SFVARN(IRQ_Asserted, "IRQ_Asserted"),
+      SFVARN(VSU_CycleFix, "VSU_CycleFix"),
+      SFEND
+   };
 
- ret &= MDFNSS_StateAction(sm, load, data_only, StateRegs, "MAIN", false);
+   ret &= MDFNSS_StateAction(sm, load, data_only, StateRegs, "MAIN", false);
 
- ret &= VB_V810->StateAction(sm, load, data_only);
+   ret &= VB_V810->StateAction(sm, load, data_only);
 
- ret &= VB_VSU->StateAction(sm, load, data_only);
- ret &= TIMER_StateAction(sm, load, data_only);
- ret &= VBINPUT_StateAction(sm, load, data_only);
- ret &= VIP_StateAction(sm, load, data_only);
+   ret &= VB_VSU->StateAction(sm, load, data_only);
+   ret &= TIMER_StateAction(sm, load, data_only);
+   ret &= VBINPUT_StateAction(sm, load, data_only);
+   ret &= VIP_StateAction(sm, load, data_only);
 
- if(load)
- {
-  // Needed to recalculate next_*_ts since we don't bother storing their deltas in save states.
-  ForceEventUpdates(timestamp);
- }
- return(ret);
+   if(load)
+   {
+      // Needed to recalculate next_*_ts since we don't bother storing their deltas in save states.
+      ForceEventUpdates(timestamp);
+   }
+   return(ret);
 }
 
-static void SetLayerEnableMask(uint64 mask)
-{
-
-}
+static void SetLayerEnableMask(uint64 mask) { }
 
 static void DoSimpleCommand(int cmd)
 {
- switch(cmd)
- {
-  case MDFN_MSC_POWER:
-  case MDFN_MSC_RESET: VB_Power(); break;
- }
+   switch(cmd)
+   {
+      case MDFN_MSC_POWER:
+      case MDFN_MSC_RESET:
+         VB_Power();
+         break;
+   }
 }
 
 static const InputDeviceInputInfoStruct IDII[] =
@@ -2289,31 +2281,15 @@ static InputInfoStruct InputInfo =
  PortInfo
 };
 
-/* forward declarations */
-extern void MDFND_DispMessage(unsigned char *str);
-
-void MDFN_ResetMessages(void)
-{
- MDFND_DispMessage(NULL);
-}
-
-
 static bool MDFNI_LoadGame(const uint8_t *data, size_t size)
 {
    MDFNGameInfo = &EmulatedVB;
-
-   // Load per-game settings
-   // Maybe we should make a "pgcfg" subdir, and automatically load all files in it?
-   // End load per-game settings
-   //
 
    if(Load(data, size) <= 0)
       goto error;
 
    MDFN_LoadGameCheats(NULL);
    MDFNMP_InstallReadPatches();
-
-   MDFN_ResetMessages();   // Save state, status messages, etc.
 
    return true;
 
@@ -2563,7 +2539,9 @@ static void check_variables(void)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      setting_vb_cpu_emulation = !strcmp(var.value, "accurate") ? V810_EMU_MODE_ACCURATE : V810_EMU_MODE_FAST;
+      setting_vb_cpu_emulation = !strcmp(var.value, "accurate") 
+         ? V810_EMU_MODE_ACCURATE 
+         : V810_EMU_MODE_FAST;
    }
 }
 
@@ -2576,7 +2554,7 @@ static void hookup_ports(bool force)
    if (initial_ports_hookup && !force)
       return;
 
-   // Possible endian bug ...
+   /* Possible endian bug ... */
    VBINPUT_SetInput(0, "gamepad", &input_buf[0]);
 
    initial_ports_hookup = true;
@@ -2644,8 +2622,6 @@ void retro_unload_game(void)
 {
    MDFNI_CloseGame();
 }
-
-
 
 static void update_input(void)
 {
@@ -2820,7 +2796,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->geometry.aspect_ratio = MEDNAFEN_CORE_GEOMETRY_ASPECT_RATIO;
 }
 
-void retro_deinit()
+void retro_deinit(void)
 {
    delete surf;
    surf = NULL;
@@ -2846,9 +2822,7 @@ unsigned retro_api_version(void)
    return RETRO_API_VERSION;
 }
 
-void retro_set_controller_port_device(unsigned in_port, unsigned device)
-{
-}
+void retro_set_controller_port_device(unsigned in_port, unsigned device) { }
 
 void retro_set_environment(retro_environment_t cb)
 {
@@ -2881,8 +2855,6 @@ void retro_set_video_refresh(retro_video_refresh_t cb)
    video_cb = cb;
 }
 
-static size_t serialize_size;
-
 size_t retro_serialize_size(void)
 {
    StateMem st;
@@ -2897,7 +2869,7 @@ size_t retro_serialize_size(void)
       return 0;
 
    free(st.data);
-   return serialize_size = st.len;
+   return st.len;
 }
 
 bool retro_serialize(void *data, size_t size)
@@ -2946,8 +2918,10 @@ void *retro_get_memory_data(unsigned type)
       case RETRO_MEMORY_SAVE_RAM:
          return GPRAM;
       default:
-         return NULL;
+         break;
    }
+
+   return NULL;
 }
 
 size_t retro_get_memory_size(unsigned type)
@@ -2959,15 +2933,14 @@ size_t retro_get_memory_size(unsigned type)
       case RETRO_MEMORY_SAVE_RAM:
          return GPRAM_Mask + 1;
       default:
-         return 0;
+         break;
    }
+
+   return 0;
 }
 
-void retro_cheat_reset(void)
-{}
-
-void retro_cheat_set(unsigned, bool, const char *)
-{}
+void retro_cheat_reset(void) { }
+void retro_cheat_set(unsigned, bool, const char *) { }
 
 void MDFND_DispMessage(unsigned char *str)
 {
@@ -2975,12 +2948,13 @@ void MDFND_DispMessage(unsigned char *str)
       log_cb(RETRO_LOG_INFO, "%s\n", str);
 }
 
-void MDFND_MidSync(const EmulateSpecStruct *)
-{}
+void MDFND_MidSync(const EmulateSpecStruct *) { }
 
 void MDFN_MidLineUpdate(EmulateSpecStruct *espec, int y)
 {
- //MDFND_MidLineUpdate(espec, y);
+#if 0
+   MDFND_MidLineUpdate(espec, y);
+#endif
 }
 
 void MDFND_PrintError(const char* err)
