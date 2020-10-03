@@ -51,15 +51,8 @@ found freely through public domain sources.
 #include "../../math_ops.h"
 #include "../../state_helpers.h"
 
-//#include "pcfx.h"
-//#include "debug.h"
-
-
 #include "v810_opt.h"
 #include "v810_cpu.h"
-#include "v810_cpuD.h"
-
-//#include "fpu-new/softfloat.h"
 
 V810::V810()
 {
@@ -498,7 +491,9 @@ INLINE void V810::SetSREG(v810_timestamp_t &timestamp, unsigned int which, uint3
 	switch(which)
 	{
 	 default:	// Reserved
+#if 0
 		printf("LDSR to reserved system register: 0x%02x : 0x%08x\n", which, value);
+#endif
 		break;
 
          case ECR:      // Read-only
@@ -527,7 +522,9 @@ INLINE void V810::SetSREG(v810_timestamp_t &timestamp, unsigned int which, uint3
 
 	 case ADDTRE:
   	        S_REG[ADDTRE] = value & 0xFFFFFFFE;
+#if 0
         	printf("Address trap(unemulated): %08x\n", value);
+#endif
 		break;
 
 	 case CHCW:
@@ -535,8 +532,11 @@ INLINE void V810::SetSREG(v810_timestamp_t &timestamp, unsigned int which, uint3
 
               	switch(value & 0x31)
               	{
-              	 default: printf("Undefined cache control bit combination: %08x\n", value);
-                          break;
+              	 default:
+#if 0
+                   printf("Undefined cache control bit combination: %08x\n", value);
+#endif
+                   break;
 
               	 case 0x00: break;
 
@@ -555,16 +555,11 @@ INLINE void V810::SetSREG(v810_timestamp_t &timestamp, unsigned int which, uint3
 
 INLINE uint32 V810::GetSREG(unsigned int which)
 {
-	uint32 ret;
-
-	if(which != 24 && which != 25 && which >= 8)
-	{
-	 printf("STSR from reserved system register: 0x%02x", which);
-        }
-
-	ret = S_REG[which];
-
-	return(ret);
+#if 0
+   if(which != 24 && which != 25 && which >= 8)
+      printf("STSR from reserved system register: 0x%02x", which);
+#endif
+	return S_REG[which];
 }
 
 #define RB_SETPC(new_pc_raw) 										\
@@ -936,157 +931,159 @@ INLINE bool V810::Do_BSTR_Search(v810_timestamp_t &timestamp, const int inc_mul,
 
 bool V810::bstr_subop(v810_timestamp_t &timestamp, int sub_op, int arg1)
 {
- if((sub_op >= 0x10) || (!(sub_op & 0x8) && sub_op >= 0x4))
- {
-  printf("%08x\tBSR Error: %04x\n", PC,sub_op);
-
-  SetPC(GetPC() - 2);
-  Exception(INVALID_OP_HANDLER_ADDR, ECODE_INVALID_OP);
-
-  return(false);
- }
-
-// printf("BSTR: %02x, %02x %02x; src: %08x, dst: %08x, len: %08x\n", sub_op, P_REG[27], P_REG[26], P_REG[30], P_REG[29], P_REG[28]);
-
- if(sub_op & 0x08)
- {
-	uint32 dstoff = (P_REG[26] & 0x1F);
-	uint32 srcoff = (P_REG[27] & 0x1F);
-	uint32 len =     P_REG[28];
-	uint32 dst =    (P_REG[29] & 0xFFFFFFFC);
-	uint32 src =    (P_REG[30] & 0xFFFFFFFC);
-
+   if((sub_op >= 0x10) || (!(sub_op & 0x8) && sub_op >= 0x4))
+   {
 #if 0
-	// Be careful not to cause 32-bit integer overflow, and careful about not shifting by 32.
-	// TODO:
-
-	// Read src[0], src[4] into shifter.
-	// Read dest[0].
-	DO_BSTR_PROLOGUE();	// if(len) { blah blah blah masking blah }
-                src_cache = BSTR_RWORD(timestamp, src);
-
-		if((uint64)(srcoff + len) > 0x20)
-                 src_cache |= (uint64)BSTR_RWORD(timestamp, src + 4) << 32;
-
-                dst_cache = BSTR_RWORD(timestamp, dst);
-
-		if(len)
-		{
-		 uint32 dst_preserve_mask;
-		 uint32 dst_change_mask;
-
-		 dst_preserve_mask = (1U << dstoff) - 1;
-
-		 if((uint64)(dstoff + len) < 0x20)
- 		  dst_preserve_mask |= ((1U << ((0x20 - (dstoff + len)) & 0x1F)) - 1) << (dstoff + len);
-
-		 dst_change_mask = ~dst_preserve_mask;
-
-		 src_cache = BSTR_RWORD(timestamp, src);
-		 src_cache |= (uint64)BSTR_RWORD(timestamp, src + 4) << 32;
-		 dst_cache = BSTR_RWORD(timestamp, dst);
-
-		 dst_cache = (dst_cache & dst_preserve_mask) | ((dst_cache OP_THINGY_HERE (src_cache >> srcoff)) & dst_change_mask);
-		 BSTR_WWORD(timestamp, dst, dst_cache);
-
-		 if((uint64)(dstoff + len) < 0x20)
-		 {
-	          srcoff += len;
-		  dstoff += len;
-		  len = 0;
-		 }
-		 else
-		 {
-		  srcoff += (0x20 - dstoff);
-		  dstoff = 0;
-		  len -= (0x20 - dstoff);
-		  dst += 4;
-		 }
-
-		 if(srcoff >= 0x20)
-		 {
-		  srcoff &= 0x1F;
-		  src += 4;
-
-		  if(len)
-		  {
-		   src_cache >>= 32;
-		   src_cache |= (uint64)BSTR_RWORD(timestamp, src + 4) << 32;
-		  }
-		 }
-		}
-
-	DO_BSTR_PRIMARY();	// while(len >= 32) (do allow interruption; interrupt and emulator-return -
-				// they must be handled differently!)
-		while(len >= 32)
-  		{
-                 dst_cache = BSTR_RWORD(timestamp, dst);
-                 dst_cache = OP_THINGY_HERE(dst_cache, src_cache >> srcoff);
-		 BSTR_WWORD(timestamp, dst, dst_cache);
-		 len -= 32;
-		 dst += 4;
-		 src += 4;
-                 src_cache >>= 32;
-                 src_cache |= (uint64)BSTR_RWORD(timestamp, src + 4) << 32;
-		}
-
-	DO_BSTR_EPILOGUE();	// if(len) { blah blah blah masking blah }
-		if(len)
-		{
-		 uint32 dst_preserve_mask;
-		 uint32 dst_change_mask;
-
-		 dst_preserve_mask = (1U << ((0x20 - len) & 0x1F) << len;
-		 dst_change_mask = ~dst_preserve_mask;
-
-                 dst_cache = BSTR_RWORD(timestamp, dst);
-		 dst_cache = OP_THINGY_HERE(dst_cache, src_cache >> srcoff);
-		 BSTR_WWORD(timestamp, dst, dst_cache);
-		 dstoff += len;
-		 srcoff += len;
-
-                 if(srcoff >= 0x20)
-                 {
-                  srcoff &= 0x1F;
-                  src += 4;
-                 }
-		 len = 0;
-		}
+      printf("%08x\tBSR Error: %04x\n", PC,sub_op);
 #endif
 
-	switch(sub_op)
-	{
-	 case ORBSU: DO_BSTR(BSTR_OP_OR); break;
+      SetPC(GetPC() - 2);
+      Exception(INVALID_OP_HANDLER_ADDR, ECODE_INVALID_OP);
 
-	 case ANDBSU: DO_BSTR(BSTR_OP_AND); break;
+      return(false);
+   }
 
-	 case XORBSU: DO_BSTR(BSTR_OP_XOR); break;
+   // printf("BSTR: %02x, %02x %02x; src: %08x, dst: %08x, len: %08x\n", sub_op, P_REG[27], P_REG[26], P_REG[30], P_REG[29], P_REG[28]);
 
-	 case MOVBSU: DO_BSTR(BSTR_OP_MOV); break;
+   if(sub_op & 0x08)
+   {
+      uint32 dstoff = (P_REG[26] & 0x1F);
+      uint32 srcoff = (P_REG[27] & 0x1F);
+      uint32 len =     P_REG[28];
+      uint32 dst =    (P_REG[29] & 0xFFFFFFFC);
+      uint32 src =    (P_REG[30] & 0xFFFFFFFC);
 
-	 case ORNBSU: DO_BSTR(BSTR_OP_ORN); break;
+#if 0
+      // Be careful not to cause 32-bit integer overflow, and careful about not shifting by 32.
+      // TODO:
 
-	 case ANDNBSU: DO_BSTR(BSTR_OP_ANDN); break;
+      // Read src[0], src[4] into shifter.
+      // Read dest[0].
+      DO_BSTR_PROLOGUE();	// if(len) { blah blah blah masking blah }
+   src_cache = BSTR_RWORD(timestamp, src);
 
-	 case XORNBSU: DO_BSTR(BSTR_OP_XORN); break;
+   if((uint64)(srcoff + len) > 0x20)
+      src_cache |= (uint64)BSTR_RWORD(timestamp, src + 4) << 32;
 
-	 case NOTBSU: DO_BSTR(BSTR_OP_NOT); break;
-	}
+   dst_cache = BSTR_RWORD(timestamp, dst);
 
-        P_REG[26] = dstoff; 
-        P_REG[27] = srcoff;
-        P_REG[28] = len;
-        P_REG[29] = dst;
-        P_REG[30] = src;
+   if(len)
+   {
+      uint32 dst_preserve_mask;
+      uint32 dst_change_mask;
 
-	return((bool)P_REG[28]);
- }
- else
- {
-  printf("BSTR Search: %02x\n", sub_op);
- }
+      dst_preserve_mask = (1U << dstoff) - 1;
 
- return(Do_BSTR_Search(timestamp, ((sub_op & 1) ? -1 : 1), (sub_op & 0x2) >> 1));
+      if((uint64)(dstoff + len) < 0x20)
+         dst_preserve_mask |= ((1U << ((0x20 - (dstoff + len)) & 0x1F)) - 1) << (dstoff + len);
+
+      dst_change_mask = ~dst_preserve_mask;
+
+      src_cache = BSTR_RWORD(timestamp, src);
+      src_cache |= (uint64)BSTR_RWORD(timestamp, src + 4) << 32;
+      dst_cache = BSTR_RWORD(timestamp, dst);
+
+      dst_cache = (dst_cache & dst_preserve_mask) | ((dst_cache OP_THINGY_HERE (src_cache >> srcoff)) & dst_change_mask);
+      BSTR_WWORD(timestamp, dst, dst_cache);
+
+      if((uint64)(dstoff + len) < 0x20)
+      {
+         srcoff += len;
+         dstoff += len;
+         len = 0;
+      }
+      else
+      {
+         srcoff += (0x20 - dstoff);
+         dstoff = 0;
+         len -= (0x20 - dstoff);
+         dst += 4;
+      }
+
+      if(srcoff >= 0x20)
+      {
+         srcoff &= 0x1F;
+         src += 4;
+
+         if(len)
+         {
+            src_cache >>= 32;
+            src_cache |= (uint64)BSTR_RWORD(timestamp, src + 4) << 32;
+         }
+      }
+   }
+
+   DO_BSTR_PRIMARY();	// while(len >= 32) (do allow interruption; interrupt and emulator-return -
+   // they must be handled differently!)
+   while(len >= 32)
+   {
+      dst_cache = BSTR_RWORD(timestamp, dst);
+      dst_cache = OP_THINGY_HERE(dst_cache, src_cache >> srcoff);
+      BSTR_WWORD(timestamp, dst, dst_cache);
+      len -= 32;
+      dst += 4;
+      src += 4;
+      src_cache >>= 32;
+      src_cache |= (uint64)BSTR_RWORD(timestamp, src + 4) << 32;
+   }
+
+   DO_BSTR_EPILOGUE();	// if(len) { blah blah blah masking blah }
+   if(len)
+   {
+      uint32 dst_preserve_mask;
+      uint32 dst_change_mask;
+
+      dst_preserve_mask = (1U << ((0x20 - len) & 0x1F) << len;
+            dst_change_mask = ~dst_preserve_mask;
+
+            dst_cache = BSTR_RWORD(timestamp, dst);
+            dst_cache = OP_THINGY_HERE(dst_cache, src_cache >> srcoff);
+            BSTR_WWORD(timestamp, dst, dst_cache);
+            dstoff += len;
+            srcoff += len;
+
+            if(srcoff >= 0x20)
+            {
+            srcoff &= 0x1F;
+            src += 4;
+            }
+            len = 0;
+            }
+#endif
+
+            switch(sub_op)
+            {
+            case ORBSU: DO_BSTR(BSTR_OP_OR); break;
+
+            case ANDBSU: DO_BSTR(BSTR_OP_AND); break;
+
+            case XORBSU: DO_BSTR(BSTR_OP_XOR); break;
+
+            case MOVBSU: DO_BSTR(BSTR_OP_MOV); break;
+
+            case ORNBSU: DO_BSTR(BSTR_OP_ORN); break;
+
+            case ANDNBSU: DO_BSTR(BSTR_OP_ANDN); break;
+
+            case XORNBSU: DO_BSTR(BSTR_OP_XORN); break;
+
+            case NOTBSU: DO_BSTR(BSTR_OP_NOT); break;
+            }
+
+      P_REG[26] = dstoff; 
+      P_REG[27] = srcoff;
+      P_REG[28] = len;
+      P_REG[29] = dst;
+      P_REG[30] = src;
+
+      return((bool)P_REG[28]);
+   }
+#if 0
+   else
+      printf("BSTR Search: %02x\n", sub_op);
+#endif
+
+   return(Do_BSTR_Search(timestamp, ((sub_op & 1) ? -1 : 1), (sub_op & 0x2) >> 1));
 }
 
 INLINE void V810::SetFPUOPNonFPUFlags(uint32 result)
@@ -1316,10 +1313,10 @@ void V810::fpu_subop(v810_timestamp_t &timestamp, int sub_op, int arg1, int arg2
 		  SetPREG(arg1, result);
 		  SetFPUOPNonFPUFlags(result);
 		 }
+#if 0
 		 else
-		 {
-		  puts("Exception on CVT.WS?????");	// This shouldn't happen, but just in case there's a bug...
-		 }
+		  puts("Exception on CVT.WS?????");	/* This shouldn't happen, but just in case there's a bug... */
+#endif
 		 FPU_DoException();
 		}
 		break;	// End CVT.WS

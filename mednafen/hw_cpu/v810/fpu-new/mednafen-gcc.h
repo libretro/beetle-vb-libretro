@@ -47,15 +47,3 @@ typedef int32_t sbits32;
 typedef uint64_t bits64;
 typedef int64_t sbits64;
 #endif
-
-#ifdef BITS64
-/*----------------------------------------------------------------------------
-| The `LIT64' macro takes as its argument a textual integer literal and
-| if necessary ``marks'' the literal as having a 64-bit integer type.
-| For example, the GNU C Compiler (`gcc') requires that 64-bit literals be
-| appended with the letters `LL' standing for `long long', which is `gcc's
-| name for the 64-bit integer type.  Some compilers may allow `LIT64' to be
-| defined as the identity macro:  `#define LIT64( a ) a'.
-*----------------------------------------------------------------------------*/
-#define LIT64( a ) a##LL
-#endif
