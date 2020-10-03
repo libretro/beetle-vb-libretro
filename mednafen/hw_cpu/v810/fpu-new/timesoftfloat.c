@@ -33,7 +33,6 @@ these four paragraphs for those parts of this code that are retained.
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include <stdio.h>
 #include <time.h>
 #include "milieu.h"
 #include "softfloat.h"

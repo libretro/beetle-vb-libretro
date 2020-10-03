@@ -4,7 +4,6 @@
 #ifndef V810_CPU_D_H_
 #define V810_CPU_D_H_
 
-#include <stdio.h>
 #include <string>
 #include "v810_opt.h"
 
