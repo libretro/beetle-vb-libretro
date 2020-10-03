@@ -114,14 +114,14 @@ static void MakeColorLUT(const MDFN_PixelFormat &format)
    {
       for(i = 0; i < 256; i++)
       {
-         double r, g, b;
-         double r_prime, g_prime, b_prime;
-         r = g = b = (double)i / 255;
-
-         // TODO: Use correct gamma curve, instead of approximation.
-         r_prime = pow(r, 1.0 / 2.2);
-         g_prime = pow(g, 1.0 / 2.2);
-         b_prime = pow(b, 1.0 / 2.2);
+         double prod    = (double)i / 255;
+         double r       = prod; 
+         double g       = prod; 
+         double b       = prod;
+         /* TODO: Use correct gamma curve, instead of approximation. */
+         double r_prime = pow(r, 1.0 / 2.2);
+         double g_prime = pow(g, 1.0 / 2.2);
+         double b_prime = pow(b, 1.0 / 2.2);
 
          switch(VB3DMode)
          {
