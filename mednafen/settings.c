@@ -15,7 +15,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -44,8 +43,6 @@ uint64_t MDFN_GetSettingUI(const char *name)
       return setting_vb_liprescale;
    if (!strcmp("vb.default_color", name))
       return setting_vb_default_color;
-
-   fprintf(stderr, "unhandled setting UI: %s\n", name);
    return 0;
 }
 
@@ -55,13 +52,6 @@ int64_t MDFN_GetSettingI(const char *name)
       return setting_vb_anaglyph_preset;
    if (!strcmp("vb.cpu_emulation", name))
       return setting_vb_cpu_emulation;
-   fprintf(stderr, "unhandled setting I: %s\n", name);
-   return 0;
-}
-
-double MDFN_GetSettingF(const char *name)
-{
-   fprintf(stderr, "unhandled setting F: %s\n", name);
    return 0;
 }
 
@@ -74,6 +64,5 @@ bool MDFN_GetSettingB(const char *name)
       return 1;
    if (!strcmp("vb.allow_draw_skip", name))
       return 1;
-   fprintf(stderr, "unhandled setting B: %s\n", name);
    return 0;
 }

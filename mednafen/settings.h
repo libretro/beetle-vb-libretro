@@ -26,7 +26,6 @@ extern uint32_t setting_vb_default_color;
  * be a totally tubular error! */
 uint64_t MDFN_GetSettingUI(const char *name);
 int64_t MDFN_GetSettingI(const char *name);
-double MDFN_GetSettingF(const char *name);
 bool MDFN_GetSettingB(const char *name);
 
 #ifdef __cplusplus
