@@ -2,7 +2,6 @@
 
 #include <libretro.h>
 
-#include "mednafen/math_ops.h"
 #include "mednafen/mempatcher.h"
 #include "mednafen/git.h"
 #include "mednafen/state_helpers.h"
