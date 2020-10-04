@@ -42,9 +42,7 @@ typedef struct
 
 enum
 {
- MDFN_COLORSPACE_RGB = 0,
- MDFN_COLORSPACE_YCbCr = 1,
- MDFN_COLORSPACE_YUV = 2, // TODO, maybe.
+ MDFN_COLORSPACE_RGB = 0
 };
 
 class MDFN_PixelFormat
@@ -57,26 +55,9 @@ class MDFN_PixelFormat
  unsigned int bpp;
  unsigned int colorspace;
 
- union
- {
-  uint8 Rshift;  // Bit position of the lowest bit of the red component
-  uint8 Yshift;
- };
-
- union
- {
-  uint8 Gshift;  // [...] green component
-  uint8 Ushift;
-  uint8 Cbshift;
- };
-
- union
- {
-  uint8 Bshift;  // [...] blue component
-  uint8 Vshift;
-  uint8 Crshift;
- };
-
+ uint8 Rshift;  // Bit position of the lowest bit of the red component
+ uint8 Gshift;  // [...] green component
+ uint8 Bshift;  // [...] blue component
  uint8 Ashift;  // [...] alpha component.
 }; // MDFN_PixelFormat;
 
