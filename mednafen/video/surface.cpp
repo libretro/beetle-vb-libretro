@@ -78,15 +78,6 @@ MDFN_Surface::MDFN_Surface(void *const p_pixels, const uint32 p_width, const uin
    pitchinpix = p_pitchinpix;
 }
 
-/* When we're converting, only convert the w*h area(AKA leave the last part of the line, pitch32 - w, alone),
- * for places where we store auxillary information there(graphics viewer in the debugger), and it'll be faster
- * to boot.
- */
-void MDFN_Surface::SetFormat(const MDFN_PixelFormat &nf, bool convert)
-{
-   format = nf;
-}
-
 MDFN_Surface::~MDFN_Surface()
 {
 #if defined(WANT_16BPP)

@@ -106,8 +106,6 @@ class MDFN_Surface //typedef struct
  };
 
  MDFN_PixelFormat format;
-
- void SetFormat(const MDFN_PixelFormat &new_format, bool convert);
 };
 
 #endif
