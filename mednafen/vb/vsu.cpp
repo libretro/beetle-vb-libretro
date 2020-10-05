@@ -205,14 +205,14 @@ void VSU::Write(int32 timestamp, uint32 A, uint8 V)
    }
 }
 
-INLINE void VSU::CalcCurrentOutput(int ch, int &left, int &right)
+INLINE void VSU::CalcCurrentOutput(int ch, int *left, int *right)
 {
    int WD;
    int l_ol, r_ol;
 
    if(!(IntlControl[ch] & 0x80))
    {
-      left = right = 0;
+      *left = *right = 0;
       return;
    }
 
@@ -239,8 +239,8 @@ INLINE void VSU::CalcCurrentOutput(int ch, int &left, int &right)
       r_ol += 1;
    }
 
-   left = WD * l_ol;
-   right = WD * r_ol;
+   *left = WD * l_ol;
+   *right = WD * r_ol;
 }
 
 void VSU::Update(int32 timestamp)
@@ -254,7 +254,7 @@ void VSU::Update(int32 timestamp)
       int32 running_timestamp = last_ts;
 
       // Output sound here
-      CalcCurrentOutput(ch, left, right);
+      CalcCurrentOutput(ch, &left, &right);
       Blip_Synth_offset(&Synth, running_timestamp, left - last_output[ch][0], bb_l);
       Blip_Synth_offset(&Synth, running_timestamp, right - last_output[ch][1], bb_r);
       last_output[ch][0] = left;
@@ -433,7 +433,7 @@ void VSU::Update(int32 timestamp)
          running_timestamp += chunk_clocks;
 
          // Output sound here too.
-         CalcCurrentOutput(ch, left, right);
+         CalcCurrentOutput(ch, &left, &right);
          Blip_Synth_offset(&Synth, running_timestamp, left - last_output[ch][0], bb_l);
          Blip_Synth_offset(&Synth, running_timestamp, right - last_output[ch][1], bb_r);
          last_output[ch][0] = left;

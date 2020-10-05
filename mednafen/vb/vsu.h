@@ -28,7 +28,7 @@ class VSU
 
    private:
 
-      void CalcCurrentOutput(int ch, int &left, int &right);
+      void CalcCurrentOutput(int ch, int *left, int *right);
 
       void Update(int32 timestamp);
 
