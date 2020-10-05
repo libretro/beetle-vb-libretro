@@ -25,7 +25,7 @@ static bool libretro_supports_bitmasks = false;
 
 static bool overscan;
 static double last_sound_rate;
-static MDFN_PixelFormat last_pixel_format;
+static struct MDFN_PixelFormat last_pixel_format;
 
 static MDFN_Surface *surf;
 
@@ -2606,8 +2606,24 @@ bool retro_load_game(const struct retro_game_info *info)
    if (!MDFNI_LoadGame((const uint8_t*)info->data, info->size))
       return false;
 
-   MDFN_PixelFormat pix_fmt(MDFN_COLORSPACE_RGB, 16, 8, 0, 24);
-   last_pixel_format = MDFN_PixelFormat();
+   struct MDFN_PixelFormat pix_fmt;
+#ifdef WANT_16BPP
+   pix_fmt.bpp        = 16;
+#else
+   pix_fmt.bpp        = 32;
+#endif
+   pix_fmt.colorspace = MDFN_COLORSPACE_RGB;
+   pix_fmt.Rshift     = 16;
+   pix_fmt.Gshift     = 8;
+   pix_fmt.Bshift     = 0;
+   pix_fmt.Ashift     = 24;
+
+   last_pixel_format.bpp        = 0;
+   last_pixel_format.colorspace = 0;
+   last_pixel_format.Rshift     = 0;
+   last_pixel_format.Gshift     = 0;
+   last_pixel_format.Bshift     = 0;
+   last_pixel_format.Ashift     = 0;
 
    surf = new MDFN_Surface(NULL, FB_WIDTH, FB_HEIGHT, FB_WIDTH, pix_fmt);
 
