@@ -58,30 +58,23 @@ struct MDFN_PixelFormat
 
 // Supports 32-bit RGBA
 //  16-bit is WIP
-class MDFN_Surface //typedef struct
+struct MDFN_Surface //typedef struct
 {
- public:
+   uint8  *pixels8;
+   uint16 *pixels16;
+   uint32 *pixels;
 
- MDFN_Surface();
- MDFN_Surface(void *const p_pixels, const uint32 p_width, const uint32 p_height, const uint32 p_pitchinpix, const struct MDFN_PixelFormat &nf);
+   // w, h, and pitch32 should always be > 0
+   int32 w;
+   int32 h;
 
- ~MDFN_Surface();
+   union
+   {
+      int32 pitch32; // In pixels, not in bytes.
+      int32 pitchinpix;	// New name, new code should use this.
+   };
 
- uint8  *pixels8;
- uint16 *pixels16;
- uint32 *pixels;
-
- // w, h, and pitch32 should always be > 0
- int32 w;
- int32 h;
-
- union
- {
-  int32 pitch32; // In pixels, not in bytes.
-  int32 pitchinpix;	// New name, new code should use this.
- };
-
- struct MDFN_PixelFormat format;
+   struct MDFN_PixelFormat format;
 };
 
 #endif

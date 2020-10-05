@@ -27,7 +27,7 @@ static bool overscan;
 static double last_sound_rate;
 static struct MDFN_PixelFormat last_pixel_format;
 
-static MDFN_Surface *surf;
+static struct MDFN_Surface surf;
 
 /* Mednafen - Multi-system Emulator
  *
@@ -2562,6 +2562,7 @@ static void hookup_ports(bool force)
 
 bool retro_load_game(const struct retro_game_info *info)
 {
+   void *rpix = NULL;
    if (!info)
       return false;
 
@@ -2625,7 +2626,21 @@ bool retro_load_game(const struct retro_game_info *info)
    last_pixel_format.Bshift     = 0;
    last_pixel_format.Ashift     = 0;
 
-   surf = new MDFN_Surface(NULL, FB_WIDTH, FB_HEIGHT, FB_WIDTH, pix_fmt);
+   surf.format                  = pix_fmt;
+   surf.pixels16                = NULL;
+   surf.pixels                  = NULL;
+
+   if(!(rpix = calloc(1, FB_WIDTH * FB_HEIGHT * (pix_fmt.bpp / 8))))
+      return false;
+
+#if defined(WANT_16BPP)
+   surf.pixels16                = (uint16 *)rpix;
+#elif defined(WANT_32BPP)
+   surf.pixels                  = (uint32 *)rpix;
+#endif
+   surf.w                       = FB_WIDTH;
+   surf.h                       = FB_HEIGHT;
+   surf.pitchinpix              = FB_WIDTH;
 
    hookup_ports(true);
 
@@ -2731,15 +2746,15 @@ void retro_run(void)
    rects[0].w = ~0;
 
    EmulateSpecStruct spec = {0};
-   spec.surface = surf;
-   spec.SoundRate = 44100;
+   spec.surface    = &surf;
+   spec.SoundRate  = 44100;
    spec.LineWidths = rects;
    spec.SoundBufMaxSize = sizeof(sound_buf) / 2;
    spec.SoundBufSize = 0;
    spec.VideoFormatChanged = false;
    spec.SoundFormatChanged = false;
 
-   if (memcmp(&last_pixel_format, &spec.surface->format, sizeof(MDFN_PixelFormat)))
+   if (memcmp(&last_pixel_format, &spec.surface->format, sizeof(struct MDFN_PixelFormat)))
    {
       spec.VideoFormatChanged = true;
 
@@ -2767,10 +2782,10 @@ void retro_run(void)
    height = spec.DisplayRect.h;
 
 #if defined(WANT_32BPP)
-   const uint32_t *pix = surf->pixels;
+   const uint32_t *pix = surf.pixels;
    video_cb(pix, width, height, FB_WIDTH << 2);
 #elif defined(WANT_16BPP)
-   const uint16_t *pix = surf->pixels16;
+   const uint16_t *pix = surf.pixels16;
    video_cb(pix, width, height, FB_WIDTH << 1);
 #endif
 
@@ -2814,8 +2829,25 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
 void retro_deinit(void)
 {
-   delete surf;
-   surf = NULL;
+#if defined(WANT_16BPP)
+   if(surf.pixels16)
+      free(surf.pixels16);
+#elif defined(WANT_32BPP)
+   if(surf.pixels)
+      free(surf.pixels);
+#endif
+   surf.pixels8    = NULL;
+   surf.pixels16   = NULL;
+   surf.pixels     = NULL;
+   surf.w          = 0;
+   surf.h          = 0;
+   surf.pitchinpix = 0;
+   surf.format.bpp        = 0;
+   surf.format.colorspace = 0;
+   surf.format.Rshift     = 0;
+   surf.format.Gshift     = 0;
+   surf.format.Bshift     = 0;
+   surf.format.Ashift     = 0;
 
    if (log_cb)
    {
