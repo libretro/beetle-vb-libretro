@@ -15,9 +15,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <retro_inline.h>
+
+#include "../state_helpers.h"
+
 #include "input.h"
 #include "vb.h"
-#include "../state_helpers.h"
 
 static bool InstantReadHack;
 
@@ -59,7 +62,7 @@ void VBINPUT_SetInput(int port, const char *type, void *ptr)
    data_ptr = (uint8 *)ptr;
 }
 
-uint8 VBINPUT_Read(v810_timestamp_t &timestamp, uint32 A)
+uint8 VBINPUT_Read(v810_timestamp_t timestamp, uint32 A)
 {
    uint8_t ret = 0;
 
@@ -92,7 +95,7 @@ uint8 VBINPUT_Read(v810_timestamp_t &timestamp, uint32 A)
    return(ret);
 }
 
-void VBINPUT_Write(v810_timestamp_t &timestamp, uint32 A, uint8 V)
+void VBINPUT_Write(v810_timestamp_t timestamp, uint32 A, uint8 V)
 {
    VBINPUT_Update(timestamp);
 
@@ -127,7 +130,7 @@ void VBINPUT_Write(v810_timestamp_t &timestamp, uint32 A, uint8 V)
    VB_SetEvent(VB_EVENT_INPUT, (ReadCounter > 0) ? (timestamp + ReadCounter) : VB_EVENT_NONONO);
 }
 
-static inline uint16_t MDFN_de16lsb(const uint8_t *morp)
+static INLINE uint16_t MDFN_de16lsb(const uint8_t *morp)
 {
    return(morp[0] | (morp[1] << 8));
 }
