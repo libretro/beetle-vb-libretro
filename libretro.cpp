@@ -5,6 +5,7 @@
 #include "mednafen/mempatcher.h"
 #include "mednafen/git.h"
 #include "mednafen/state_helpers.h"
+#include "mednafen/masmem.h"
 #include "mednafen/settings.h"
 
 /* Forward declarations */

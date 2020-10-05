@@ -31,7 +31,7 @@ enum
 #define VBIRQ_SOURCE_COMM       3
 #define VBIRQ_SOURCE_VIP        4
 
-#include "../masmem.h"
+#include "../mednafen-types.h"
 
 #ifdef __cplusplus
 extern "C" {

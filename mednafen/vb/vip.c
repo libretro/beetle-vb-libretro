@@ -23,6 +23,7 @@
 #include "vip.h"
 
 #include "../math_ops.h"
+#include "../masmem.h"
 #include "../state_helpers.h"
 
 static uint8 FB[2][2][0x6000];
