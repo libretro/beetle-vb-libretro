@@ -1,14 +1,4 @@
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
 #include <stdint.h>
-
-/*----------------------------------------------------------------------------
-| The macro `BITS64' can be defined to indicate that 64-bit integer types are
-| supported by the compiler.
-*----------------------------------------------------------------------------*/
-#define BITS64
 
 /*----------------------------------------------------------------------------
 | Each of the following `typedef's defines the most convenient type that holds
@@ -26,24 +16,13 @@ typedef int16_t int16;
 typedef uint32_t uint32;
 typedef int32_t int32;
 
-#ifdef BITS64
-typedef uint64_t uint64;
-typedef int64_t int64;
-#endif
-
 /*----------------------------------------------------------------------------
 | Each of the following `typedef's defines a type that holds integers
 | of _exactly_ the number of bits specified.  For instance, for most
 | implementation of C, `bits16' and `sbits16' should be `typedef'ed to
 | `unsigned short int' and `signed short int' (or `short int'), respectively.
 *----------------------------------------------------------------------------*/
-typedef uint8_t bits8;
-typedef int8_t sbits8;
 typedef uint16_t bits16;
 typedef int16_t sbits16;
 typedef uint32_t bits32;
 typedef int32_t sbits32;
-#ifdef BITS64
-typedef uint64_t bits64;
-typedef int64_t sbits64;
-#endif

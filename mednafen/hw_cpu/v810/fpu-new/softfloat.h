@@ -40,9 +40,6 @@ extern "C" {
 | Software IEC/IEEE floating-point types.
 *----------------------------------------------------------------------------*/
 typedef uint32 float32;
-typedef struct {
-    uint32 high, low;
-} float64;
 
 /*----------------------------------------------------------------------------
 | Software IEC/IEEE floating-point underflow tininess-detection mode.
@@ -86,14 +83,12 @@ void float_raise( int8 );
 | Software IEC/IEEE integer-to-floating-point conversion routines.
 *----------------------------------------------------------------------------*/
 float32 int32_to_float32( int32 );
-float64 int32_to_float64( int32 );
 
 /*----------------------------------------------------------------------------
 | Software IEC/IEEE single-precision conversion routines.
 *----------------------------------------------------------------------------*/
 int32 float32_to_int32( float32 );
 int32 float32_to_int32_round_to_zero( float32 );
-float64 float32_to_float64( float32 );
 
 /*----------------------------------------------------------------------------
 | Software IEC/IEEE single-precision operations.
@@ -112,31 +107,6 @@ char float32_eq_signaling( float32, float32 );
 char float32_le_quiet( float32, float32 );
 char float32_lt_quiet( float32, float32 );
 char float32_is_signaling_nan( float32 );
-
-/*----------------------------------------------------------------------------
-| Software IEC/IEEE double-precision conversion routines.
-*----------------------------------------------------------------------------*/
-int32 float64_to_int32( float64 );
-int32 float64_to_int32_round_to_zero( float64 );
-float32 float64_to_float32( float64 );
-
-/*----------------------------------------------------------------------------
-| Software IEC/IEEE double-precision operations.
-*----------------------------------------------------------------------------*/
-float64 float64_round_to_int( float64 );
-float64 float64_add( float64, float64 );
-float64 float64_sub( float64, float64 );
-float64 float64_mul( float64, float64 );
-float64 float64_div( float64, float64 );
-float64 float64_rem( float64, float64 );
-float64 float64_sqrt( float64 );
-char float64_eq( float64, float64 );
-char float64_le( float64, float64 );
-char float64_lt( float64, float64 );
-char float64_eq_signaling( float64, float64 );
-char float64_le_quiet( float64, float64 );
-char float64_lt_quiet( float64, float64 );
-char float64_is_signaling_nan( float64 );
 
 #ifdef __cplusplus
 };
