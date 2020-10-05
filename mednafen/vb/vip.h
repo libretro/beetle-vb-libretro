@@ -51,11 +51,11 @@ void VIP_ResetTS(void);
 
 void VIP_StartFrame(EmulateSpecStruct *espec);
 
-uint8 VIP_Read8(v810_timestamp_t &timestamp, uint32 A);
-uint16 VIP_Read16(v810_timestamp_t &timestamp, uint32 A);
+uint8 VIP_Read8(v810_timestamp_t timestamp, uint32 A);
+uint16 VIP_Read16(v810_timestamp_t timestamp, uint32 A);
 
-void VIP_Write8(v810_timestamp_t &timestamp, uint32 A, uint8 V);
-void VIP_Write16(v810_timestamp_t &timestamp, uint32 A, uint16 V);
+void VIP_Write8(v810_timestamp_t timestamp, uint32 A, uint8 V);
+void VIP_Write16(v810_timestamp_t timestamp, uint32 A, uint16 V);
 
 int VIP_StateAction(StateMem *sm, int load, int data_only);
 

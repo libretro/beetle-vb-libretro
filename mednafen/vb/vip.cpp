@@ -108,7 +108,7 @@ static bool ParallaxDisabled;
 static uint32 Anaglyph_Colors[2];
 static uint32 Default_Color;
 
-static void MakeColorLUT(const MDFN_PixelFormat &format)
+static void MakeColorLUT(void)
 {
    unsigned lr, i, l_b, r_b;
 
@@ -478,7 +478,7 @@ void VIP_Power(void)
    BKCOL = 0;
 }
 
-static INLINE uint16 ReadRegister(int32 &timestamp, uint32 A)
+static INLINE uint16 ReadRegister(int32 timestamp, uint32 A)
 {
    uint16_t ret = 0;	//0xFFFF;
 
@@ -586,7 +586,7 @@ static INLINE uint16 ReadRegister(int32 &timestamp, uint32 A)
    return(ret);
 }
 
-static INLINE void WriteRegister(int32 &timestamp, uint32 A, uint16 V)
+static INLINE void WriteRegister(int32 timestamp, uint32 A, uint16 V)
 {
 #ifdef DEBUG
    if(A & 1)
@@ -714,7 +714,7 @@ static INLINE void WriteRegister(int32 &timestamp, uint32 A, uint16 V)
  * as far as VB software cares.
  */
 
-uint8 VIP_Read8(int32 &timestamp, uint32 A)
+uint8 VIP_Read8(int32 timestamp, uint32 A)
 {
    uint8_t ret = 0; //0xFF;
 
@@ -754,7 +754,7 @@ uint8 VIP_Read8(int32 &timestamp, uint32 A)
    return 0;
 }
 
-uint16 VIP_Read16(int32 &timestamp, uint32 A)
+uint16 VIP_Read16(int32 timestamp, uint32 A)
 {
    //VIP_Update(timestamp); 
 
@@ -791,7 +791,7 @@ uint16 VIP_Read16(int32 &timestamp, uint32 A)
    return 0;
 }
 
-void VIP_Write8(int32 &timestamp, uint32 A, uint8 V)
+void VIP_Write8(int32 timestamp, uint32 A, uint8 V)
 {
    //VIP_Update(timestamp); 
 
@@ -848,7 +848,7 @@ void VIP_Write8(int32 &timestamp, uint32 A, uint8 V)
    //VB_SetEvent(VB_EVENT_VIP, timestamp + CalcNextEvent());
 }
 
-void VIP_Write16(int32 &timestamp, uint32 A, uint16 V)
+void VIP_Write16(int32 timestamp, uint32 A, uint16 V)
 {
    //VIP_Update(timestamp); 
 
@@ -909,7 +909,7 @@ void VIP_StartFrame(EmulateSpecStruct *espec)
 {
    if(espec->VideoFormatChanged || VidSettingsDirty)
    {
-      MakeColorLUT(espec->surface->format);
+      MakeColorLUT();
       Recalc3DModeStuff(espec->surface->format.colorspace != MDFN_COLORSPACE_RGB);
    }
 
