@@ -1085,11 +1085,13 @@ static INLINE void CopyFBColumnToTarget_AnaglyphSlow_BASE(const bool DisplayActi
 
       if (DisplayActive_arg)
       {
-         for(int y = 56; y; y--)
+         int y;
+         for(y = 56; y; y--)
          {
+            int y_sub;
             uint32 source_bits = *fb_source;
 
-            for(int y_sub = 4; y_sub; y_sub--)
+            for(y_sub = 4; y_sub; y_sub--)
             {
                uint32 pixel  = BrightnessCache[source_bits & 3];
                *target       = pixel;
@@ -1101,11 +1103,13 @@ static INLINE void CopyFBColumnToTarget_AnaglyphSlow_BASE(const bool DisplayActi
       }
       else
       {
-         for(int y = 56; y; y--)
+         int y;
+         for(y = 56; y; y--)
          {
+            int y_sub;
             uint32 source_bits = *fb_source;
 
-            for(int y_sub = 4; y_sub; y_sub--)
+            for(y_sub = 4; y_sub; y_sub--)
             {
                *target       = 0;
                source_bits >>= 2;
@@ -1117,15 +1121,17 @@ static INLINE void CopyFBColumnToTarget_AnaglyphSlow_BASE(const bool DisplayActi
    }
    else
    {
+      int y;
       uint32         *target = surface->pixels + Column;
       const uint32 *left_src = AnaSlowBuf[Column];
       const int32    pitch32 = surface->pitch32;
 
-      for(int y = 56; y; y--)
+      for(y = 56; y; y--)
       {
+         int y_sub;
          uint32 source_bits = *fb_source;
 
-         for(int y_sub = 4; y_sub; y_sub--)
+         for(y_sub = 4; y_sub; y_sub--)
          {
             uint32 pixel  = AnaSlowColorLUT
                [*left_src]
@@ -1248,11 +1254,13 @@ static void CopyFBColumnToTarget_SideBySide_BASE(const bool DisplayActive_arg, c
 
    if(DisplayActive_arg)
    {
-      for(int y = 56; y; y--)
+      int y;
+      for(y = 56; y; y--)
       {
+         int y_sub;
          uint32 source_bits = *fb_source;
 
-         for(int y_sub = 4; y_sub; y_sub--)
+         for(y_sub = 4; y_sub; y_sub--)
          {
             *target       = BrightCLUT[lr][source_bits & 3];
             source_bits >>= 2;
@@ -1263,11 +1271,13 @@ static void CopyFBColumnToTarget_SideBySide_BASE(const bool DisplayActive_arg, c
    }
    else
    {
-      for(int y = 56; y; y--)
+      int y;
+      for(y = 56; y; y--)
       {
+         int y_sub;
          uint32 source_bits = *fb_source;
 
-         for(int y_sub = 4; y_sub; y_sub--)
+         for(y_sub = 4; y_sub; y_sub--)
          {
             *target       = 0;
             source_bits >>= 2;
@@ -1297,14 +1307,17 @@ static INLINE void CopyFBColumnToTarget_VLI_BASE(const bool DisplayActive_arg, c
 
    if(DisplayActive_arg)
    {
-      for(int y = 56; y; y--)
+      int y;
+      for(y = 56; y; y--)
       {
+         int y_sub;
          uint32 source_bits = *fb_source;
 
-         for(int y_sub = 4; y_sub; y_sub--)
+         for(y_sub = 4; y_sub; y_sub--)
          {
+            uint32 ps;
             uint32 tv = BrightCLUT[0][source_bits & 3];
-            for(uint32 ps = 0; ps < VBPrescale; ps++)
+            for(ps = 0; ps < VBPrescale; ps++)
                target[ps * 2] = tv;
 
             source_bits >>= 2;
@@ -1315,14 +1328,17 @@ static INLINE void CopyFBColumnToTarget_VLI_BASE(const bool DisplayActive_arg, c
    }
    else
    {
-      for(int y = 56; y; y--)
+      int y;
+      for(y = 56; y; y--)
       {
+         int y_sub;
          uint32 source_bits = *fb_source;
 
-         for(int y_sub = 4; y_sub; y_sub--)
+         for(y_sub = 4; y_sub; y_sub--)
          {
+            uint32 ps;
             uint32 tv = 0;
-            for(uint32 ps = 0; ps < VBPrescale; ps++)
+            for(ps = 0; ps < VBPrescale; ps++)
                target[ps * 2] = tv;
 
             source_bits >>= 2;
@@ -1351,11 +1367,14 @@ static INLINE void CopyFBColumnToTarget_HLI_BASE(const bool DisplayActive_arg, c
    const uint8 *fb_source = &FB[fb][lr][64 * Column];
 
    if(VBPrescale <= 4)
-      for(int y = 56; y; y--)
+   {
+      int y;
+      for(y = 56; y; y--)
       {
+         int y_sub;
          uint32 source_bits = HLILUT[*fb_source];
 
-         for(int y_sub = 4 * VBPrescale; y_sub; y_sub--)
+         for(y_sub = 4 * VBPrescale; y_sub; y_sub--)
          {
             if(DisplayActive_arg)
                *target = BrightCLUT[0][source_bits & 3];
@@ -1367,14 +1386,19 @@ static INLINE void CopyFBColumnToTarget_HLI_BASE(const bool DisplayActive_arg, c
          }
          fb_source++;
       }
+   }
    else
-      for(int y = 56; y; y--)
+   {
+      int y;
+      for(y = 56; y; y--)
       {
+         int y_sub;
          uint32 source_bits = *fb_source;
 
-         for(int y_sub = 4; y_sub; y_sub--)
+         for(y_sub = 4; y_sub; y_sub--)
          {
-            for(uint32 ps = 0; ps < VBPrescale; ps++)
+            uint32 ps;
+            for(ps = 0; ps < VBPrescale; ps++)
             {
                if(DisplayActive_arg)
                   *target = BrightCLUT[0][source_bits & 3];
@@ -1388,6 +1412,7 @@ static INLINE void CopyFBColumnToTarget_HLI_BASE(const bool DisplayActive_arg, c
          }
          fb_source++;
       }
+   }
 }
 
 static void CopyFBColumnToTarget_HLI(void)
@@ -1439,13 +1464,15 @@ v810_timestamp_t MDFN_FASTCALL VIP_Update(const v810_timestamp_t timestamp)
             }
             else
             {
+               int lr;
                VIP_DrawBlock(DrawingBlock, DrawingBuffers[0] + 8, DrawingBuffers[1] + 8);
 
-               for(int lr = 0; lr < 2; lr++)
+               for(lr = 0; lr < 2; lr++)
                {
+                  int x;
                   uint8 *FB_Target = FB[DrawingFB][lr] + DrawingBlock * 2;
 
-                  for(int x = 0; x < 384; x++)
+                  for(x = 0; x < 384; x++)
                   {
                      FB_Target[64 * x + 0] = (DrawingBuffers[lr][8 + x + 512 * 0] << 0)
                         | (DrawingBuffers[lr][8 + x + 512 * 1] << 2)
@@ -1548,12 +1575,13 @@ v810_timestamp_t MDFN_FASTCALL VIP_Update(const v810_timestamp_t timestamp)
 
                if(!skip && InstantDisplayHack)
                {
+                  int lr;
                   // Ugly kludge, fix in the future.
                   int32 save_DisplayRegion = DisplayRegion;
                   int32 save_Column = Column;
                   uint8 save_Repeat = Repeat;
 
-                  for(int lr = 0; lr < 2; lr++)
+                  for(lr = 0; lr < 2; lr++)
                   {
                      DisplayRegion = lr << 1;
                      for(Column = 0; Column < 384; Column++)
@@ -1645,8 +1673,9 @@ int VIP_StateAction(StateMem *sm, int load, int data_only)
 
    if(load)
    {
+      int i;
       RecalcBrightnessCache();
-      for(int i = 0; i < 4; i++)
+      for(i = 0; i < 4; i++)
       {
          Recalc_GPLT_Cache(i);
          Recalc_JPLT_Cache(i);

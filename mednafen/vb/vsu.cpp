@@ -111,8 +111,9 @@ void VSU::Write(int32 timestamp, uint32 A, uint8 V)
       {
          if(A == 0x580 && (V & 1))
          {
+            int i;
             //puts("STOP, HAMMER TIME");
-            for(int i = 0; i < 6; i++)
+            for(i = 0; i < 6; i++)
                IntlControl[i] &= ~0x80;
          }
       }
