@@ -444,7 +444,7 @@ static int32 MDFN_FASTCALL EventHandler(const v810_timestamp_t timestamp)
 }
 
 // Called externally from debug.cpp in some cases.
-void ForceEventUpdates(const v810_timestamp_t timestamp)
+static void ForceEventUpdates(const v810_timestamp_t timestamp)
 {
    next_vip_ts = VIP_Update(timestamp);
    next_timer_ts = TIMER_Update(timestamp);
@@ -470,7 +470,6 @@ static void VB_Power(void)
 
    VSU_CycleFix = 0;
    WCR = 0;
-
 
    ForceEventUpdates(0);  //VB_V810->v810_timestamp);
 }

@@ -47,8 +47,6 @@ void VB_ExitLoop(void);
 }
 #endif
 
-void ForceEventUpdates(const v810_timestamp_t timestamp);
-
 extern int32 VB_InDebugPeek;
 
 #endif
