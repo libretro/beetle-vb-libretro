@@ -71,9 +71,7 @@ int8 float_exception_flags = 0;
 
 static INLINE bits32 extractFloat32Frac( float32 a )
 {
-
     return a & 0x007FFFFF;
-
 }
 
 /*----------------------------------------------------------------------------
@@ -82,9 +80,7 @@ static INLINE bits32 extractFloat32Frac( float32 a )
 
 static INLINE int16 extractFloat32Exp( float32 a )
 {
-
     return ( a>>23 ) & 0xFF;
-
 }
 
 /*----------------------------------------------------------------------------
@@ -93,9 +89,7 @@ static INLINE int16 extractFloat32Exp( float32 a )
 
 static INLINE flag extractFloat32Sign( float32 a )
 {
-
     return a>>31;
-
 }
 
 /*----------------------------------------------------------------------------
@@ -108,9 +102,7 @@ static INLINE flag extractFloat32Sign( float32 a )
 static void
  normalizeFloat32Subnormal( bits32 aSig, int16 *zExpPtr, bits32 *zSigPtr )
 {
-    int8 shiftCount;
-
-    shiftCount = countLeadingZeros32( aSig ) - 8;
+    int8 shiftCount = countLeadingZeros32( aSig ) - 8;
     *zSigPtr = aSig<<shiftCount;
     *zExpPtr = 1 - shiftCount;
 
@@ -129,9 +121,7 @@ static void
 
 static INLINE float32 packFloat32( flag zSign, int16 zExp, bits32 zSig )
 {
-
     return ( ( (bits32) zSign )<<31 ) + ( ( (bits32) zExp )<<23 ) + zSig;
-
 }
 
 /*----------------------------------------------------------------------------
@@ -158,59 +148,66 @@ static INLINE float32 packFloat32( flag zSign, int16 zExp, bits32 zSig )
 
 static float32 roundAndPackFloat32( flag zSign, int16 zExp, bits32 zSig )
 {
-    int8 roundingMode;
-    flag roundNearestEven;
-    int8 roundIncrement, roundBits;
-    flag isTiny;
+   int8 roundBits;
+   flag isTiny;
+   int8 roundingMode     = float_rounding_mode;
+   flag roundNearestEven = roundingMode == float_round_nearest_even;
+   int8 roundIncrement   = 0x40;
 
-    roundingMode = float_rounding_mode;
-    roundNearestEven = roundingMode == float_round_nearest_even;
-    roundIncrement = 0x40;
-    if ( ! roundNearestEven ) {
-        if ( roundingMode == float_round_to_zero ) {
-            roundIncrement = 0;
-        }
-        else {
-            roundIncrement = 0x7F;
-            if ( zSign ) {
-                if ( roundingMode == float_round_up ) roundIncrement = 0;
-            }
-            else {
-                if ( roundingMode == float_round_down ) roundIncrement = 0;
-            }
-        }
-    }
-    roundBits = zSig & 0x7F;
-    if ( 0xFD <= (bits16) zExp ) {
-        if (    ( 0xFD < zExp )
-             || (    ( zExp == 0xFD )
-                  && ( (sbits32) ( zSig + roundIncrement ) < 0 ) )
-           ) {
-	    // Mednafen hack
-            //float_raise( float_flag_overflow | float_flag_inexact );
-            float_raise( float_flag_overflow );
+   if ( ! roundNearestEven )
+   {
+      if ( roundingMode == float_round_to_zero )
+         roundIncrement = 0;
+      else
+      {
+         roundIncrement = 0x7F;
+         if ( zSign )
+         {
+            if ( roundingMode == float_round_up )
+               roundIncrement = 0;
+         }
+         else
+         {
+            if ( roundingMode == float_round_down )
+               roundIncrement = 0;
+         }
+      }
+   }
+   roundBits = zSig & 0x7F;
+   if ( 0xFD <= (bits16) zExp )
+   {
+      if (    ( 0xFD < zExp )
+            || (    ( zExp == 0xFD )
+               && ( (sbits32) ( zSig + roundIncrement ) < 0 ) )
+         )
+      {
+         // Mednafen hack
+         //float_raise( float_flag_overflow | float_flag_inexact );
+         float_raise( float_flag_overflow );
 
-	    // Mednafen hack
-	    zExp -= 192;
-            //return packFloat32( zSign, 0xFF, 0 ) - ( roundIncrement == 0 );
-        }
-        if ( zExp < 0 ) {
-            isTiny =
-                   ( float_detect_tininess == float_tininess_before_rounding )
-                || ( zExp < -1 )
-                || ( zSig + roundIncrement < 0x80000000 );
-            shift32RightJamming( zSig, - zExp, &zSig );
-            zExp = 0;
-            roundBits = zSig & 0x7F;
-            if ( isTiny && roundBits ) float_raise( float_flag_underflow );
-        }
-    }
-    if ( roundBits ) float_exception_flags |= float_flag_inexact;
-    zSig = ( zSig + roundIncrement )>>7;
-    zSig &= ~ ( ( ( roundBits ^ 0x40 ) == 0 ) & roundNearestEven );
-    if ( zSig == 0 ) zExp = 0;
-    return packFloat32( zSign, zExp, zSig );
-
+         // Mednafen hack
+         zExp -= 192;
+         //return packFloat32( zSign, 0xFF, 0 ) - ( roundIncrement == 0 );
+      }
+      if ( zExp < 0 )
+      {
+         isTiny =
+            ( float_detect_tininess == float_tininess_before_rounding )
+            || ( zExp < -1 )
+            || ( zSig + roundIncrement < 0x80000000 );
+         shift32RightJamming( zSig, - zExp, &zSig );
+         zExp = 0;
+         roundBits = zSig & 0x7F;
+         if ( isTiny && roundBits ) float_raise( float_flag_underflow );
+      }
+   }
+   if ( roundBits )
+      float_exception_flags |= float_flag_inexact;
+   zSig = ( zSig + roundIncrement )>>7;
+   zSig &= ~ ( ( ( roundBits ^ 0x40 ) == 0 ) & roundNearestEven );
+   if ( zSig == 0 )
+      zExp = 0;
+   return packFloat32( zSign, zExp, zSig );
 }
 
 /*----------------------------------------------------------------------------
@@ -225,10 +222,8 @@ static float32 roundAndPackFloat32( flag zSign, int16 zExp, bits32 zSig )
 static float32
  normalizeRoundAndPackFloat32( flag zSign, int16 zExp, bits32 zSig )
 {
-    int8 shiftCount;
-
-    shiftCount = countLeadingZeros32( zSig ) - 1;
-    return roundAndPackFloat32( zSign, zExp - shiftCount, zSig<<shiftCount );
+   int8 shiftCount = countLeadingZeros32( zSig ) - 1;
+   return roundAndPackFloat32( zSign, zExp - shiftCount, zSig<<shiftCount );
 
 }
 
@@ -261,16 +256,13 @@ float32 int32_to_float32( int32 a )
 
 int32 float32_to_int32( float32 a )
 {
-    flag aSign;
-    int16 aExp, shiftCount;
-    bits32 aSig, aSigExtra;
+    bits32 aSigExtra;
     int32 z;
     int8 roundingMode;
-
-    aSig = extractFloat32Frac( a );
-    aExp = extractFloat32Exp( a );
-    aSign = extractFloat32Sign( a );
-    shiftCount = aExp - 0x96;
+    bits32 aSig      = extractFloat32Frac( a );
+    int16 aExp       = extractFloat32Exp( a );
+    flag aSign       = extractFloat32Sign( a );
+    int16 shiftCount = aExp - 0x96;
     if ( 0 <= shiftCount ) {
         if ( 0x9E <= aExp ) {
             if ( a != 0xCF000000 ) {
@@ -330,34 +322,29 @@ int32 float32_to_int32( float32 a )
 
 int32 float32_to_int32_round_to_zero( float32 a )
 {
-    flag aSign;
-    int16 aExp, shiftCount;
-    bits32 aSig;
-    int32 z;
-
-    aSig = extractFloat32Frac( a );
-    aExp = extractFloat32Exp( a );
-    aSign = extractFloat32Sign( a );
-    shiftCount = aExp - 0x9E;
-    if ( 0 <= shiftCount ) {
-        if ( a != 0xCF000000 ) {
-            float_raise( float_flag_invalid );
-            if ( ! aSign || ( ( aExp == 0xFF ) && aSig ) ) return 0x7FFFFFFF;
-        }
-        return (sbits32) 0x80000000;
-    }
-    else if ( aExp <= 0x7E ) {
-        if ( aExp | aSig ) float_exception_flags |= float_flag_inexact;
-        return 0;
-    }
-    aSig = ( aSig | 0x00800000 )<<8;
-    z = aSig>>( - shiftCount );
-    if ( (bits32) ( aSig<<( shiftCount & 31 ) ) ) {
-        float_exception_flags |= float_flag_inexact;
-    }
-    if ( aSign ) z = - z;
-    return z;
-
+   int32 z;
+   bits32 aSig       = extractFloat32Frac( a );
+   int16 aExp        = extractFloat32Exp( a );
+   flag aSign        = extractFloat32Sign( a );
+   int16 shiftCount  = aExp - 0x9E;
+   if ( 0 <= shiftCount ) {
+      if ( a != 0xCF000000 ) {
+         float_raise( float_flag_invalid );
+         if ( ! aSign || ( ( aExp == 0xFF ) && aSig ) ) return 0x7FFFFFFF;
+      }
+      return (sbits32) 0x80000000;
+   }
+   else if ( aExp <= 0x7E ) {
+      if ( aExp | aSig ) float_exception_flags |= float_flag_inexact;
+      return 0;
+   }
+   aSig = ( aSig | 0x00800000 )<<8;
+   z = aSig>>( - shiftCount );
+   if ( (bits32) ( aSig<<( shiftCount & 31 ) ) ) {
+      float_exception_flags |= float_flag_inexact;
+   }
+   if ( aSign ) z = - z;
+   return z;
 }
 
 /*----------------------------------------------------------------------------
@@ -370,12 +357,10 @@ int32 float32_to_int32_round_to_zero( float32 a )
 float32 float32_round_to_int( float32 a )
 {
     flag aSign;
-    int16 aExp;
+    float32 z;
     bits32 lastBitMask, roundBitsMask;
     int8 roundingMode;
-    float32 z;
-
-    aExp = extractFloat32Exp( a );
+    int16 aExp = extractFloat32Exp( a );
     if ( 0x96 <= aExp ) {
         if ( ( aExp == 0xFF ) && extractFloat32Frac( a ) ) {
             return propagateFloat32NaN( a, a );
@@ -429,64 +414,62 @@ float32 float32_round_to_int( float32 a )
 
 static float32 addFloat32Sigs( float32 a, float32 b, flag zSign )
 {
-    int16 aExp, bExp, zExp;
-    bits32 aSig, bSig, zSig;
-    int16 expDiff;
-
-    aSig = extractFloat32Frac( a );
-    aExp = extractFloat32Exp( a );
-    bSig = extractFloat32Frac( b );
-    bExp = extractFloat32Exp( b );
-    expDiff = aExp - bExp;
-    aSig <<= 6;
-    bSig <<= 6;
-    if ( 0 < expDiff ) {
-        if ( aExp == 0xFF ) {
-            if ( aSig ) return propagateFloat32NaN( a, b );
-            return a;
-        }
-        if ( bExp == 0 ) {
-            --expDiff;
-        }
-        else {
-            bSig |= 0x20000000;
-        }
-        shift32RightJamming( bSig, expDiff, &bSig );
-        zExp = aExp;
-    }
-    else if ( expDiff < 0 ) {
-        if ( bExp == 0xFF ) {
-            if ( bSig ) return propagateFloat32NaN( a, b );
-            return packFloat32( zSign, 0xFF, 0 );
-        }
-        if ( aExp == 0 ) {
-            ++expDiff;
-        }
-        else {
-            aSig |= 0x20000000;
-        }
-        shift32RightJamming( aSig, - expDiff, &aSig );
-        zExp = bExp;
-    }
-    else {
-        if ( aExp == 0xFF ) {
-            if ( aSig | bSig ) return propagateFloat32NaN( a, b );
-            return a;
-        }
-        if ( aExp == 0 ) return packFloat32( zSign, 0, ( aSig + bSig )>>6 );
-        zSig = 0x40000000 + aSig + bSig;
-        zExp = aExp;
-        goto roundAndPack;
-    }
-    aSig |= 0x20000000;
-    zSig = ( aSig + bSig )<<1;
-    --zExp;
-    if ( (sbits32) zSig < 0 ) {
-        zSig = aSig + bSig;
-        ++zExp;
-    }
- roundAndPack:
-    return roundAndPackFloat32( zSign, zExp, zSig );
+   int16 zExp;
+   bits32 zSig;
+   bits32 aSig   = extractFloat32Frac( a );
+   int16 aExp    = extractFloat32Exp( a );
+   bits32 bSig   = extractFloat32Frac( b );
+   int16 bExp    = extractFloat32Exp( b );
+   int16 expDiff = aExp - bExp;
+   aSig <<= 6;
+   bSig <<= 6;
+   if ( 0 < expDiff ) {
+      if ( aExp == 0xFF ) {
+         if ( aSig ) return propagateFloat32NaN( a, b );
+         return a;
+      }
+      if ( bExp == 0 ) {
+         --expDiff;
+      }
+      else {
+         bSig |= 0x20000000;
+      }
+      shift32RightJamming( bSig, expDiff, &bSig );
+      zExp = aExp;
+   }
+   else if ( expDiff < 0 ) {
+      if ( bExp == 0xFF ) {
+         if ( bSig ) return propagateFloat32NaN( a, b );
+         return packFloat32( zSign, 0xFF, 0 );
+      }
+      if ( aExp == 0 ) {
+         ++expDiff;
+      }
+      else {
+         aSig |= 0x20000000;
+      }
+      shift32RightJamming( aSig, - expDiff, &aSig );
+      zExp = bExp;
+   }
+   else {
+      if ( aExp == 0xFF ) {
+         if ( aSig | bSig ) return propagateFloat32NaN( a, b );
+         return a;
+      }
+      if ( aExp == 0 ) return packFloat32( zSign, 0, ( aSig + bSig )>>6 );
+      zSig = 0x40000000 + aSig + bSig;
+      zExp = aExp;
+      goto roundAndPack;
+   }
+   aSig |= 0x20000000;
+   zSig = ( aSig + bSig )<<1;
+   --zExp;
+   if ( (sbits32) zSig < 0 ) {
+      zSig = aSig + bSig;
+      ++zExp;
+   }
+roundAndPack:
+   return roundAndPackFloat32( zSign, zExp, zSig );
 
 }
 
@@ -500,69 +483,66 @@ static float32 addFloat32Sigs( float32 a, float32 b, flag zSign )
 
 static float32 subFloat32Sigs( float32 a, float32 b, flag zSign )
 {
-    int16 aExp, bExp, zExp;
-    bits32 aSig, bSig, zSig;
-    int16 expDiff;
-
-    aSig = extractFloat32Frac( a );
-    aExp = extractFloat32Exp( a );
-    bSig = extractFloat32Frac( b );
-    bExp = extractFloat32Exp( b );
-    expDiff = aExp - bExp;
-    aSig <<= 7;
-    bSig <<= 7;
-    if ( 0 < expDiff ) goto aExpBigger;
-    if ( expDiff < 0 ) goto bExpBigger;
-    if ( aExp == 0xFF ) {
-        if ( aSig | bSig ) return propagateFloat32NaN( a, b );
-        float_raise( float_flag_invalid );
-        return float32_default_nan;
-    }
-    if ( aExp == 0 ) {
-        aExp = 1;
-        bExp = 1;
-    }
-    if ( bSig < aSig ) goto aBigger;
-    if ( aSig < bSig ) goto bBigger;
-    return packFloat32( float_rounding_mode == float_round_down, 0, 0 );
- bExpBigger:
-    if ( bExp == 0xFF ) {
-        if ( bSig ) return propagateFloat32NaN( a, b );
-        return packFloat32( zSign ^ 1, 0xFF, 0 );
-    }
-    if ( aExp == 0 ) {
-        ++expDiff;
-    }
-    else {
-        aSig |= 0x40000000;
-    }
-    shift32RightJamming( aSig, - expDiff, &aSig );
-    bSig |= 0x40000000;
- bBigger:
-    zSig = bSig - aSig;
-    zExp = bExp;
-    zSign ^= 1;
-    goto normalizeRoundAndPack;
- aExpBigger:
-    if ( aExp == 0xFF ) {
-        if ( aSig ) return propagateFloat32NaN( a, b );
-        return a;
-    }
-    if ( bExp == 0 ) {
-        --expDiff;
-    }
-    else {
-        bSig |= 0x40000000;
-    }
-    shift32RightJamming( bSig, expDiff, &bSig );
-    aSig |= 0x40000000;
- aBigger:
-    zSig = aSig - bSig;
-    zExp = aExp;
- normalizeRoundAndPack:
-    --zExp;
-    return normalizeRoundAndPackFloat32( zSign, zExp, zSig );
-
+   int16 zExp;
+   bits32 zSig;
+   bits32 aSig   = extractFloat32Frac( a );
+   int16 aExp    = extractFloat32Exp( a );
+   bits32 bSig   = extractFloat32Frac( b );
+   int16 bExp    = extractFloat32Exp( b );
+   int16 expDiff = aExp - bExp;
+   aSig <<= 7;
+   bSig <<= 7;
+   if ( 0 < expDiff ) goto aExpBigger;
+   if ( expDiff < 0 ) goto bExpBigger;
+   if ( aExp == 0xFF ) {
+      if ( aSig | bSig ) return propagateFloat32NaN( a, b );
+      float_raise( float_flag_invalid );
+      return float32_default_nan;
+   }
+   if ( aExp == 0 ) {
+      aExp = 1;
+      bExp = 1;
+   }
+   if ( bSig < aSig ) goto aBigger;
+   if ( aSig < bSig ) goto bBigger;
+   return packFloat32( float_rounding_mode == float_round_down, 0, 0 );
+bExpBigger:
+   if ( bExp == 0xFF ) {
+      if ( bSig ) return propagateFloat32NaN( a, b );
+      return packFloat32( zSign ^ 1, 0xFF, 0 );
+   }
+   if ( aExp == 0 ) {
+      ++expDiff;
+   }
+   else {
+      aSig |= 0x40000000;
+   }
+   shift32RightJamming( aSig, - expDiff, &aSig );
+   bSig |= 0x40000000;
+bBigger:
+   zSig = bSig - aSig;
+   zExp = bExp;
+   zSign ^= 1;
+   goto normalizeRoundAndPack;
+aExpBigger:
+   if ( aExp == 0xFF ) {
+      if ( aSig ) return propagateFloat32NaN( a, b );
+      return a;
+   }
+   if ( bExp == 0 ) {
+      --expDiff;
+   }
+   else {
+      bSig |= 0x40000000;
+   }
+   shift32RightJamming( bSig, expDiff, &bSig );
+   aSig |= 0x40000000;
+aBigger:
+   zSig = aSig - bSig;
+   zExp = aExp;
+normalizeRoundAndPack:
+   --zExp;
+   return normalizeRoundAndPackFloat32( zSign, zExp, zSig );
 }
 
 /*----------------------------------------------------------------------------
@@ -573,17 +553,11 @@ static float32 subFloat32Sigs( float32 a, float32 b, flag zSign )
 
 float32 float32_add( float32 a, float32 b )
 {
-    flag aSign, bSign;
-
-    aSign = extractFloat32Sign( a );
-    bSign = extractFloat32Sign( b );
-    if ( aSign == bSign ) {
-        return addFloat32Sigs( a, b, aSign );
-    }
-    else {
-        return subFloat32Sigs( a, b, aSign );
-    }
-
+   flag aSign = extractFloat32Sign( a );
+   flag bSign = extractFloat32Sign( b );
+   if ( aSign == bSign )
+      return addFloat32Sigs( a, b, aSign );
+   return subFloat32Sigs( a, b, aSign );
 }
 
 /*----------------------------------------------------------------------------
@@ -594,17 +568,11 @@ float32 float32_add( float32 a, float32 b )
 
 float32 float32_sub( float32 a, float32 b )
 {
-    flag aSign, bSign;
-
-    aSign = extractFloat32Sign( a );
-    bSign = extractFloat32Sign( b );
-    if ( aSign == bSign ) {
-        return subFloat32Sigs( a, b, aSign );
-    }
-    else {
-        return addFloat32Sigs( a, b, aSign );
-    }
-
+   flag aSign = extractFloat32Sign( a );
+   flag bSign = extractFloat32Sign( b );
+   if ( aSign == bSign )
+      return subFloat32Sigs( a, b, aSign );
+   return addFloat32Sigs( a, b, aSign );
 }
 
 /*----------------------------------------------------------------------------
@@ -615,53 +583,60 @@ float32 float32_sub( float32 a, float32 b )
 
 float32 float32_mul( float32 a, float32 b )
 {
-    flag aSign, bSign, zSign;
-    int16 aExp, bExp, zExp;
-    bits32 aSig, bSig, zSig0, zSig1;
-
-    aSig = extractFloat32Frac( a );
-    aExp = extractFloat32Exp( a );
-    aSign = extractFloat32Sign( a );
-    bSig = extractFloat32Frac( b );
-    bExp = extractFloat32Exp( b );
-    bSign = extractFloat32Sign( b );
-    zSign = aSign ^ bSign;
-    if ( aExp == 0xFF ) {
-        if ( aSig || ( ( bExp == 0xFF ) && bSig ) ) {
-            return propagateFloat32NaN( a, b );
-        }
-        if ( ( bExp | bSig ) == 0 ) {
-            float_raise( float_flag_invalid );
-            return float32_default_nan;
-        }
-        return packFloat32( zSign, 0xFF, 0 );
-    }
-    if ( bExp == 0xFF ) {
-        if ( bSig ) return propagateFloat32NaN( a, b );
-        if ( ( aExp | aSig ) == 0 ) {
-            float_raise( float_flag_invalid );
-            return float32_default_nan;
-        }
-        return packFloat32( zSign, 0xFF, 0 );
-    }
-    if ( aExp == 0 ) {
-        if ( aSig == 0 ) return packFloat32( zSign, 0, 0 );
-        normalizeFloat32Subnormal( aSig, &aExp, &aSig );
-    }
-    if ( bExp == 0 ) {
-        if ( bSig == 0 ) return packFloat32( zSign, 0, 0 );
-        normalizeFloat32Subnormal( bSig, &bExp, &bSig );
-    }
-    zExp = aExp + bExp - 0x7F;
-    aSig = ( aSig | 0x00800000 )<<7;
-    bSig = ( bSig | 0x00800000 )<<8;
-    mul32To64( aSig, bSig, &zSig0, &zSig1 );
-    zSig0 |= ( zSig1 != 0 );
-    if ( 0 <= (sbits32) ( zSig0<<1 ) ) {
-        zSig0 <<= 1;
-        --zExp;
-    }
-    return roundAndPackFloat32( zSign, zExp, zSig0 );
+   int16 zExp;
+   bits32 zSig0, zSig1;
+   bits32 aSig = extractFloat32Frac( a );
+   int16 aExp  = extractFloat32Exp( a );
+   flag aSign  = extractFloat32Sign( a );
+   bits32 bSig = extractFloat32Frac( b );
+   int16 bExp  = extractFloat32Exp( b );
+   flag bSign  = extractFloat32Sign( b );
+   flag zSign  = aSign ^ bSign;
+   if ( aExp == 0xFF )
+   {
+      if ( aSig || ( ( bExp == 0xFF ) && bSig ) )
+         return propagateFloat32NaN( a, b );
+      if ( ( bExp | bSig ) == 0 )
+      {
+         float_raise( float_flag_invalid );
+         return float32_default_nan;
+      }
+      return packFloat32( zSign, 0xFF, 0 );
+   }
+   if ( bExp == 0xFF )
+   {
+      if ( bSig )
+         return propagateFloat32NaN( a, b );
+      if ( ( aExp | aSig ) == 0 )
+      {
+         float_raise( float_flag_invalid );
+         return float32_default_nan;
+      }
+      return packFloat32( zSign, 0xFF, 0 );
+   }
+   if ( aExp == 0 )
+   {
+      if ( aSig == 0 )
+         return packFloat32( zSign, 0, 0 );
+      normalizeFloat32Subnormal( aSig, &aExp, &aSig );
+   }
+   if ( bExp == 0 )
+   {
+      if ( bSig == 0 )
+         return packFloat32( zSign, 0, 0 );
+      normalizeFloat32Subnormal( bSig, &bExp, &bSig );
+   }
+   zExp = aExp + bExp - 0x7F;
+   aSig = ( aSig | 0x00800000 )<<7;
+   bSig = ( bSig | 0x00800000 )<<8;
+   mul32To64( aSig, bSig, &zSig0, &zSig1 );
+   zSig0 |= ( zSig1 != 0 );
+   if ( 0 <= (sbits32) ( zSig0<<1 ) )
+   {
+      zSig0 <<= 1;
+      --zExp;
+   }
+   return roundAndPackFloat32( zSign, zExp, zSig0 );
 
 }
 
@@ -673,64 +648,75 @@ float32 float32_mul( float32 a, float32 b )
 
 float32 float32_div( float32 a, float32 b )
 {
-    flag aSign, bSign, zSign;
-    int16 aExp, bExp, zExp;
-    bits32 aSig, bSig, zSig, rem0, rem1, term0, term1;
-
-    aSig = extractFloat32Frac( a );
-    aExp = extractFloat32Exp( a );
-    aSign = extractFloat32Sign( a );
-    bSig = extractFloat32Frac( b );
-    bExp = extractFloat32Exp( b );
-    bSign = extractFloat32Sign( b );
-    zSign = aSign ^ bSign;
-    if ( aExp == 0xFF ) {
-        if ( aSig ) return propagateFloat32NaN( a, b );
-        if ( bExp == 0xFF ) {
-            if ( bSig ) return propagateFloat32NaN( a, b );
+   int16 zExp;
+   bits32 zSig, rem0, rem1, term0, term1;
+   bits32 aSig = extractFloat32Frac( a );
+   int16 aExp  = extractFloat32Exp( a );
+   flag aSign  = extractFloat32Sign( a );
+   bits32 bSig = extractFloat32Frac( b );
+   int16 bExp  = extractFloat32Exp( b );
+   flag bSign  = extractFloat32Sign( b );
+   flag zSign  = aSign ^ bSign;
+   if ( aExp == 0xFF )
+   {
+      if ( aSig )
+         return propagateFloat32NaN( a, b );
+      if ( bExp == 0xFF )
+      {
+         if ( bSig )
+            return propagateFloat32NaN( a, b );
+         float_raise( float_flag_invalid );
+         return float32_default_nan;
+      }
+      return packFloat32( zSign, 0xFF, 0 );
+   }
+   if ( bExp == 0xFF )
+   {
+      if ( bSig )
+         return propagateFloat32NaN( a, b );
+      return packFloat32( zSign, 0, 0 );
+   }
+   if ( bExp == 0 )
+   {
+      if ( bSig == 0 )
+      {
+         if ( ( aExp | aSig ) == 0 )
+         {
             float_raise( float_flag_invalid );
             return float32_default_nan;
-        }
-        return packFloat32( zSign, 0xFF, 0 );
-    }
-    if ( bExp == 0xFF ) {
-        if ( bSig ) return propagateFloat32NaN( a, b );
-        return packFloat32( zSign, 0, 0 );
-    }
-    if ( bExp == 0 ) {
-        if ( bSig == 0 ) {
-            if ( ( aExp | aSig ) == 0 ) {
-                float_raise( float_flag_invalid );
-                return float32_default_nan;
-            }
-            float_raise( float_flag_divbyzero );
-            return packFloat32( zSign, 0xFF, 0 );
-        }
-        normalizeFloat32Subnormal( bSig, &bExp, &bSig );
-    }
-    if ( aExp == 0 ) {
-        if ( aSig == 0 ) return packFloat32( zSign, 0, 0 );
-        normalizeFloat32Subnormal( aSig, &aExp, &aSig );
-    }
-    zExp = aExp - bExp + 0x7D;
-    aSig = ( aSig | 0x00800000 )<<7;
-    bSig = ( bSig | 0x00800000 )<<8;
-    if ( bSig <= ( aSig + aSig ) ) {
-        aSig >>= 1;
-        ++zExp;
-    }
-    zSig = estimateDiv64To32( aSig, 0, bSig );
-    if ( ( zSig & 0x3F ) <= 2 ) {
-        mul32To64( bSig, zSig, &term0, &term1 );
-        sub64( aSig, 0, term0, term1, &rem0, &rem1 );
-        while ( (sbits32) rem0 < 0 ) {
-            --zSig;
-            add64( rem0, rem1, 0, bSig, &rem0, &rem1 );
-        }
-        zSig |= ( rem1 != 0 );
-    }
-    return roundAndPackFloat32( zSign, zExp, zSig );
-
+         }
+         float_raise( float_flag_divbyzero );
+         return packFloat32( zSign, 0xFF, 0 );
+      }
+      normalizeFloat32Subnormal( bSig, &bExp, &bSig );
+   }
+   if ( aExp == 0 )
+   {
+      if ( aSig == 0 )
+         return packFloat32( zSign, 0, 0 );
+      normalizeFloat32Subnormal( aSig, &aExp, &aSig );
+   }
+   zExp = aExp - bExp + 0x7D;
+   aSig = ( aSig | 0x00800000 )<<7;
+   bSig = ( bSig | 0x00800000 )<<8;
+   if ( bSig <= ( aSig + aSig ) )
+   {
+      aSig >>= 1;
+      ++zExp;
+   }
+   zSig = estimateDiv64To32( aSig, 0, bSig );
+   if ( ( zSig & 0x3F ) <= 2 )
+   {
+      mul32To64( bSig, zSig, &term0, &term1 );
+      sub64( aSig, 0, term0, term1, &rem0, &rem1 );
+      while ( (sbits32) rem0 < 0 )
+      {
+         --zSig;
+         add64( rem0, rem1, 0, bSig, &rem0, &rem1 );
+      }
+      zSig |= ( rem1 != 0 );
+   }
+   return roundAndPackFloat32( zSign, zExp, zSig );
 }
 
 /*----------------------------------------------------------------------------
@@ -741,83 +727,82 @@ float32 float32_div( float32 a, float32 b )
 
 float32 float32_rem( float32 a, float32 b )
 {
-    flag zSign;
-    int16 expDiff;
-    bits32 q, allZero, alternateASig;
-    sbits32 sigMean;
+   flag zSign;
+   int16 expDiff;
+   bits32 q, allZero, alternateASig;
+   sbits32 sigMean;
 
-    bits32 aSig = extractFloat32Frac( a );
-    int16 aExp  = extractFloat32Exp( a );
-    flag aSign  = extractFloat32Sign( a );
-    bits32 bSig = extractFloat32Frac( b );
-    int16 bExp  = extractFloat32Exp( b );
+   bits32 aSig = extractFloat32Frac( a );
+   int16 aExp  = extractFloat32Exp( a );
+   flag aSign  = extractFloat32Sign( a );
+   bits32 bSig = extractFloat32Frac( b );
+   int16 bExp  = extractFloat32Exp( b );
 #if 0
-    flag bSign  = extractFloat32Sign( b );
+   flag bSign  = extractFloat32Sign( b );
 #endif
 
-    if ( aExp == 0xFF ) {
-        if ( aSig || ( ( bExp == 0xFF ) && bSig ) ) {
-            return propagateFloat32NaN( a, b );
-        }
-        float_raise( float_flag_invalid );
-        return float32_default_nan;
-    }
-    if ( bExp == 0xFF ) {
-        if ( bSig ) return propagateFloat32NaN( a, b );
-        return a;
-    }
-    if ( bExp == 0 ) {
-        if ( bSig == 0 ) {
-            float_raise( float_flag_invalid );
-            return float32_default_nan;
-        }
-        normalizeFloat32Subnormal( bSig, &bExp, &bSig );
-    }
-    if ( aExp == 0 ) {
-        if ( aSig == 0 ) return a;
-        normalizeFloat32Subnormal( aSig, &aExp, &aSig );
-    }
-    expDiff = aExp - bExp;
-    aSig = ( aSig | 0x00800000 )<<8;
-    bSig = ( bSig | 0x00800000 )<<8;
-    if ( expDiff < 0 ) {
-        if ( expDiff < -1 ) return a;
-        aSig >>= 1;
-    }
-    q = ( bSig <= aSig );
-    if ( q ) aSig -= bSig;
-    expDiff -= 32;
-    while ( 0 < expDiff ) {
-        q = estimateDiv64To32( aSig, 0, bSig );
-        q = ( 2 < q ) ? q - 2 : 0;
-        aSig = - ( ( bSig>>2 ) * q );
-        expDiff -= 30;
-    }
-    expDiff += 32;
-    if ( 0 < expDiff ) {
-        q = estimateDiv64To32( aSig, 0, bSig );
-        q = ( 2 < q ) ? q - 2 : 0;
-        q >>= 32 - expDiff;
-        bSig >>= 2;
-        aSig = ( ( aSig>>1 )<<( expDiff - 1 ) ) - bSig * q;
-    }
-    else {
-        aSig >>= 2;
-        bSig >>= 2;
-    }
-    do {
-        alternateASig = aSig;
-        ++q;
-        aSig -= bSig;
-    } while ( 0 <= (sbits32) aSig );
-    sigMean = aSig + alternateASig;
-    if ( ( sigMean < 0 ) || ( ( sigMean == 0 ) && ( q & 1 ) ) ) {
-        aSig = alternateASig;
-    }
-    zSign = ( (sbits32) aSig < 0 );
-    if ( zSign ) aSig = - aSig;
-    return normalizeRoundAndPackFloat32( aSign ^ zSign, bExp, aSig );
-
+   if ( aExp == 0xFF )
+   {
+      if ( aSig || ( ( bExp == 0xFF ) && bSig ) )
+         return propagateFloat32NaN( a, b );
+      float_raise( float_flag_invalid );
+      return float32_default_nan;
+   }
+   if ( bExp == 0xFF ) {
+      if ( bSig ) return propagateFloat32NaN( a, b );
+      return a;
+   }
+   if ( bExp == 0 ) {
+      if ( bSig == 0 ) {
+         float_raise( float_flag_invalid );
+         return float32_default_nan;
+      }
+      normalizeFloat32Subnormal( bSig, &bExp, &bSig );
+   }
+   if ( aExp == 0 ) {
+      if ( aSig == 0 ) return a;
+      normalizeFloat32Subnormal( aSig, &aExp, &aSig );
+   }
+   expDiff = aExp - bExp;
+   aSig = ( aSig | 0x00800000 )<<8;
+   bSig = ( bSig | 0x00800000 )<<8;
+   if ( expDiff < 0 ) {
+      if ( expDiff < -1 ) return a;
+      aSig >>= 1;
+   }
+   q = ( bSig <= aSig );
+   if ( q ) aSig -= bSig;
+   expDiff -= 32;
+   while ( 0 < expDiff ) {
+      q = estimateDiv64To32( aSig, 0, bSig );
+      q = ( 2 < q ) ? q - 2 : 0;
+      aSig = - ( ( bSig>>2 ) * q );
+      expDiff -= 30;
+   }
+   expDiff += 32;
+   if ( 0 < expDiff ) {
+      q = estimateDiv64To32( aSig, 0, bSig );
+      q = ( 2 < q ) ? q - 2 : 0;
+      q >>= 32 - expDiff;
+      bSig >>= 2;
+      aSig = ( ( aSig>>1 )<<( expDiff - 1 ) ) - bSig * q;
+   }
+   else {
+      aSig >>= 2;
+      bSig >>= 2;
+   }
+   do {
+      alternateASig = aSig;
+      ++q;
+      aSig -= bSig;
+   } while ( 0 <= (sbits32) aSig );
+   sigMean = aSig + alternateASig;
+   if ( ( sigMean < 0 ) || ( ( sigMean == 0 ) && ( q & 1 ) ) ) {
+      aSig = alternateASig;
+   }
+   zSign = ( (sbits32) aSig < 0 );
+   if ( zSign ) aSig = - aSig;
+   return normalizeRoundAndPackFloat32( aSign ^ zSign, bExp, aSig );
 }
 
 /*----------------------------------------------------------------------------
@@ -828,13 +813,11 @@ float32 float32_rem( float32 a, float32 b )
 
 float32 float32_sqrt( float32 a )
 {
-    flag aSign;
-    int16 aExp, zExp;
-    bits32 aSig, zSig, rem0, rem1, term0, term1;
-
-    aSig = extractFloat32Frac( a );
-    aExp = extractFloat32Exp( a );
-    aSign = extractFloat32Sign( a );
+    int16 zExp;
+    bits32 zSig, rem0, rem1, term0, term1;
+    bits32 aSig = extractFloat32Frac( a );
+    int16 aExp  = extractFloat32Exp( a );
+    flag aSign  = extractFloat32Sign( a );
     if ( aExp == 0xFF ) {
         if ( aSig ) return propagateFloat32NaN( a, 0 );
         if ( ! aSign ) return a;
@@ -885,16 +868,15 @@ float32 float32_sqrt( float32 a )
 
 flag float32_eq( float32 a, float32 b )
 {
-
-    if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
+   if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
          || ( ( extractFloat32Exp( b ) == 0xFF ) && extractFloat32Frac( b ) )
-       ) {
-        if ( float32_is_signaling_nan( a ) || float32_is_signaling_nan( b ) ) {
-            float_raise( float_flag_invalid );
-        }
-        return 0;
-    }
-    return ( a == b ) || ( (bits32) ( ( a | b )<<1 ) == 0 );
+      )
+   {
+      if ( float32_is_signaling_nan( a ) || float32_is_signaling_nan( b ) )
+         float_raise( float_flag_invalid );
+      return 0;
+   }
+   return ( a == b ) || ( (bits32) ( ( a | b )<<1 ) == 0 );
 
 }
 
@@ -907,19 +889,20 @@ flag float32_eq( float32 a, float32 b )
 
 flag float32_le( float32 a, float32 b )
 {
-    flag aSign, bSign;
+   flag aSign, bSign;
 
-    if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
+   if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
          || ( ( extractFloat32Exp( b ) == 0xFF ) && extractFloat32Frac( b ) )
-       ) {
-        float_raise( float_flag_invalid );
-        return 0;
-    }
-    aSign = extractFloat32Sign( a );
-    bSign = extractFloat32Sign( b );
-    if ( aSign != bSign ) return aSign || ( (bits32) ( ( a | b )<<1 ) == 0 );
-    return ( a == b ) || ( aSign ^ ( a < b ) );
-
+      )
+   {
+      float_raise( float_flag_invalid );
+      return 0;
+   }
+   aSign = extractFloat32Sign( a );
+   bSign = extractFloat32Sign( b );
+   if ( aSign != bSign )
+      return aSign || ( (bits32) ( ( a | b )<<1 ) == 0 );
+   return ( a == b ) || ( aSign ^ ( a < b ) );
 }
 
 /*----------------------------------------------------------------------------
@@ -930,19 +913,19 @@ flag float32_le( float32 a, float32 b )
 
 flag float32_lt( float32 a, float32 b )
 {
-    flag aSign, bSign;
+   flag aSign, bSign;
 
-    if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
+   if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
          || ( ( extractFloat32Exp( b ) == 0xFF ) && extractFloat32Frac( b ) )
-       ) {
-        float_raise( float_flag_invalid );
-        return 0;
-    }
-    aSign = extractFloat32Sign( a );
-    bSign = extractFloat32Sign( b );
-    if ( aSign != bSign ) return aSign && ( (bits32) ( ( a | b )<<1 ) != 0 );
-    return ( a != b ) && ( aSign ^ ( a < b ) );
-
+      ) {
+      float_raise( float_flag_invalid );
+      return 0;
+   }
+   aSign = extractFloat32Sign( a );
+   bSign = extractFloat32Sign( b );
+   if ( aSign != bSign )
+      return aSign && ( (bits32) ( ( a | b )<<1 ) != 0 );
+   return ( a != b ) && ( aSign ^ ( a < b ) );
 }
 
 /*----------------------------------------------------------------------------
@@ -955,14 +938,13 @@ flag float32_lt( float32 a, float32 b )
 flag float32_eq_signaling( float32 a, float32 b )
 {
 
-    if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
+   if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
          || ( ( extractFloat32Exp( b ) == 0xFF ) && extractFloat32Frac( b ) )
-       ) {
-        float_raise( float_flag_invalid );
-        return 0;
-    }
-    return ( a == b ) || ( (bits32) ( ( a | b )<<1 ) == 0 );
-
+      ) {
+      float_raise( float_flag_invalid );
+      return 0;
+   }
+   return ( a == b ) || ( (bits32) ( ( a | b )<<1 ) == 0 );
 }
 
 /*----------------------------------------------------------------------------
@@ -974,22 +956,21 @@ flag float32_eq_signaling( float32 a, float32 b )
 
 flag float32_le_quiet( float32 a, float32 b )
 {
-    flag aSign, bSign;
-    int16 aExp, bExp;
+   flag aSign, bSign;
+   int16 aExp, bExp;
 
-    if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
+   if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
          || ( ( extractFloat32Exp( b ) == 0xFF ) && extractFloat32Frac( b ) )
-       ) {
-        if ( float32_is_signaling_nan( a ) || float32_is_signaling_nan( b ) ) {
-            float_raise( float_flag_invalid );
-        }
-        return 0;
-    }
-    aSign = extractFloat32Sign( a );
-    bSign = extractFloat32Sign( b );
-    if ( aSign != bSign ) return aSign || ( (bits32) ( ( a | b )<<1 ) == 0 );
-    return ( a == b ) || ( aSign ^ ( a < b ) );
-
+      ) {
+      if ( float32_is_signaling_nan( a ) || float32_is_signaling_nan( b ) )
+         float_raise( float_flag_invalid );
+      return 0;
+   }
+   aSign = extractFloat32Sign( a );
+   bSign = extractFloat32Sign( b );
+   if ( aSign != bSign )
+      return aSign || ( (bits32) ( ( a | b )<<1 ) == 0 );
+   return ( a == b ) || ( aSign ^ ( a < b ) );
 }
 
 /*----------------------------------------------------------------------------
@@ -1001,19 +982,19 @@ flag float32_le_quiet( float32 a, float32 b )
 
 flag float32_lt_quiet( float32 a, float32 b )
 {
-    flag aSign, bSign;
+   flag aSign, bSign;
 
-    if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
+   if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
          || ( ( extractFloat32Exp( b ) == 0xFF ) && extractFloat32Frac( b ) )
-       ) {
-        if ( float32_is_signaling_nan( a ) || float32_is_signaling_nan( b ) ) {
-            float_raise( float_flag_invalid );
-        }
-        return 0;
-    }
-    aSign = extractFloat32Sign( a );
-    bSign = extractFloat32Sign( b );
-    if ( aSign != bSign ) return aSign && ( (bits32) ( ( a | b )<<1 ) != 0 );
-    return ( a != b ) && ( aSign ^ ( a < b ) );
-
+      )
+   {
+      if ( float32_is_signaling_nan( a ) || float32_is_signaling_nan( b ) )
+         float_raise( float_flag_invalid );
+      return 0;
+   }
+   aSign = extractFloat32Sign( a );
+   bSign = extractFloat32Sign( b );
+   if ( aSign != bSign )
+      return aSign && ( (bits32) ( ( a | b )<<1 ) != 0 );
+   return ( a != b ) && ( aSign ^ ( a < b ) );
 }
