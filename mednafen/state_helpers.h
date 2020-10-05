@@ -2,7 +2,6 @@
 #define _STATE_HELPERS_H
 
 #include <stdint.h>
-#include <retro_inline.h>
 
 #define SFVARN_BOOL(x, n) { &(x), 1, MDFNSTATE_RLSB | MDFNSTATE_BOOL, n }
 #define SFVARN(x, n) { &(x), (uint32_t)sizeof(x), MDFNSTATE_RLSB, n }
