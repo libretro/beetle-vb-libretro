@@ -150,7 +150,7 @@ static INLINE void RecalcIntLevel(void)
    VB_V810->SetInt(ilevel);
 }
 
-void VBIRQ_Assert(int source, bool assert)
+extern "C" void VBIRQ_Assert(int source, bool assert)
 {
    assert(source >= 0 && source <= 4);
 
@@ -414,7 +414,7 @@ static void RebaseTS(const v810_timestamp_t timestamp)
    next_input_ts -= timestamp;
 }
 
-void VB_SetEvent(const int type, const v810_timestamp_t next_timestamp)
+extern "C" void VB_SetEvent(const int type, const v810_timestamp_t next_timestamp)
 {
    //assert(next_timestamp > VB_V810->v810_timestamp);
 

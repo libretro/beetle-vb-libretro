@@ -3,6 +3,10 @@
 
 #include "../state.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum
 {
    TIMER_GSREG_TCR,
@@ -15,9 +19,9 @@ v810_timestamp_t TIMER_Update(v810_timestamp_t timestamp);
 
 void TIMER_ResetTS(void);
 
-uint8 TIMER_Read(const v810_timestamp_t &timestamp, uint32 A);
+uint8 TIMER_Read(const v810_timestamp_t timestamp, uint32 A);
 
-void TIMER_Write(const v810_timestamp_t &timestamp, uint32 A, uint8 V);
+void TIMER_Write(const v810_timestamp_t timestamp, uint32 A, uint8 V);
 
 void TIMER_Power(void) MDFN_COLD;
 
@@ -26,5 +30,9 @@ int TIMER_StateAction(StateMem *sm, int load, int data_only);
 uint32 TIMER_GetRegister(const unsigned int id, char *special, const uint32 special_len);
 
 void TIMER_SetRegister(const unsigned int id, const uint32 value);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

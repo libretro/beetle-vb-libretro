@@ -72,7 +72,7 @@ void TIMER_ResetTS(void)
    TimerLastTS = 0;
 }
 
-uint8 TIMER_Read(const v810_timestamp_t &timestamp, uint32 A)
+uint8 TIMER_Read(const v810_timestamp_t timestamp, uint32 A)
 {
    //if(A <= 0x1C)
    //printf("Read: %d, %08x\n", timestamp, A);
@@ -91,7 +91,7 @@ uint8 TIMER_Read(const v810_timestamp_t &timestamp, uint32 A)
    return 0;
 }
 
-void TIMER_Write(const v810_timestamp_t &timestamp, uint32 A, uint8 V)
+void TIMER_Write(const v810_timestamp_t timestamp, uint32 A, uint8 V)
 {
    if(A & 0x3)
       return;

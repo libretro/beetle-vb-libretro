@@ -1,6 +1,8 @@
 #ifndef __VB_VB_H
 #define __VB_VB_H
 
+#include <boolean.h>
+
 enum
 {
  VB3DMODE_ANAGLYPH = 0,
@@ -11,10 +13,6 @@ enum
  VB3DMODE_HLI
 };
 
-#define VB_MASTER_CLOCK       20000000.0
-
-
-
 enum
 {
  VB_EVENT_VIP = 0,
@@ -22,6 +20,8 @@ enum
  VB_EVENT_INPUT,
 // VB_EVENT_COMM
 };
+
+#define VB_MASTER_CLOCK       20000000.0
 
 #define VB_EVENT_NONONO       0x7fffffff
 
@@ -33,9 +33,17 @@ enum
 
 #include "../masmem.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void VB_SetEvent(const int type, const v810_timestamp_t next_timestamp);
 
 void VBIRQ_Assert(int source, bool assert);
+
+#ifdef __cplusplus
+}
+#endif
 
 void VB_ExitLoop(void);
 
