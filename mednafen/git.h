@@ -78,7 +78,7 @@ struct CheatFormatInfoStruct
 {
  unsigned NumFormats;
 
- CheatFormatStruct *Formats;
+ struct CheatFormatStruct *Formats;
 };
 
 // Miscellaneous system/simple commands(power, reset, dip switch toggles, coin insert, etc.)
@@ -96,7 +96,7 @@ typedef struct
 	// Pitch(32-bit) must be equal to width and >= the "fb_width" specified in the MDFNGI struct for the emulated system.
 	// Height must be >= to the "fb_height" specified in the MDFNGI struct for the emulated system.
 	// The framebuffer pointed to by surface->pixels is written to by the system emulation code.
-	MDFN_Surface *surface;
+	struct MDFN_Surface *surface;
 
 	// Will be set to TRUE if the video pixel format has changed since the last call to Emulate(), FALSE otherwise.
 	// Will be set to TRUE on the first call to the Emulate() function/method

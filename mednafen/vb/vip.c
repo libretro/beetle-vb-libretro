@@ -235,7 +235,7 @@ static void RecalcBrightnessCache(void)
          BrightCLUT[lr][i] = ColorLUT[lr][BrightnessCache[i]];
 }
 
-static void Recalc3DModeStuff(bool non_rgb_output = false)
+static void Recalc3DModeStuff(bool non_rgb_output)
 {
    switch(VB3DMode)
    {
@@ -902,7 +902,7 @@ void VIP_Write16(int32 timestamp, uint32 A, uint16 V)
    //VB_SetEvent(VB_EVENT_VIP, timestamp + CalcNextEvent());
 }
 
-static MDFN_Surface *surface;
+static struct MDFN_Surface *surface;
 static bool skip;
 
 void VIP_StartFrame(EmulateSpecStruct *espec)

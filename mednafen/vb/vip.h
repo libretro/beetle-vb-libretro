@@ -4,9 +4,13 @@
 #include "../git.h"
 #include "../state.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum
 {
- VIP_GSREG_IPENDING = 0,	// Current pending interrupt(bits)
+ VIP_GSREG_IPENDING = 0,	/* Current pending interrupt(bits) */
  VIP_GSREG_IENABLE,
 
  VIP_GSREG_DPCTRL,
@@ -44,7 +48,7 @@ void VIP_SetAllowDrawSkip(bool);
 void VIP_Set3DMode(uint32 mode, bool reverse, uint32 prescale, uint32 sbs_separation);
 void VIP_SetParallaxDisable(bool disabled);
 void VIP_SetDefaultColor(uint32 default_color);
-void VIP_SetAnaglyphColors(uint32 lcolor, uint32 rcolor);	// R << 16, G << 8, B << 0
+void VIP_SetAnaglyphColors(uint32 lcolor, uint32 rcolor);	/* R << 16, G << 8, B << 0 */
 
 v810_timestamp_t MDFN_FASTCALL VIP_Update(const v810_timestamp_t timestamp);
 void VIP_ResetTS(void);
@@ -61,5 +65,9 @@ int VIP_StateAction(StateMem *sm, int load, int data_only);
 
 uint32 VIP_GetRegister(const unsigned int id, char *special, const uint32 special_len);
 void VIP_SetRegister(const unsigned int id, const uint32 value);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

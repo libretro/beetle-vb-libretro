@@ -2111,7 +2111,7 @@ static void CloseGame(void)
    }
 }
 
-void VB_ExitLoop(void)
+extern "C" void VB_ExitLoop(void)
 {
    VB_V810->Exit();
 }

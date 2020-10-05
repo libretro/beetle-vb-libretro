@@ -20,12 +20,12 @@ endif
 ifneq ($(HAVE_GRIFFIN),1)
 SOURCES_CXX += \
 	$(CORE_EMU_DIR)/input.cpp \
-	$(CORE_EMU_DIR)/vip.cpp \
 	$(CORE_EMU_DIR)/vsu.cpp \
 	$(MEDNAFEN_DIR)/hw_cpu/v810/v810_cpu.cpp
 
 SOURCES_C += \
 	$(CORE_EMU_DIR)/timer.c \
+	$(CORE_EMU_DIR)/vip.c \
 	$(MEDNAFEN_DIR)/hw_cpu/v810/fpu-new/softfloat.c
 endif
 

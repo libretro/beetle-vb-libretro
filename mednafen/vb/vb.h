@@ -41,11 +41,11 @@ void VB_SetEvent(const int type, const v810_timestamp_t next_timestamp);
 
 void VBIRQ_Assert(int source, bool assert);
 
+void VB_ExitLoop(void);
+
 #ifdef __cplusplus
 }
 #endif
-
-void VB_ExitLoop(void);
 
 void ForceEventUpdates(const v810_timestamp_t timestamp);
 
