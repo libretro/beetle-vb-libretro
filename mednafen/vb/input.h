@@ -5,6 +5,10 @@
 
 #include "../state.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void VBINPUT_Init(void);
 void VBINPUT_SetInstantReadHack(bool);
 
@@ -23,5 +27,9 @@ void VBINPUT_ResetTS(void);
 void VBINPUT_Power(void);
 
 int VBINPUT_StateAction(StateMem *sm, int load, int data_only);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
