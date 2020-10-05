@@ -81,7 +81,7 @@ class MDFN_Surface //typedef struct
   int32 pitchinpix;	// New name, new code should use this.
  };
 
- MDFN_PixelFormat format;
+ struct MDFN_PixelFormat format;
 };
 
 #endif
