@@ -75,7 +75,8 @@ class VSU
       int32 last_output[6][2];
       int32 last_ts;
 
-      Blip_Buffer *sbuf[2];
+      Blip_Buffer *bb_l;
+      Blip_Buffer *bb_r;
       Blip_Synth Synth;
       Blip_Synth NoiseSynth;
 };
