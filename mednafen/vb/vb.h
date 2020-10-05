@@ -47,6 +47,4 @@ void VB_ExitLoop(void);
 }
 #endif
 
-extern int32 VB_InDebugPeek;
-
 #endif

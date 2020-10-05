@@ -90,8 +90,6 @@ static const uint32 AnaglyphPreset_Colors[][2] =
 #define RIGHT_DPAD_UP 0x0010
 #define RIGHT_DPAD_DOWN 0x2000
 
-int32 VB_InDebugPeek;
-
 static uint32 VB3DMode;
 
 static Blip_Buffer sbuf[2];
@@ -1899,11 +1897,7 @@ static INLINE uint32 round_up_pow2(uint32 v)
 
 static int Load(const uint8_t *data, size_t size)
 {
-   V810_Emu_Mode cpu_mode;
-
-   VB_InDebugPeek = 0;
-
-   cpu_mode = (V810_Emu_Mode)MDFN_GetSettingI("vb.cpu_emulation");
+   V810_Emu_Mode cpu_mode = (V810_Emu_Mode)MDFN_GetSettingI("vb.cpu_emulation");
 
    /* VB ROM image size is not a power of 2??? */
    if(size != round_up_pow2(size))
