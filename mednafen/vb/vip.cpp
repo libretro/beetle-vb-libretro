@@ -17,6 +17,8 @@
 
 #include <math.h>
 
+#include <retro_inline.h>
+
 #include "vb.h"
 #include "vip.h"
 

@@ -15,8 +15,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "vb.h"
 #include "input.h"
+#include "vb.h"
 #include "../state_helpers.h"
 
 static bool InstantReadHack;
