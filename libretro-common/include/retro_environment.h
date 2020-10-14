@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2018 The RetroArch team
+/* Copyright  (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (retro_environment.h).
@@ -99,6 +99,14 @@ printf("This is C++, version %d.\n", __cplusplus);
 #if WINAPI_FAMILY_WINRT
 #undef __WINRT__
 #define __WINRT__ 1
+#endif
+
+/* MSVC obviously has to have some non-standard constants... */
+#if _M_IX86_FP == 1
+#define __SSE__ 1
+#elif _M_IX86_FP == 2 || (defined(_M_AMD64) || defined(_M_X64))
+#define __SSE__ 1
+#define __SSE2__ 1
 #endif
 
 #endif
