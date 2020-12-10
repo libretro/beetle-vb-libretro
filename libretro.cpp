@@ -56,9 +56,6 @@ static struct MDFN_Surface surf;
 #endif
 #include "mednafen/vb/input.h"
 #include "mednafen/mempatcher.h"
-#if 0
-#include <iconv.h>
-#endif
 #include "mednafen/hw_cpu/v810/v810_cpu.h"
 
 #include "libretro_core_options.h"
@@ -171,25 +168,19 @@ static uint8 HWCTRL_Read(v810_timestamp_t &timestamp, uint32 A)
 
    switch(A & 0xFF)
    {
-      default:
-#if 0
-         printf("Unknown HWCTRL Read: %08x\n", A);
-#endif
-         break;
-
       case 0x18:
       case 0x1C:
-      case 0x20: ret = TIMER_Read(timestamp, A);
-                 break;
-
-      case 0x24: ret = WCR | 0xFC;
-                 break;
-
+      case 0x20:
+         ret = TIMER_Read(timestamp, A);
+         break;
+      case 0x24:
+         ret = WCR | 0xFC;
+         break;
       case 0x10:
       case 0x14:
-      case 0x28: ret = VBINPUT_Read(timestamp, A);
-                 break;
-
+      case 0x28:
+         ret = VBINPUT_Read(timestamp, A);
+         break;
    }
 
    return(ret);
@@ -203,22 +194,19 @@ static void HWCTRL_Write(v810_timestamp_t &timestamp, uint32 A, uint8 V)
 
    switch(A & 0xFF)
    {
-      default:
-         //printf("Unknown HWCTRL Write: %08x %02x\n", A, V);
-         break;
-
       case 0x18:
       case 0x1C:
-      case 0x20: TIMER_Write(timestamp, A, V);
-                 break;
-
-      case 0x24: WCR = V & 0x3;
-                 break;
-
+      case 0x20:
+         TIMER_Write(timestamp, A, V);
+         break;
+      case 0x24:
+         WCR = V & 0x3;
+         break;
       case 0x10:
       case 0x14:
-      case 0x28: VBINPUT_Write(timestamp, A, V);
-                 break;
+      case 0x28:
+         VBINPUT_Write(timestamp, A, V);
+         break;
    }
 }
 
@@ -227,183 +215,167 @@ uint8 MDFN_FASTCALL MemRead8(v810_timestamp_t &timestamp, uint32 A)
    uint8 ret = 0;
    A &= (1 << 27) - 1;
 
-   //if((A >> 24) <= 2)
-   // printf("Read8: %d %08x\n", timestamp, A);
-
    switch(A >> 24)
    {
-      case 0: ret = VIP_Read8(timestamp, A);
-              break;
+      case 0:
+         ret = VIP_Read8(timestamp, A);
+         break;
 
-      case 1: break;
+      case 2:
+         ret = HWCTRL_Read(timestamp, A);
+         break;
 
-      case 2: ret = HWCTRL_Read(timestamp, A);
-              break;
+      case 1:
+      case 3:
+      case 4:
+         break;
 
-      case 3: break;
-      case 4: break;
+      case 5:
+         ret = WRAM[A & 0xFFFF];
+         break;
 
-      case 5: ret = WRAM[A & 0xFFFF];
-              break;
+      case 6:
+         if(GPRAM)
+            ret = GPRAM[A & GPRAM_Mask];
+         break;
 
-      case 6: if(GPRAM)
-                 ret = GPRAM[A & GPRAM_Mask];
-#if 0
-              else
-                 printf("GPRAM(Unmapped) Read: %08x\n", A);
-#endif
-              break;
-
-      case 7: ret = GPROM[A & GPROM_Mask];
-              break;
+      case 7:
+         ret = GPROM[A & GPROM_Mask];
+         break;
    }
    return(ret);
 }
 
 uint16 MDFN_FASTCALL MemRead16(v810_timestamp_t &timestamp, uint32 A)
 {
- uint16 ret = 0;
+   uint16 ret = 0;
 
- A &= (1 << 27) - 1;
+   A &= (1 << 27) - 1;
 
- //if((A >> 24) <= 2)
- // printf("Read16: %d %08x\n", timestamp, A);
+   switch(A >> 24)
+   {
+      case 0:
+         ret = VIP_Read16(timestamp, A);
+         break;
+      case 2:
+         ret = HWCTRL_Read(timestamp, A);
+         break;
+      case 1:
+      case 3:
+      case 4:
+         break;
+      case 5:
+         ret = LoadU16_LE((uint16 *)&WRAM[A & 0xFFFF]);
+         break;
+      case 6:
+         if(GPRAM)
+            ret = LoadU16_LE((uint16 *)&GPRAM[A & GPRAM_Mask]);
+         break;
 
-
- switch(A >> 24)
- {
-  case 0: ret = VIP_Read16(timestamp, A);
-      break;
-
-  case 1: break;
-
-  case 2: ret = HWCTRL_Read(timestamp, A);
-      break;
-
-  case 3: break;
-
-  case 4: break;
-
-  case 5: ret = LoadU16_LE((uint16 *)&WRAM[A & 0xFFFF]);
-      break;
-
-  case 6: if(GPRAM)
-           ret = LoadU16_LE((uint16 *)&GPRAM[A & GPRAM_Mask]);
-#if 0
-      else printf("GPRAM(Unmapped) Read: %08x\n", A);
-#endif
-      break;
-
-  case 7: ret = LoadU16_LE((uint16 *)&GPROM[A & GPROM_Mask]);
-      break;
- }
- return(ret);
+      case 7:
+         ret = LoadU16_LE((uint16 *)&GPROM[A & GPROM_Mask]);
+         break;
+   }
+   return(ret);
 }
 
 void MDFN_FASTCALL MemWrite8(v810_timestamp_t &timestamp, uint32 A, uint8 V)
 {
- A &= (1 << 27) - 1;
+   A &= (1 << 27) - 1;
 
- //if((A >> 24) <= 2)
- // printf("Write8: %d %08x %02x\n", timestamp, A, V);
+   switch(A >> 24)
+   {
+      case 0:
+         VIP_Write8(timestamp, A, V);
+         break;
+      case 1:
+         VB_VSU->Write((timestamp + VSU_CycleFix) >> 2, A, V);
+         break;
+      case 2:
+         HWCTRL_Write(timestamp, A, V);
+         break;
+      case 3:
+      case 4:
+         break;
+      case 5:
+         WRAM[A & 0xFFFF] = V;
+         break;
+      case 6:
+         if(GPRAM)
+            GPRAM[A & GPRAM_Mask] = V;
+         break;
 
- switch(A >> 24)
- {
-  case 0: VIP_Write8(timestamp, A, V);
-          break;
-
-  case 1: VB_VSU->Write((timestamp + VSU_CycleFix) >> 2, A, V);
-          break;
-
-  case 2: HWCTRL_Write(timestamp, A, V);
-          break;
-
-  case 3: break;
-
-  case 4: break;
-
-  case 5: WRAM[A & 0xFFFF] = V;
-          break;
-
-  case 6: if(GPRAM)
-           GPRAM[A & GPRAM_Mask] = V;
-          break;
-
-  case 7: // ROM, no writing allowed!
-          break;
- }
+      case 7:
+         // ROM, no writing allowed!
+         break;
+   }
 }
 
 void MDFN_FASTCALL MemWrite16(v810_timestamp_t &timestamp, uint32 A, uint16 V)
 {
- A &= (1 << 27) - 1;
+   A &= (1 << 27) - 1;
 
- //if((A >> 24) <= 2)
- // printf("Write16: %d %08x %04x\n", timestamp, A, V);
-
- switch(A >> 24)
- {
-  case 0: VIP_Write16(timestamp, A, V);
-          break;
-
-  case 1: VB_VSU->Write((timestamp + VSU_CycleFix) >> 2, A, V);
-          break;
-
-  case 2: HWCTRL_Write(timestamp, A, V);
-          break;
-
-  case 3: break;
-
-  case 4: break;
-
-  case 5: StoreU16_LE((uint16 *)&WRAM[A & 0xFFFF], V);
-          break;
-
-  case 6: if(GPRAM)
-           StoreU16_LE((uint16 *)&GPRAM[A & GPRAM_Mask], V);
-          break;
-
-  case 7: // ROM, no writing allowed!
-          break;
- }
+   switch(A >> 24)
+   {
+      case 0:
+         VIP_Write16(timestamp, A, V);
+         break;
+      case 1:
+         VB_VSU->Write((timestamp + VSU_CycleFix) >> 2, A, V);
+         break;
+      case 2:
+         HWCTRL_Write(timestamp, A, V);
+         break;
+      case 3:
+      case 4:
+         break;
+      case 5:
+         StoreU16_LE((uint16 *)&WRAM[A & 0xFFFF], V);
+         break;
+      case 6:
+         if(GPRAM)
+            StoreU16_LE((uint16 *)&GPRAM[A & GPRAM_Mask], V);
+         break;
+      case 7:
+         /* ROM, no writing allowed! */
+         break;
+   }
 }
 
 static void FixNonEvents(void)
 {
- if(next_vip_ts & 0x40000000)
-  next_vip_ts = VB_EVENT_NONONO;
+   if(next_vip_ts & 0x40000000)
+      next_vip_ts = VB_EVENT_NONONO;
 
- if(next_timer_ts & 0x40000000)
-  next_timer_ts = VB_EVENT_NONONO;
+   if(next_timer_ts & 0x40000000)
+      next_timer_ts = VB_EVENT_NONONO;
 
- if(next_input_ts & 0x40000000)
-  next_input_ts = VB_EVENT_NONONO;
+   if(next_input_ts & 0x40000000)
+      next_input_ts = VB_EVENT_NONONO;
 }
 
 static void EventReset(void)
 {
- next_vip_ts = VB_EVENT_NONONO;
- next_timer_ts = VB_EVENT_NONONO;
- next_input_ts = VB_EVENT_NONONO;
+   next_vip_ts = VB_EVENT_NONONO;
+   next_timer_ts = VB_EVENT_NONONO;
+   next_input_ts = VB_EVENT_NONONO;
 }
 
 static INLINE int32 CalcNextTS(void)
 {
- int32 next_timestamp = next_vip_ts;
+   int32 next_timestamp = next_vip_ts;
 
- if(next_timestamp > next_timer_ts)
-  next_timestamp  = next_timer_ts;
+   if(next_timestamp > next_timer_ts)
+      next_timestamp  = next_timer_ts;
 
- if(next_timestamp > next_input_ts)
-  next_timestamp  = next_input_ts;
+   if(next_timestamp > next_input_ts)
+      next_timestamp  = next_input_ts;
 
- return(next_timestamp);
+   return(next_timestamp);
 }
 
 static void RebaseTS(const v810_timestamp_t timestamp)
 {
-   //printf("Rebase: %08x %08x %08x\n", timestamp, next_vip_ts, next_timer_ts);
-
    assert(next_vip_ts > timestamp);
    assert(next_timer_ts > timestamp);
    assert(next_input_ts > timestamp);
@@ -413,10 +385,9 @@ static void RebaseTS(const v810_timestamp_t timestamp)
    next_input_ts -= timestamp;
 }
 
-extern "C" void VB_SetEvent(const int type, const v810_timestamp_t next_timestamp)
+extern "C" void VB_SetEvent(const int type,
+      const v810_timestamp_t next_timestamp)
 {
-   //assert(next_timestamp > VB_V810->v810_timestamp);
-
    if(type == VB_EVENT_VIP)
       next_vip_ts = next_timestamp;
    else if(type == VB_EVENT_TIMER)
@@ -450,7 +421,6 @@ static void ForceEventUpdates(const v810_timestamp_t timestamp)
    next_input_ts = VBINPUT_Update(timestamp);
 
    VB_V810->SetEventNT(CalcNextTS());
-   //printf("FEU: %d %d %d\n", next_vip_ts, next_timer_ts, next_input_ts);
 }
 
 static void VB_Power(void)
@@ -470,7 +440,7 @@ static void VB_Power(void)
    VSU_CycleFix = 0;
    WCR = 0;
 
-   ForceEventUpdates(0);  //VB_V810->v810_timestamp);
+   ForceEventUpdates(0);
 }
 
 static void SettingChanged(const char *name)
@@ -518,39 +488,6 @@ struct VB_HeaderInfo
    uint16 manf_code;
    uint8 version;
 };
-
-static void ReadHeader(const uint8_t *data, size_t size, VB_HeaderInfo *hi)
-{
-#if 0
-   iconv_t sjis_ict = iconv_open("UTF-8", "shift_jis");
-
-   if(sjis_ict != (iconv_t)-1)
-   {
-      char *in_ptr, *out_ptr;
-      size_t ibl, obl;
-
-      ibl = 20;
-      obl = sizeof(hi->game_title) - 1;
-
-      in_ptr = (char*)data + (0xFFFFFDE0 & (size - 1));
-      out_ptr = hi->game_title;
-
-      iconv(sjis_ict, (ICONV_CONST char **)&in_ptr, &ibl, &out_ptr, &obl);
-      iconv_close(sjis_ict);
-
-      *out_ptr = 0;
-
-      MDFN_RemoveControlChars(hi->game_title);
-      MDFN_trim(hi->game_title);
-   }
-   else
-      hi->game_title[0] = 0;
-
-   hi->game_code = MDFN_de32lsb(data + (0xFFFFFDFB & (size - 1)));
-   hi->manf_code = MDFN_de16lsb(data + (0xFFFFFDF9 & (size - 1)));
-   hi->version = data[0xFFFFFDFF & (size - 1)];
-#endif
-}
 
 struct VBGameEntry
 {
@@ -1914,8 +1851,6 @@ static int Load(const uint8_t *data, size_t size)
 
    VB_HeaderInfo hinfo;
 
-   ReadHeader(data, size, &hinfo);
-
    log_cb(RETRO_LOG_INFO, "Title:     %s\n", hinfo.game_title);
    log_cb(RETRO_LOG_INFO, "Game ID Code: %u\n", hinfo.game_code);
    log_cb(RETRO_LOG_INFO, "Manufacturer Code: %d\n", hinfo.manf_code);
@@ -2992,12 +2927,7 @@ void MDFND_DispMessage(unsigned char *str)
 
 void MDFND_MidSync(const EmulateSpecStruct *) { }
 
-void MDFN_MidLineUpdate(EmulateSpecStruct *espec, int y)
-{
-#if 0
-   MDFND_MidLineUpdate(espec, y);
-#endif
-}
+void MDFN_MidLineUpdate(EmulateSpecStruct *espec, int y) { }
 
 void MDFND_PrintError(const char* err)
 {

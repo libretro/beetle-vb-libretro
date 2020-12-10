@@ -737,9 +737,6 @@ float32 float32_rem( float32 a, float32 b )
    flag aSign  = extractFloat32Sign( a );
    bits32 bSig = extractFloat32Frac( b );
    int16 bExp  = extractFloat32Exp( b );
-#if 0
-   flag bSign  = extractFloat32Sign( b );
-#endif
 
    if ( aExp == 0xFF )
    {

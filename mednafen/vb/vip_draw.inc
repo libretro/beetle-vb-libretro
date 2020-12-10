@@ -72,17 +72,6 @@ static void DrawBG(uint8 *target, uint16 RealY, bool lr, uint8 bgmap_base_raw, b
   {
    uint32 pixels = CHR16[char_no * 8 + char_sub_y];
 
-   #if 0
-   unsigned int char_sub_x;
-   uint8 *sub_target = target + x + 8;
-
-   for(int sub_x = -8; sub_x < 0; sub_x++)
-   {
-    if(pixels & 3) sub_target[sub_x] = GPLT_Cache[palette_selector][pixels & 3];
-    pixels >>= 2;
-   }
-   #endif
-
    if(bgsc & 0x2000)
    {
     if((pixels >> 14) & 3) target[0 + x] = GPLT_Cache[palette_selector][(pixels >> 14) & 3];
@@ -357,30 +346,6 @@ static void DrawOBJ(uint8 *fb[2], uint16 Y, bool lron[2])
       pixels >>= 2;
      }
     }
-     #if 0
-    if(oam_ptr[3] & 0x2000)
-    {
-     if((pixels >> 14) & 3) fb[lr][0 + x] = JPLT_Cache[palette_selector][(pixels >> 14) & 3];
-     if((pixels >> 12) & 3) fb[lr][1 + x] = JPLT_Cache[palette_selector][(pixels >> 12) & 3];
-     if((pixels >> 10) & 3) fb[lr][2 + x] = JPLT_Cache[palette_selector][(pixels >> 10) & 3];
-     if((pixels >> 8) & 3) fb[lr][3 + x] = JPLT_Cache[palette_selector][(pixels >> 8) & 3];
-     if((pixels >> 6) & 3) fb[lr][4 + x] = JPLT_Cache[palette_selector][(pixels >> 6) & 3];
-     if((pixels >> 4) & 3) fb[lr][5 + x] = JPLT_Cache[palette_selector][(pixels >> 4) & 3];
-     if((pixels >> 2) & 3) fb[lr][6 + x] = JPLT_Cache[palette_selector][(pixels >> 2) & 3];
-     if((pixels >> 0) & 3) fb[lr][7 + x] = JPLT_Cache[palette_selector][(pixels >> 0) & 3];
-    }
-    else
-    {
-     if((pixels >> 0) & 3) fb[lr][0 + x] = JPLT_Cache[palette_selector][(pixels >> 0) & 3];
-     if((pixels >> 2) & 3) fb[lr][1 + x] = JPLT_Cache[palette_selector][(pixels >> 2) & 3];
-     if((pixels >> 4) & 3) fb[lr][2 + x] = JPLT_Cache[palette_selector][(pixels >> 4) & 3];
-     if((pixels >> 6) & 3) fb[lr][3 + x] = JPLT_Cache[palette_selector][(pixels >> 6) & 3];
-     if((pixels >> 8) & 3) fb[lr][4 + x] = JPLT_Cache[palette_selector][(pixels >> 8) & 3];
-     if((pixels >> 10) & 3) fb[lr][5 + x] = JPLT_Cache[palette_selector][(pixels >> 10) & 3];
-     if((pixels >> 12) & 3) fb[lr][6 + x] = JPLT_Cache[palette_selector][(pixels >> 12) & 3];
-     if((pixels >> 14) & 3) fb[lr][7 + x] = JPLT_Cache[palette_selector][(pixels >> 14) & 3];
-    }
-#endif
 
    }
 

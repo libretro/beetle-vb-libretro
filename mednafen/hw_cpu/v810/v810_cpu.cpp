@@ -172,47 +172,40 @@ INLINE uint32 V810::CacheOpMemLoad(v810_timestamp_t &timestamp, uint32 A)
 
 void V810::CacheDump(v810_timestamp_t &timestamp, const uint32 SA)
 {
-#if 0
- printf("Cache dump: %08x\n", SA);
-#endif
+   for(int i = 0; i < 128; i++)
+   {
+      CacheOpMemStore(timestamp, SA + i * 8 + 0, Cache[i].data[0]);
+      CacheOpMemStore(timestamp, SA + i * 8 + 4, Cache[i].data[1]);
+   }
 
- for(int i = 0; i < 128; i++)
- {
-  CacheOpMemStore(timestamp, SA + i * 8 + 0, Cache[i].data[0]);
-  CacheOpMemStore(timestamp, SA + i * 8 + 4, Cache[i].data[1]);
- }
+   for(int i = 0; i < 128; i++)
+   {
+      uint32 icht = Cache[i].tag | ((int)Cache[i].data_valid[0] << 22) | ((int)Cache[i].data_valid[1] << 23);
 
- for(int i = 0; i < 128; i++)
- {
-  uint32 icht = Cache[i].tag | ((int)Cache[i].data_valid[0] << 22) | ((int)Cache[i].data_valid[1] << 23);
-
-  CacheOpMemStore(timestamp, SA + 1024 + i * 4, icht);
- }
+      CacheOpMemStore(timestamp, SA + 1024 + i * 4, icht);
+   }
 
 }
 
 void V810::CacheRestore(v810_timestamp_t &timestamp, const uint32 SA)
 {
-#if 0
- printf("Cache restore: %08x\n", SA);
-#endif
 
- for(int i = 0; i < 128; i++)
- {
-  Cache[i].data[0] = CacheOpMemLoad(timestamp, SA + i * 8 + 0);
-  Cache[i].data[1] = CacheOpMemLoad(timestamp, SA + i * 8 + 4);
- }
+   for(int i = 0; i < 128; i++)
+   {
+      Cache[i].data[0] = CacheOpMemLoad(timestamp, SA + i * 8 + 0);
+      Cache[i].data[1] = CacheOpMemLoad(timestamp, SA + i * 8 + 4);
+   }
 
- for(int i = 0; i < 128; i++)
- {
-  uint32 icht;
+   for(int i = 0; i < 128; i++)
+   {
+      uint32 icht;
 
-  icht = CacheOpMemLoad(timestamp, SA + 1024 + i * 4);
+      icht = CacheOpMemLoad(timestamp, SA + 1024 + i * 4);
 
-  Cache[i].tag = icht & ((1 << 22) - 1);
-  Cache[i].data_valid[0] = (icht >> 22) & 1;
-  Cache[i].data_valid[1] = (icht >> 23) & 1;
- }
+      Cache[i].tag = icht & ((1 << 22) - 1);
+      Cache[i].data_valid[0] = (icht >> 22) & 1;
+      Cache[i].data_valid[1] = (icht >> 23) & 1;
+   }
 }
 
 
@@ -489,77 +482,59 @@ void V810::CheckBreakpoints(void (*callback)(int type, uint32 address, uint32 va
 INLINE void V810::SetSREG(v810_timestamp_t &timestamp, unsigned int which, uint32 value)
 {
 	switch(which)
-	{
-	 default:	// Reserved
-#if 0
-		printf("LDSR to reserved system register: 0x%02x : 0x%08x\n", which, value);
-#endif
-		break;
+   {
+      case ECR:      // Read-only
+         break;
 
-         case ECR:      // Read-only
-                break;
+      case PIR:      // Read-only (obviously)
+         break;
 
-         case PIR:      // Read-only (obviously)
-                break;
+      case TKCW:     // Read-only
+         break;
 
-         case TKCW:     // Read-only
-                break;
+      case EIPSW:
+      case FEPSW:
+         S_REG[which] = value & 0xFF3FF;
+         break;
 
-	 case EIPSW:
-	 case FEPSW:
-              	S_REG[which] = value & 0xFF3FF;
-		break;
+      case PSW:
+         S_REG[which] = value & 0xFF3FF;
+         RecalcIPendingCache();
+         break;
 
-	 case PSW:
-              	S_REG[which] = value & 0xFF3FF;
-		RecalcIPendingCache();
-		break;
+      case EIPC:
+      case FEPC:
+         S_REG[which] = value & 0xFFFFFFFE;
+         break;
 
-	 case EIPC:
-	 case FEPC:
-		S_REG[which] = value & 0xFFFFFFFE;
-		break;
+      case ADDTRE:
+         S_REG[ADDTRE] = value & 0xFFFFFFFE;
+         break;
 
-	 case ADDTRE:
-  	        S_REG[ADDTRE] = value & 0xFFFFFFFE;
-#if 0
-        	printf("Address trap(unemulated): %08x\n", value);
-#endif
-		break;
+      case CHCW:
+         S_REG[CHCW] = value & 0x2;
 
-	 case CHCW:
-              	S_REG[CHCW] = value & 0x2;
-
-              	switch(value & 0x31)
-              	{
-              	 default:
-#if 0
-                   printf("Undefined cache control bit combination: %08x\n", value);
-#endif
-                   break;
-
-              	 case 0x00: break;
-
-              	 case 0x01: CacheClear(timestamp, (value >> 20) & 0xFFF, (value >> 8) & 0xFFF);
-                            break;
-
-              	 case 0x10: CacheDump(timestamp, value & ~0xFF);
-                            break;
-
-              	 case 0x20: CacheRestore(timestamp, value & ~0xFF);
-                            break;
-               	}
-		break;
-	}
+         switch(value & 0x31)
+         {
+            case 0x00:
+               break;
+            case 0x01:
+               CacheClear(timestamp, (value >> 20) & 0xFFF, (value >> 8) & 0xFFF);
+               break;
+            case 0x10:
+               CacheDump(timestamp, value & ~0xFF);
+               break;
+            case 0x20:
+               CacheRestore(timestamp, value & ~0xFF);
+               break;
+         }
+         break;
+   }
 }
 
 INLINE uint32 V810::GetSREG(unsigned int which)
 {
-#if 0
-   if(which != 24 && which != 25 && which >= 8)
-      printf("STSR from reserved system register: 0x%02x", which);
-#endif
-	return S_REG[which];
+   return S_REG[which];
 }
 
 #define RB_SETPC(new_pc_raw) 										\
@@ -868,15 +843,6 @@ INLINE bool V810::Do_BSTR_Search(v810_timestamp_t &timestamp, const int inc_mul,
         uint32 src = (P_REG[30] & 0xFFFFFFFC);
 	bool found = false;
 
-	#if 0
-	// TODO: Better timing.
-	if(!in_bstr)	// If we're just starting the execution of this instruction(kind of spaghetti-code), so FIXME if we change
-			// bstr handling in v810_oploop.inc
-	{
-	 timestamp += 13 - 1;
-	}
-	#endif
-
 	while(len)
 	{
 		if(!have_src_cache)
@@ -933,10 +899,6 @@ bool V810::bstr_subop(v810_timestamp_t &timestamp, int sub_op, int arg1)
 {
    if((sub_op >= 0x10) || (!(sub_op & 0x8) && sub_op >= 0x4))
    {
-#if 0
-      printf("%08x\tBSR Error: %04x\n", PC,sub_op);
-#endif
-
       SetPC(GetPC() - 2);
       Exception(INVALID_OP_HANDLER_ADDR, ECODE_INVALID_OP);
 
@@ -953,122 +915,40 @@ bool V810::bstr_subop(v810_timestamp_t &timestamp, int sub_op, int arg1)
       uint32 dst =    (P_REG[29] & 0xFFFFFFFC);
       uint32 src =    (P_REG[30] & 0xFFFFFFFC);
 
-#if 0
-      // Be careful not to cause 32-bit integer overflow, and careful about not shifting by 32.
-      // TODO:
-
-      // Read src[0], src[4] into shifter.
-      // Read dest[0].
-      DO_BSTR_PROLOGUE();	// if(len) { blah blah blah masking blah }
-   src_cache = BSTR_RWORD(timestamp, src);
-
-   if((uint64)(srcoff + len) > 0x20)
-      src_cache |= (uint64)BSTR_RWORD(timestamp, src + 4) << 32;
-
-   dst_cache = BSTR_RWORD(timestamp, dst);
-
-   if(len)
-   {
-      uint32 dst_preserve_mask;
-      uint32 dst_change_mask;
-
-      dst_preserve_mask = (1U << dstoff) - 1;
-
-      if((uint64)(dstoff + len) < 0x20)
-         dst_preserve_mask |= ((1U << ((0x20 - (dstoff + len)) & 0x1F)) - 1) << (dstoff + len);
-
-      dst_change_mask = ~dst_preserve_mask;
-
-      src_cache = BSTR_RWORD(timestamp, src);
-      src_cache |= (uint64)BSTR_RWORD(timestamp, src + 4) << 32;
-      dst_cache = BSTR_RWORD(timestamp, dst);
-
-      dst_cache = (dst_cache & dst_preserve_mask) | ((dst_cache OP_THINGY_HERE (src_cache >> srcoff)) & dst_change_mask);
-      BSTR_WWORD(timestamp, dst, dst_cache);
-
-      if((uint64)(dstoff + len) < 0x20)
+      switch(sub_op)
       {
-         srcoff += len;
-         dstoff += len;
-         len = 0;
+         case ORBSU:
+            DO_BSTR(BSTR_OP_OR);
+            break;
+
+         case ANDBSU:
+            DO_BSTR(BSTR_OP_AND);
+            break;
+
+         case XORBSU:
+            DO_BSTR(BSTR_OP_XOR);
+            break;
+
+         case MOVBSU:
+            DO_BSTR(BSTR_OP_MOV);
+            break;
+
+         case ORNBSU:
+            DO_BSTR(BSTR_OP_ORN);
+            break;
+
+         case ANDNBSU:
+            DO_BSTR(BSTR_OP_ANDN);
+            break;
+
+         case XORNBSU:
+            DO_BSTR(BSTR_OP_XORN);
+            break;
+
+         case NOTBSU:
+            DO_BSTR(BSTR_OP_NOT);
+            break;
       }
-      else
-      {
-         srcoff += (0x20 - dstoff);
-         dstoff = 0;
-         len -= (0x20 - dstoff);
-         dst += 4;
-      }
-
-      if(srcoff >= 0x20)
-      {
-         srcoff &= 0x1F;
-         src += 4;
-
-         if(len)
-         {
-            src_cache >>= 32;
-            src_cache |= (uint64)BSTR_RWORD(timestamp, src + 4) << 32;
-         }
-      }
-   }
-
-   DO_BSTR_PRIMARY();	// while(len >= 32) (do allow interruption; interrupt and emulator-return -
-   // they must be handled differently!)
-   while(len >= 32)
-   {
-      dst_cache = BSTR_RWORD(timestamp, dst);
-      dst_cache = OP_THINGY_HERE(dst_cache, src_cache >> srcoff);
-      BSTR_WWORD(timestamp, dst, dst_cache);
-      len -= 32;
-      dst += 4;
-      src += 4;
-      src_cache >>= 32;
-      src_cache |= (uint64)BSTR_RWORD(timestamp, src + 4) << 32;
-   }
-
-   DO_BSTR_EPILOGUE();	// if(len) { blah blah blah masking blah }
-   if(len)
-   {
-      uint32 dst_preserve_mask;
-      uint32 dst_change_mask;
-
-      dst_preserve_mask = (1U << ((0x20 - len) & 0x1F) << len;
-            dst_change_mask = ~dst_preserve_mask;
-
-            dst_cache = BSTR_RWORD(timestamp, dst);
-            dst_cache = OP_THINGY_HERE(dst_cache, src_cache >> srcoff);
-            BSTR_WWORD(timestamp, dst, dst_cache);
-            dstoff += len;
-            srcoff += len;
-
-            if(srcoff >= 0x20)
-            {
-            srcoff &= 0x1F;
-            src += 4;
-            }
-            len = 0;
-            }
-#endif
-
-            switch(sub_op)
-            {
-            case ORBSU: DO_BSTR(BSTR_OP_OR); break;
-
-            case ANDBSU: DO_BSTR(BSTR_OP_AND); break;
-
-            case XORBSU: DO_BSTR(BSTR_OP_XOR); break;
-
-            case MOVBSU: DO_BSTR(BSTR_OP_MOV); break;
-
-            case ORNBSU: DO_BSTR(BSTR_OP_ORN); break;
-
-            case ANDNBSU: DO_BSTR(BSTR_OP_ANDN); break;
-
-            case XORNBSU: DO_BSTR(BSTR_OP_XORN); break;
-
-            case NOTBSU: DO_BSTR(BSTR_OP_NOT); break;
-            }
 
       P_REG[26] = dstoff; 
       P_REG[27] = srcoff;
@@ -1078,33 +958,29 @@ bool V810::bstr_subop(v810_timestamp_t &timestamp, int sub_op, int arg1)
 
       return((bool)P_REG[28]);
    }
-#if 0
-   else
-      printf("BSTR Search: %02x\n", sub_op);
-#endif
 
    return(Do_BSTR_Search(timestamp, ((sub_op & 1) ? -1 : 1), (sub_op & 0x2) >> 1));
 }
 
 INLINE void V810::SetFPUOPNonFPUFlags(uint32 result)
 {
-                 // Now, handle flag setting
-                 SetFlag(PSW_OV, 0);
+   // Now, handle flag setting
+   SetFlag(PSW_OV, 0);
 
-                 if(!(result & 0x7FFFFFFF)) // Check to see if exponent and mantissa are 0
-		 {
-		  // If Z flag is set, S and CY should be clear, even if it's negative 0(confirmed on real thing with subf.s, at least).
-                  SetFlag(PSW_Z, 1);
-                  SetFlag(PSW_S, 0);
-                  SetFlag(PSW_CY, 0);
-		 }
-                 else
-		 {
-                  SetFlag(PSW_Z, 0);
-                  SetFlag(PSW_S, result & 0x80000000);
-                  SetFlag(PSW_CY, result & 0x80000000);
-		 }
-                 //printf("MEOW: %08x\n", S_REG[PSW] & (PSW_S | PSW_CY));
+   if(!(result & 0x7FFFFFFF)) // Check to see if exponent and mantissa are 0
+   {
+      // If Z flag is set, S and CY should be clear, even if it's negative 0(confirmed on real thing with subf.s, at least).
+      SetFlag(PSW_Z, 1);
+      SetFlag(PSW_S, 0);
+      SetFlag(PSW_CY, 0);
+   }
+   else
+   {
+      SetFlag(PSW_Z, 0);
+      SetFlag(PSW_S, result & 0x80000000);
+      SetFlag(PSW_CY, result & 0x80000000);
+   }
+   //printf("MEOW: %08x\n", S_REG[PSW] & (PSW_S | PSW_CY));
 }
 
 INLINE bool V810::CheckFPInputException(uint32 fpval)
@@ -1247,178 +1123,171 @@ INLINE void V810::FPU_Math_Template(float32 (*func)(float32, float32), uint32 ar
 
 void V810::fpu_subop(v810_timestamp_t &timestamp, int sub_op, int arg1, int arg2)
 {
- //printf("FPU: %02x\n", sub_op);
- if(VBMode)
- {
-  switch(sub_op)
-  {
-   case XB: timestamp++;	// Unknown
-	    P_REG[arg1] = (P_REG[arg1] & 0xFFFF0000) | ((P_REG[arg1] & 0xFF) << 8) | ((P_REG[arg1] & 0xFF00) >> 8);
-	    return;
+   if(VBMode)
+   {
+      switch(sub_op)
+      {
+         case XB: timestamp++;	// Unknown
+                  P_REG[arg1] = (P_REG[arg1] & 0xFFFF0000) | ((P_REG[arg1] & 0xFF) << 8) | ((P_REG[arg1] & 0xFF00) >> 8);
+                  return;
 
-   case XH: timestamp++;	// Unknown
-	    P_REG[arg1] = (P_REG[arg1] << 16) | (P_REG[arg1] >> 16);
-	    return;
+         case XH: timestamp++;	// Unknown
+                  P_REG[arg1] = (P_REG[arg1] << 16) | (P_REG[arg1] >> 16);
+                  return;
 
-   // Does REV use arg1 or arg2 for the source register?
-   case REV: timestamp++;	// Unknown
-#if 0
-		printf("Revvie bits\n");
-#endif
-	     {
-	      // Public-domain code snippet from: http://graphics.stanford.edu/~seander/bithacks.html#ReverseParallel
-      	      uint32 v = P_REG[arg2]; // 32-bit word to reverse bit order
+                  // Does REV use arg1 or arg2 for the source register?
+         case REV: timestamp++;	// Unknown
+                   {
+                      // Public-domain code snippet from: http://graphics.stanford.edu/~seander/bithacks.html#ReverseParallel
+                      uint32 v = P_REG[arg2]; // 32-bit word to reverse bit order
 
-	      // swap odd and even bits
-	      v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1);
-	      // swap consecutive pairs
-	      v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2);
-	      // swap nibbles ... 
-	      v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4);
-	      // swap bytes
-	      v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8);
-	      // swap 2-byte long pairs
-	      v = ( v >> 16             ) | ( v               << 16);
+                      // swap odd and even bits
+                      v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1);
+                      // swap consecutive pairs
+                      v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2);
+                      // swap nibbles ... 
+                      v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4);
+                      // swap bytes
+                      v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8);
+                      // swap 2-byte long pairs
+                      v = ( v >> 16             ) | ( v               << 16);
 
-	      P_REG[arg1] = v;
-	     }
-	     return;
+                      P_REG[arg1] = v;
+                   }
+                   return;
 
-   case MPYHW: timestamp += 9 - 1;	// Unknown?
-	       P_REG[arg1] = (int32)(int16)(P_REG[arg1] & 0xFFFF) * (int32)(int16)(P_REG[arg2] & 0xFFFF);
-	       return;
-  }
- }
+         case MPYHW:
+                   timestamp += 9 - 1;	// Unknown?
+                   P_REG[arg1] = (int32)(int16)(P_REG[arg1] & 0xFFFF) * (int32)(int16)(P_REG[arg2] & 0xFFFF);
+                   return;
+      }
+   }
 
- switch(sub_op) 
- {
-        // Virtual-Boy specific(probably!)
-	default:
-		{
-		 SetPC(GetPC() - 4);
-                 Exception(INVALID_OP_HANDLER_ADDR, ECODE_INVALID_OP);
-		}
-		break;
+   switch(sub_op) 
+   {
+      // Virtual-Boy specific(probably!)
+      default:
+         {
+            SetPC(GetPC() - 4);
+            Exception(INVALID_OP_HANDLER_ADDR, ECODE_INVALID_OP);
+         }
+         break;
 
-	case CVT_WS: 
-		timestamp += 5;
-		{
-		 uint32 result;
+      case CVT_WS: 
+         timestamp += 5;
+         {
+            uint32 result;
 
-                 float_exception_flags = 0;
-		 result = int32_to_float32((int32)P_REG[arg2]);
+            float_exception_flags = 0;
+            result = int32_to_float32((int32)P_REG[arg2]);
 
-		 if(!FPU_DoesExceptionKillResult())
-		 {
-		  SetPREG(arg1, result);
-		  SetFPUOPNonFPUFlags(result);
-		 }
-#if 0
-		 else
-		  puts("Exception on CVT.WS?????");	/* This shouldn't happen, but just in case there's a bug... */
-#endif
-		 FPU_DoException();
-		}
-		break;	// End CVT.WS
+            if(!FPU_DoesExceptionKillResult())
+            {
+               SetPREG(arg1, result);
+               SetFPUOPNonFPUFlags(result);
+            }
+            FPU_DoException();
+         }
+         break;	// End CVT.WS
 
-	case CVT_SW:
-		timestamp += 8;
-                if(CheckFPInputException(P_REG[arg2]))
-                {
+      case CVT_SW:
+         timestamp += 8;
+         if(CheckFPInputException(P_REG[arg2]))
+         {
 
-                }
-		else
-		{
-		 int32 result;
+         }
+         else
+         {
+            int32 result;
 
-                 float_exception_flags = 0;
-		 result = float32_to_int32(P_REG[arg2]);
+            float_exception_flags = 0;
+            result = float32_to_int32(P_REG[arg2]);
 
-		 if(!FPU_DoesExceptionKillResult())
-		 {
-		  SetPREG(arg1, result);
-                  SetFlag(PSW_OV, 0);
-                  SetSZ(result);
-		 }
-		 FPU_DoException();
-		}
-		break;	// End CVT.SW
+            if(!FPU_DoesExceptionKillResult())
+            {
+               SetPREG(arg1, result);
+               SetFlag(PSW_OV, 0);
+               SetSZ(result);
+            }
+            FPU_DoException();
+         }
+         break;	// End CVT.SW
 
-	case ADDF_S: timestamp += 8;
-		     FPU_Math_Template(float32_add, arg1, arg2);
-		     break;
+      case ADDF_S: timestamp += 8;
+                   FPU_Math_Template(float32_add, arg1, arg2);
+                   break;
 
-	case SUBF_S: timestamp += 11;
-		     FPU_Math_Template(float32_sub, arg1, arg2);
-		     break;
+      case SUBF_S: timestamp += 11;
+                   FPU_Math_Template(float32_sub, arg1, arg2);
+                   break;
 
-        case CMPF_S: timestamp += 6;
-		     // Don't handle this like subf.s because the flags
-		     // have slightly different semantics(mostly regarding underflow/subnormal results) (confirmed on real V810).
-                     if(CheckFPInputException(P_REG[arg1]) || CheckFPInputException(P_REG[arg2]))
-                     {
+      case CMPF_S: timestamp += 6;
+                   // Don't handle this like subf.s because the flags
+                   // have slightly different semantics(mostly regarding underflow/subnormal results) (confirmed on real V810).
+                   if(CheckFPInputException(P_REG[arg1]) || CheckFPInputException(P_REG[arg2]))
+                   {
 
-                     }
-		     else
-		     {
-		      SetFlag(PSW_OV, 0);
+                   }
+                   else
+                   {
+                      SetFlag(PSW_OV, 0);
 
-		      if(float32_eq(P_REG[arg1], P_REG[arg2]))
-		      {
-		       SetFlag(PSW_Z, 1);
-		       SetFlag(PSW_S, 0);
-		       SetFlag(PSW_CY, 0);
-		      }
-		      else
-		      {
-		       SetFlag(PSW_Z, 0);
+                      if(float32_eq(P_REG[arg1], P_REG[arg2]))
+                      {
+                         SetFlag(PSW_Z, 1);
+                         SetFlag(PSW_S, 0);
+                         SetFlag(PSW_CY, 0);
+                      }
+                      else
+                      {
+                         SetFlag(PSW_Z, 0);
 
-		       if(float32_lt(P_REG[arg1], P_REG[arg2]))
-		       {
-		        SetFlag(PSW_S, 1);
-		        SetFlag(PSW_CY, 1);
-		       }
-		       else
-		       {
-		        SetFlag(PSW_S, 0);
-		        SetFlag(PSW_CY, 0);
-                       }
-		      }
-		     }	// else of if(CheckFP...
-                     break;
+                         if(float32_lt(P_REG[arg1], P_REG[arg2]))
+                         {
+                            SetFlag(PSW_S, 1);
+                            SetFlag(PSW_CY, 1);
+                         }
+                         else
+                         {
+                            SetFlag(PSW_S, 0);
+                            SetFlag(PSW_CY, 0);
+                         }
+                      }
+                   }	// else of if(CheckFP...
+                   break;
 
-	case MULF_S: timestamp += 7;
-		     FPU_Math_Template(float32_mul, arg1, arg2);
-		     break;
+      case MULF_S: timestamp += 7;
+                   FPU_Math_Template(float32_mul, arg1, arg2);
+                   break;
 
-	case DIVF_S: timestamp += 43;
-		     FPU_Math_Template(float32_div, arg1, arg2);
-		     break;
+      case DIVF_S: timestamp += 43;
+                   FPU_Math_Template(float32_div, arg1, arg2);
+                   break;
 
-	case TRNC_SW:
-                timestamp += 7;
+      case TRNC_SW:
+                   timestamp += 7;
 
-		if(CheckFPInputException(P_REG[arg2]))
-		{
+                   if(CheckFPInputException(P_REG[arg2]))
+                   {
 
-		}
-		else
-                {
-                 int32 result;
+                   }
+                   else
+                   {
+                      int32 result;
 
-		 float_exception_flags = 0;
-                 result = float32_to_int32_round_to_zero(P_REG[arg2]);
+                      float_exception_flags = 0;
+                      result = float32_to_int32_round_to_zero(P_REG[arg2]);
 
-                 if(!FPU_DoesExceptionKillResult())
-                 {
-                  SetPREG(arg1, result);
-		  SetFlag(PSW_OV, 0);
-		  SetSZ(result);
-                 }
-		 FPU_DoException();
-                }
-                break;	// end TRNC.SW
-	}
+                      if(!FPU_DoesExceptionKillResult())
+                      {
+                         SetPREG(arg1, result);
+                         SetFlag(PSW_OV, 0);
+                         SetSZ(result);
+                      }
+                      FPU_DoException();
+                   }
+                   break;	// end TRNC.SW
+   }
 }
 
 // Generate exception
@@ -1438,10 +1307,6 @@ void V810::Exception(uint32 handler, uint16 eCode)
  }
 #endif
 
-#if 0
-    printf("Exception: %08x %04x\n", handler, eCode);
-#endif
-
     // Invalidate our bitstring state(forces the instruction to be re-read, and the r/w buffers reloaded).
     in_bstr = false;
     have_src_cache = false;
@@ -1449,12 +1314,9 @@ void V810::Exception(uint32 handler, uint16 eCode)
 
     if(S_REG[PSW] & PSW_NP) // Fatal exception
     {
-#if 0
-     printf("Fatal exception; Code: %08x, ECR: %08x, PSW: %08x, PC: %08x\n", eCode, S_REG[ECR], S_REG[PSW], PC);
-#endif
-     Halted = HALT_FATAL_EXCEPTION;
-     IPendingCache = 0;
-     return;
+       Halted = HALT_FATAL_EXCEPTION;
+       IPendingCache = 0;
+       return;
     }
     else if(S_REG[PSW] & PSW_EP)  //Double Exception
     {
