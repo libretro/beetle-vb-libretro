@@ -166,32 +166,13 @@ else ifeq ($(platform), qnx)
    FLAGS += -D__BLACKBERRY_QNX__ -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp
 
 # PS3
-else ifneq (,$(filter $(platform), ps3 sncps3 psl1ght))
+else ifneq (,$(filter $(platform), psl1ght))
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
    ENDIANNESS_DEFINES := -DMSB_FIRST
    STATIC_LINKING = 1
 
-   # sncps3
-   ifneq (,$(findstring sncps3,$(platform)))
-      TARGET := $(TARGET_NAME)_libretro_ps3.a
-      CC = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
-      CXX = $(CC)
-      AR = $(CELL_SDK)/host-win32/sn/bin/ps3snarl.exe
-      OLD_GCC := 1
-      NO_GCC := 1
-      CXXFLAGS += -Xc+=exceptions
-      FLAGS += -DARCH_POWERPC_ALTIVEC
-
-   # PS3
-   else ifneq (,$(findstring ps3,$(platform)))
-      CC = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-gcc.exe
-      CXX = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-g++.exe
-      AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe
-      OLD_GCC := 1
-      FLAGS += -DARCH_POWERPC_ALTIVEC
-
    # Lightweight PS3 Homebrew SDK
-   else ifneq (,$(findstring psl1ght,$(platform)))
+   ifneq (,$(findstring psl1ght,$(platform)))
       CC = $(PS3DEV)/ppu/bin/ppu-gcc$(EXE_EXT)
       CXX = $(PS3DEV)/ppu/bin/ppu-g++$(EXE_EXT)
       AR = $(PS3DEV)/ppu/bin/ppu-ar$(EXE_EXT)
