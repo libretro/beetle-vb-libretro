@@ -10,6 +10,7 @@
     JNI_PATH: .
     CORENAME: mednafen_vb
 
+# Inclusion templates, required for the build to work
 include:
   ################################## DESKTOPS ################################
   # Windows 64-bit
