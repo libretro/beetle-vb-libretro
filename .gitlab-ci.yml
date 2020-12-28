@@ -34,6 +34,11 @@ include:
   # PlayStation Vita
   - project: 'libretro-infrastructure/ci-templates'
     file: '/vita-static.yml'
+    
+  # Nintendo WiiU
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/wiiu-static.yml'
+    
   # Nintendo Switch
   - project: 'libretro-infrastructure/ci-templates'
     file: '/libnx-static.yml'
@@ -93,6 +98,12 @@ android-x86:
     - .core-defs
     
 ################################### CONSOLES #################################
+# Nintendo WiiU
+libretro-build-wiiu:
+  extends:
+    - .libretro-wiiu-static-retroarch-master
+    - .core-defs
+    
 # Nintendo Switch
 libretro-build-libnx-aarch64:
   extends:
