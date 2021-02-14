@@ -541,10 +541,19 @@ OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o)
 
 all: $(TARGET)
 
-ifeq ($(DEBUG),0)
-   FLAGS += -O2 -DNDEBUG $(EXTRA_GCC_FLAGS)
-else
+ifeq ($(DEBUG),1)
    FLAGS += -O0 -g
+else
+   FLAGS += -O2 -DNDEBUG $(EXTRA_GCC_FLAGS)
+endif
+
+ifneq (,$(findstring msvc,$(platform)))
+ifeq ($(DEBUG),1)
+   FLAGS += -MTd
+else
+   FLAGS += -MT
+endif
+   FLAGS += -D_CRT_SECURE_NO_DEPRECATE
 endif
 
 LDFLAGS += $(fpic) $(SHARED)
