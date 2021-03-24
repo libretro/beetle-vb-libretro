@@ -260,7 +260,6 @@ static bool SubWrite(StateMem *st, SFORMAT *sf, const char *name_prefix)
          for(bool_monster = 0; bool_monster < bytesize; bool_monster++)
          {
             uint8_t tmp_bool = ((bool *)sf->v)[bool_monster];
-            //printf("Bool write: %.31s\n", sf->name);
             smem_write(st, &tmp_bool, 1);
          }
       }
@@ -298,11 +297,6 @@ static int WriteStateChunk(StateMem *st, const char *sname, SFORMAT *sf)
 
    memset(sname_tmp, 0, sizeof(sname_tmp));
    memcpy((char *)sname_tmp, sname, (sname_len < 32) ? sname_len : 32);
-
-#ifndef NDEBUG
-   if(sname_len > 32)
-      printf("Warning: section name is too long: %s\n", sname);
-#endif
 
    smem_write(st, sname_tmp, 32);
 
@@ -408,16 +402,10 @@ static int ReadStateChunk(StateMem *st, SFORMAT *sf, int size)
       SFORMAT *tmp           = NULL;
 
       if(smem_read(st, toa, 1) != 1)
-      {
-         puts("Unexpected EOF");
          return 0;
-      }
 
       if(smem_read(st, toa + 1, toa[0]) != toa[0])
-      {
-         puts("Unexpected EOF?");
          return 0;
-      }
 
       toa[1 + toa[0]] = 0;
 
@@ -431,8 +419,6 @@ static int ReadStateChunk(StateMem *st, SFORMAT *sf, int size)
 
          if(recorded_size != expected_size)
          {
-            printf("Variable in save state wrong size: %s.  Need: %d, got: %d\n",
-                  toa + 1, expected_size, recorded_size);
             if(smem_seek(st, recorded_size, SEEK_CUR) < 0)
                return 0;
          }
@@ -463,7 +449,6 @@ static int ReadStateChunk(StateMem *st, SFORMAT *sf, int size)
       }
       else
       {
-         printf("Unknown variable in save state: %s\n", toa + 1);
          if(smem_seek(st, recorded_size, SEEK_CUR) < 0)
             return 0;
       }
@@ -495,10 +480,7 @@ static int MDFNSS_StateAction_internal(StateMem *st,
          if(!strncmp(sname, section->name, 32))
          {
             if(!ReadStateChunk(st, section->sf, tmp_size))
-            {
-               printf("Error reading chunk: %s\n", section->name);
                return 0;
-            }
             found = 1;
             break;
          } 
@@ -510,16 +492,10 @@ static int MDFNSS_StateAction_internal(StateMem *st,
       }
 
       if(smem_seek(st, -total, SEEK_CUR) < 0)
-      {
-         puts("Reverse seek error");
          return 0;
-      }
 
       if(!found && !section->optional) // Not found.  We are sad!
-      {
-         printf("Section missing:  %.32s\n", section->name);
          return 0;
-      }
    }
    else
    {
