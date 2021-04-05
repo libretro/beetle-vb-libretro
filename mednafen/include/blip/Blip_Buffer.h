@@ -7,7 +7,6 @@
 
 #include <limits.h>
 #include <stdint.h>
-#include <assert.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -200,7 +199,6 @@ static INLINE void Blip_Synth_offset_resampled(
 
    // Fails if time is beyond end of Blip_Buffer, due to a bug in caller code or the
    // need for a longer buffer as set by set_sample_rate().
-   assert((blip_long)(time >> BLIP_BUFFER_ACCURACY) < blip_buf->buffer_size);
    delta *= synth->delta_factor;
    buf = blip_buf->buffer + (time >>
                                         BLIP_BUFFER_ACCURACY);

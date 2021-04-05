@@ -16,6 +16,7 @@
  */
 
 #include <string.h>
+#include <assert.h>
 
 #include "../mednafen-types.h"
 #include "../state_helpers.h"

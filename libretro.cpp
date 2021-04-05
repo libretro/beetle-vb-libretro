@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#include <assert.h>
 
 #include <libretro.h>
 
