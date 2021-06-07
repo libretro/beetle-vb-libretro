@@ -129,13 +129,11 @@ MDFNGI EmulatedVB =
    2,     // Number of output sound channels
 };
 
-MDFNGI *MDFNGameInfo = &EmulatedVB;
-
 static INLINE void RecalcIntLevel(void)
 {
-   int ilevel = -1;
+   int i, ilevel = -1;
 
-   for(int i = 4; i >= 0; i--)
+   for(i = 4; i >= 0; i--)
    {
       if(IRQ_Asserted & (1 << i))
       {
@@ -1836,6 +1834,8 @@ static INLINE uint32 round_up_pow2(uint32 v)
 
 static int Load(const uint8_t *data, size_t size)
 {
+   int i;
+   uint64 A, sub_A;
    V810_Emu_Mode cpu_mode = (V810_Emu_Mode)MDFN_GetSettingI("vb.cpu_emulation");
 
    /* VB ROM image size is not a power of 2??? */
@@ -1870,7 +1870,7 @@ static int Load(const uint8_t *data, size_t size)
    VB_V810->SetIOReadHandlers(MemRead8, MemRead16, NULL);
    VB_V810->SetIOWriteHandlers(MemWrite8, MemWrite16, NULL);
 
-   for(int i = 0; i < 256; i++)
+   for(i = 0; i < 256; i++)
    {
       VB_V810->SetMemReadBus32(i, false);
       VB_V810->SetMemWriteBus32(i, false);
@@ -1878,12 +1878,10 @@ static int Load(const uint8_t *data, size_t size)
 
    std::vector<uint32> Map_Addresses;
 
-   for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
+   for(A = 0; A < 1ULL << 32; A += (1 << 27))
    {
-      for(uint64 sub_A = 5 << 24; sub_A < (6 << 24); sub_A += 65536)
-      {
+      for(sub_A = 5 << 24; sub_A < (6 << 24); sub_A += 65536)
          Map_Addresses.push_back(A + sub_A);
-      }
    }
 
    WRAM = VB_V810->SetFastMap(&Map_Addresses[0], 65536, Map_Addresses.size(), "WRAM");
@@ -1893,13 +1891,10 @@ static int Load(const uint8_t *data, size_t size)
    // Round up the ROM size to 65536(we mirror it a little later)
    GPROM_Mask = (size < 65536) ? (65536 - 1) : (size - 1);
 
-   for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
+   for(A = 0; A < 1ULL << 32; A += (1 << 27))
    {
-      for(uint64 sub_A = 7 << 24; sub_A < (8 << 24); sub_A += GPROM_Mask + 1)
-      {
+      for(sub_A = 7 << 24; sub_A < (8 << 24); sub_A += GPROM_Mask + 1)
          Map_Addresses.push_back(A + sub_A);
-         //printf("%08x\n", (uint32)(A + sub_A));
-      }
    }
 
 
@@ -1912,13 +1907,10 @@ static int Load(const uint8_t *data, size_t size)
 
    GPRAM_Mask = 0xFFFF;
 
-   for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
+   for(A = 0; A < 1ULL << 32; A += (1 << 27))
    {
-      for(uint64 sub_A = 6 << 24; sub_A < (7 << 24); sub_A += GPRAM_Mask + 1)
-      {
-         //printf("GPRAM: %08x\n", A + sub_A);
+      for(sub_A = 6 << 24; sub_A < (7 << 24); sub_A += GPRAM_Mask + 1)
          Map_Addresses.push_back(A + sub_A);
-      }
    }
 
 
@@ -1950,7 +1942,7 @@ static int Load(const uint8_t *data, size_t size)
 
    SettingChanged("vb.input.instant_read_hack");
 
-   MDFNGameInfo->fps = (int64)20000000 * 65536 * 256 / (259 * 384 * 4);
+   EmulatedVB.fps = (int64)20000000 * 65536 * 256 / (259 * 384 * 4);
 
 
    VB_Power();
@@ -1961,45 +1953,45 @@ static int Load(const uint8_t *data, size_t size)
 #endif
 
 
-   MDFNGameInfo->nominal_width = 384;
-   MDFNGameInfo->nominal_height = 224;
-   MDFNGameInfo->fb_width = 384;
-   MDFNGameInfo->fb_height = 224;
+   EmulatedVB.nominal_width = 384;
+   EmulatedVB.nominal_height = 224;
+   EmulatedVB.fb_width = 384;
+   EmulatedVB.fb_height = 224;
 
    switch(VB3DMode)
    {
-      default: break;
-
       case VB3DMODE_VLI:
-               MDFNGameInfo->nominal_width = 768 * prescale;
-               MDFNGameInfo->nominal_height = 224;
-               MDFNGameInfo->fb_width = 768 * prescale;
-               MDFNGameInfo->fb_height = 224;
-               break;
+         EmulatedVB.nominal_width = 768 * prescale;
+         EmulatedVB.nominal_height = 224;
+         EmulatedVB.fb_width = 768 * prescale;
+         EmulatedVB.fb_height = 224;
+         break;
 
       case VB3DMODE_HLI:
-               MDFNGameInfo->nominal_width = 384;
-               MDFNGameInfo->nominal_height = 448 * prescale;
-               MDFNGameInfo->fb_width = 384;
-               MDFNGameInfo->fb_height = 448 * prescale;
-               break;
+         EmulatedVB.nominal_width = 384;
+         EmulatedVB.nominal_height = 448 * prescale;
+         EmulatedVB.fb_width = 384;
+         EmulatedVB.fb_height = 448 * prescale;
+         break;
 
       case VB3DMODE_CSCOPE:
-               MDFNGameInfo->nominal_width = 512;
-               MDFNGameInfo->nominal_height = 384;
-               MDFNGameInfo->fb_width = 512;
-               MDFNGameInfo->fb_height = 384;
-               break;
+         EmulatedVB.nominal_width = 512;
+         EmulatedVB.nominal_height = 384;
+         EmulatedVB.fb_width = 512;
+         EmulatedVB.fb_height = 384;
+         break;
 
       case VB3DMODE_SIDEBYSIDE:
-               MDFNGameInfo->nominal_width = 384 * 2 + sbs_separation;
-               MDFNGameInfo->nominal_height = 224;
-               MDFNGameInfo->fb_width = 384 * 2 + sbs_separation;
-               MDFNGameInfo->fb_height = 224;
-               break;
+         EmulatedVB.nominal_width = 384 * 2 + sbs_separation;
+         EmulatedVB.nominal_height = 224;
+         EmulatedVB.fb_width = 384 * 2 + sbs_separation;
+         EmulatedVB.fb_height = 224;
+         break;
+      default:
+         break;
    }
-   MDFNGameInfo->lcm_width = MDFNGameInfo->fb_width;
-   MDFNGameInfo->lcm_height = MDFNGameInfo->fb_height;
+   EmulatedVB.lcm_width = EmulatedVB.fb_width;
+   EmulatedVB.lcm_height = EmulatedVB.fb_height;
 
 
    MDFNMP_Init(32768, ((uint64)1 << 27) / 32768);
@@ -2011,7 +2003,9 @@ static int Load(const uint8_t *data, size_t size)
 
 static void CloseGame(void)
 {
-   //VIP_Kill();
+#if 0
+   VIP_Kill();
+#endif
 
    if(VB_VSU)
    {
@@ -2019,19 +2013,19 @@ static void CloseGame(void)
       VB_VSU = NULL;
    }
 
-   /*
-      if(GPRAM)
-      {
+#if 0
+   if(GPRAM)
+   {
       MDFN_free(GPRAM);
       GPRAM = NULL;
-      }
+   }
 
-      if(GPROM)
-      {
+   if(GPROM)
+   {
       MDFN_free(GPROM);
       GPROM = NULL;
-      }
-      */
+   }
+#endif
 
    if(VB_V810)
    {
@@ -2056,7 +2050,8 @@ static void Emulate(EmulateSpecStruct *espec, int16_t *sound_buf)
 
    if(espec->SoundFormatChanged)
    {
-      for(int y = 0; y < 2; y++)
+      int y;
+      for(y = 0; y < 2; y++)
       {
          Blip_Buffer_set_sample_rate(&sbuf[y], espec->SoundRate ? espec->SoundRate : 44100, 50);
          Blip_Buffer_set_clock_rate(&sbuf[y], (long)(VB_MASTER_CLOCK / 4));
@@ -2075,7 +2070,8 @@ static void Emulate(EmulateSpecStruct *espec, int16_t *sound_buf)
 
    if(sound_buf)
    {
-      for(int y = 0; y < 2; y++)
+      int y;
+      for(y = 0; y < 2; y++)
       {
          Blip_Buffer_end_frame(&sbuf[y], (v810_timestamp + VSU_CycleFix) >> 2);
          espec->SoundBufSize = Blip_Buffer_read_samples(&sbuf[y], sound_buf + y, espec->SoundBufMaxSize);
@@ -2210,39 +2206,6 @@ static InputInfoStruct InputInfo =
  sizeof(PortInfo) / sizeof(InputPortInfoStruct),
  PortInfo
 };
-
-static bool MDFNI_LoadGame(const uint8_t *data, size_t size)
-{
-   MDFNGameInfo = &EmulatedVB;
-
-   if(Load(data, size) <= 0)
-      goto error;
-
-   MDFN_LoadGameCheats(NULL);
-   MDFNMP_InstallReadPatches();
-
-   return true;
-
-error:
-   MDFNGameInfo = NULL;
-   return false;
-}
-
-static void MDFNI_CloseGame(void)
-{
-   if(!MDFNGameInfo)
-      return;
-
-   MDFN_FlushGameCheats(0);
-
-   CloseGame();
-
-   MDFNMP_Kill();
-
-   MDFNGameInfo = NULL;
-}
-
-static void hookup_ports(bool force);
 
 static bool initial_ports_hookup = false;
 
@@ -2492,10 +2455,11 @@ static void hookup_ports(bool force)
 
 bool retro_load_game(const struct retro_game_info *info)
 {
+   struct MDFN_PixelFormat pix_fmt;
    void *rpix = NULL;
-   if (!info)
-      return false;
-
+#ifdef WANT_32BPP
+   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
+#endif
    static struct retro_input_descriptor desc[] = {
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "Left D-Pad Left" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "Left D-Pad Up" },
@@ -2517,10 +2481,12 @@ bool retro_load_game(const struct retro_game_info *info)
       { 0 },
    };
 
+   if (!info)
+      return false;
+
    environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
 #ifdef WANT_32BPP
-   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
    if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
    {
       if (log_cb)
@@ -2534,10 +2500,12 @@ bool retro_load_game(const struct retro_game_info *info)
 
    check_variables();
 
-   if (!MDFNI_LoadGame((const uint8_t*)info->data, info->size))
+   if (Load((const uint8_t*)info->data, info->size) <= 0)
       return false;
 
-   struct MDFN_PixelFormat pix_fmt;
+   MDFN_LoadGameCheats(NULL);
+   MDFNMP_InstallReadPatches();
+
 #ifdef WANT_16BPP
    pix_fmt.bpp        = 16;
 #else
@@ -2581,7 +2549,9 @@ bool retro_load_game(const struct retro_game_info *info)
 
 void retro_unload_game(void)
 {
-   MDFNI_CloseGame();
+   MDFN_FlushGameCheats(0);
+   CloseGame();
+   MDFNMP_Kill();
 }
 
 static void update_input(void)
