@@ -118,7 +118,7 @@ struct retro_core_option_definition option_defs_us[] = {
          { "fast",      NULL },
          { NULL, NULL},
       },
-      "disabled",
+      "accurate",
    },
    { NULL, NULL, NULL, { NULL, NULL }, NULL },
 };
