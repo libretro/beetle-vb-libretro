@@ -2441,6 +2441,7 @@ static void check_variables(void)
 #define MAX_PLAYERS 1
 #define MAX_BUTTONS 14
 static uint16_t input_buf[MAX_PLAYERS];
+static uint16_t low_battery;
 
 static void hookup_ports(bool force)
 {
@@ -2449,6 +2450,7 @@ static void hookup_ports(bool force)
 
    /* Possible endian bug ... */
    VBINPUT_SetInput(0, "gamepad", &input_buf[0]);
+   VBINPUT_SetInput(1, "gamepad", &low_battery);
 
    initial_ports_hookup = true;
 }
@@ -2612,6 +2614,20 @@ static void update_input(void)
       u.s = input_buf[j];
       input_buf[j] = u.b[0] | u.b[1] << 8;
 #endif
+   }
+   // For low-battery mode switch
+   {
+      static int pressed;
+      if ((joy_bits[0] & (1 << RETRO_DEVICE_ID_JOYPAD_X)) || 
+         (joy_bits[0] & (1 << RETRO_DEVICE_ID_JOYPAD_Y)))
+      {
+         if (!pressed)
+         {
+            pressed ^= 1;
+            low_battery ^= 1;
+         }
+      } else
+         pressed = 0;
    }
 }
 

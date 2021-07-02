@@ -26,7 +26,7 @@ static bool InstantReadHack;
 
 static bool IntPending;
 
-static uint8 *data_ptr;
+static uint8* data_ptr[2];
 
 static uint16 PadData;
 static uint16 PadLatched;
@@ -59,7 +59,7 @@ void VBINPUT_SetInstantReadHack(bool enabled)
 
 void VBINPUT_SetInput(int port, const char *type, void *ptr)
 {
-   data_ptr = (uint8 *)ptr;
+   data_ptr[port] = (uint8 *)ptr;
 }
 
 uint8 VBINPUT_Read(v810_timestamp_t timestamp, uint32 A)
@@ -137,7 +137,7 @@ static INLINE uint16_t MDFN_de16lsb(const uint8_t *morp)
 
 void VBINPUT_Frame(void)
 {
-   PadData = (MDFN_de16lsb(data_ptr) << 2) | 0x2;
+   PadData = (MDFN_de16lsb(data_ptr[0]) << 2) | 0x2 | (*data_ptr[1] & 0x1);
 }
 
 v810_timestamp_t VBINPUT_Update(const v810_timestamp_t timestamp)
