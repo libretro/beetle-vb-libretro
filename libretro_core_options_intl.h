@@ -143,7 +143,7 @@ struct retro_core_option_definition option_defs_tr[] = {
          { "fast",      "hızlı" },
          { NULL, NULL},
       },
-      "disabled",
+      "fast",
    },
    { NULL, NULL, NULL, { NULL, NULL }, NULL },
 };
