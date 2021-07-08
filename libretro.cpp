@@ -2477,6 +2477,7 @@ bool retro_load_game(const struct retro_game_info *info)
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3, "Right D-Pad Right" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X, "Low-Battery Toggle" },
 
       { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Right D-Pad X" },
       { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Right D-Pad Y" },
@@ -2618,8 +2619,7 @@ static void update_input(void)
    // For low-battery mode switch
    {
       static int pressed;
-      if ((joy_bits[0] & (1 << RETRO_DEVICE_ID_JOYPAD_X)) || 
-         (joy_bits[0] & (1 << RETRO_DEVICE_ID_JOYPAD_Y)))
+      if (joy_bits[0] & (1 << RETRO_DEVICE_ID_JOYPAD_X))
       {
          if (!pressed)
          {
