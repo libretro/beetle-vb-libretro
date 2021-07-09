@@ -2668,12 +2668,6 @@ void retro_run(void)
 
    Emulate(&spec, sound_buf);
 
-   int16 *const SoundBuf = sound_buf + spec.SoundBufSizeALMS * EmulatedVB.soundchan;
-   int32 SoundBufSize = spec.SoundBufSize - spec.SoundBufSizeALMS;
-   const int32 SoundBufMaxSize = spec.SoundBufMaxSize - spec.SoundBufSizeALMS;
-
-   spec.SoundBufSize = spec.SoundBufSizeALMS + SoundBufSize;
-
    if (width != spec.DisplayRect.w || height != spec.DisplayRect.h)
       resolution_changed = true;
 
