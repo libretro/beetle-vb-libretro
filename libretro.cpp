@@ -1920,7 +1920,7 @@ static int Load(const uint8_t *data, size_t size)
    memset(GPRAM, 0, GPRAM_Mask + 1);
 
    VIP_Init();
-   VB_VSU = new VSU(&sbuf[0], &sbuf[1]);
+   VB_VSU = new VSU();
    VBINPUT_Init();
 
    VB3DMode = MDFN_GetSettingUI("vb.3dmode");
@@ -2049,15 +2049,7 @@ static void Emulate(EmulateSpecStruct *espec, int16_t *sound_buf)
    VBINPUT_Frame();
 
    if(espec->SoundFormatChanged)
-   {
-      int y;
-      for(y = 0; y < 2; y++)
-      {
-         Blip_Buffer_set_sample_rate(&sbuf[y], espec->SoundRate ? espec->SoundRate : 44100, 50);
-         Blip_Buffer_set_clock_rate(&sbuf[y], (long)(VB_MASTER_CLOCK / 4));
-         Blip_Buffer_bass_freq(&sbuf[y], 20);
-      }
-   }
+      VB_VSU->SetSoundRate(espec->SoundRate);
 
    VIP_StartFrame(espec);
 
@@ -2066,17 +2058,8 @@ static void Emulate(EmulateSpecStruct *espec, int16_t *sound_buf)
    FixNonEvents();
    ForceEventUpdates(v810_timestamp);
 
-   VB_VSU->EndFrame((v810_timestamp + VSU_CycleFix) >> 2);
+   espec->SoundBufSize = VB_VSU->EndFrame((v810_timestamp + VSU_CycleFix) >> 2, sound_buf, espec->SoundBufMaxSize);
 
-   if(sound_buf)
-   {
-      int y;
-      for(y = 0; y < 2; y++)
-      {
-         Blip_Buffer_end_frame(&sbuf[y], (v810_timestamp + VSU_CycleFix) >> 2);
-         espec->SoundBufSize = Blip_Buffer_read_samples(&sbuf[y], sound_buf + y, espec->SoundBufMaxSize);
-      }
-   }
 
    VSU_CycleFix = (v810_timestamp + VSU_CycleFix) & 3;
 
@@ -2684,12 +2667,6 @@ void retro_run(void)
    }
 
    Emulate(&spec, sound_buf);
-
-   int16 *const SoundBuf = sound_buf + spec.SoundBufSizeALMS * EmulatedVB.soundchan;
-   int32 SoundBufSize = spec.SoundBufSize - spec.SoundBufSizeALMS;
-   const int32 SoundBufMaxSize = spec.SoundBufMaxSize - spec.SoundBufSizeALMS;
-
-   spec.SoundBufSize = spec.SoundBufSizeALMS + SoundBufSize;
 
    if (width != spec.DisplayRect.w || height != spec.DisplayRect.h)
       resolution_changed = true;

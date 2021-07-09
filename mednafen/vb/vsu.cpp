@@ -18,19 +18,19 @@
 #include <string.h>
 #include <assert.h>
 
+#include "vb.h"
 #include "../mednafen-types.h"
 #include "../state_helpers.h"
 
 #include "vsu.h"
 
+#include "retro_miscellaneous.h"
+
 static const unsigned int Tap_LUT[8] = { 15 - 1, 11 - 1, 14 - 1, 5 - 1, 9 - 1, 7 - 1, 10 - 1, 12 - 1 };
 
-VSU::VSU(Blip_Buffer *_bb_l, Blip_Buffer *_bb_r)
+VSU::VSU(void)
 {
    unsigned ch, lr;
-
-   bb_l    = _bb_l;
-   bb_r    = _bb_r;
 
    Blip_Synth_set_volume(&Synth, 1.0 / 6 / 2, 0x400);
 
@@ -42,6 +42,17 @@ VSU::VSU(Blip_Buffer *_bb_l, Blip_Buffer *_bb_r)
 VSU::~VSU()
 {
 
+}
+
+void VSU::SetSoundRate(double rate)
+{
+ int y;
+ for(y = 0; y < 2; y++)
+ {
+  Blip_Buffer_set_sample_rate(&sbuf[y], rate ? rate : 44100, 50);
+  Blip_Buffer_set_clock_rate(&sbuf[y], (long)(VB_MASTER_CLOCK / 4));
+  Blip_Buffer_bass_freq(&sbuf[y], 20);
+ }
 }
 
 void VSU::Power(void)
@@ -64,9 +75,9 @@ void VSU::Power(void)
       EffFreq[ch] = 0;
       Envelope[ch] = 0;
       WavePos[ch] = 0;
-      FreqCounter[ch] = 0;
+      FreqCounter[ch] = 1;
       IntervalCounter[ch] = 0;
-      EnvelopeCounter[ch] = 0;
+      EnvelopeCounter[ch] = 1;
 
       EffectsClockDivider[ch] = 4800;
       IntervalClockDivider[ch] = 4;
@@ -215,14 +226,14 @@ void VSU::Write(int32 timestamp, uint32 A, uint8 V)
    }
 }
 
-INLINE void VSU::CalcCurrentOutput(int ch, int *left, int *right)
+INLINE void VSU::CalcCurrentOutput(int ch, int &left, int &right)
 {
    int WD;
    int l_ol, r_ol;
 
    if(!(IntlControl[ch] & 0x80))
    {
-      *left = *right = 0;
+      left = right = 0;
       return;
    }
 
@@ -249,8 +260,8 @@ INLINE void VSU::CalcCurrentOutput(int ch, int *left, int *right)
       r_ol += 1;
    }
 
-   *left = WD * l_ol;
-   *right = WD * r_ol;
+   left = WD * l_ol;
+   right = WD * r_ol;
 }
 
 void VSU::Update(int32 timestamp)
@@ -264,9 +275,9 @@ void VSU::Update(int32 timestamp)
       int32 running_timestamp = last_ts;
 
       // Output sound here
-      CalcCurrentOutput(ch, &left, &right);
-      Blip_Synth_offset(&Synth, running_timestamp, left - last_output[ch][0], bb_l);
-      Blip_Synth_offset(&Synth, running_timestamp, right - last_output[ch][1], bb_r);
+      CalcCurrentOutput(ch, left, right);
+      Blip_Synth_offset(&Synth, running_timestamp, left - last_output[ch][0], &sbuf[0]);
+      Blip_Synth_offset(&Synth, running_timestamp, right - last_output[ch][1], &sbuf[1]);
       last_output[ch][0] = left;
       last_output[ch][1] = right;
 
@@ -443,9 +454,9 @@ void VSU::Update(int32 timestamp)
          running_timestamp += chunk_clocks;
 
          // Output sound here too.
-         CalcCurrentOutput(ch, &left, &right);
-         Blip_Synth_offset(&Synth, running_timestamp, left - last_output[ch][0], bb_l);
-         Blip_Synth_offset(&Synth, running_timestamp, right - last_output[ch][1], bb_r);
+         CalcCurrentOutput(ch, left, right);
+         Blip_Synth_offset(&Synth, running_timestamp, left - last_output[ch][0], &sbuf[0]);
+         Blip_Synth_offset(&Synth, running_timestamp, right - last_output[ch][1], &sbuf[1]);
          last_output[ch][0] = left;
          last_output[ch][1] = right;
       }
@@ -454,14 +465,29 @@ void VSU::Update(int32 timestamp)
    last_ts = timestamp;
 }
 
-void VSU::EndFrame(int32 timestamp)
+int32 VSU::EndFrame(int32 timestamp, int16* SoundBuf, int32 SoundBufMaxSize)
 {
+ int32 ret = 0;
+
    Update(timestamp);
    last_ts = 0;
+
+ if(SoundBuf)
+ {
+  for(int y = 0; y < 2; y++)
+  {
+   Blip_Buffer_end_frame(&sbuf[y], timestamp);
+   ret = Blip_Buffer_read_samples(&sbuf[y], SoundBuf + y, SoundBufMaxSize);
+  }
+ }
+
+ return ret;
 }
 
 int VSU::StateAction(StateMem *sm, int load, int data_only)
 {
+   int ret = 0;
+
    SFORMAT StateRegs[] =
    {
       SFARRAY(IntlControl, 6),
@@ -502,8 +528,60 @@ int VSU::StateAction(StateMem *sm, int load, int data_only)
       SFEND
    };
 
-   return MDFNSS_StateAction(sm, load, data_only, StateRegs, "VSU", false);
+ ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "VSU", false);
+ if(load)
+ {
+  for(int ch = 0; ch < 6; ch++)
+  {
+   WavePos[ch] &= 0x1F;
+
+   LeftLevel[ch] &= 0xF;
+   RightLevel[ch] &= 0xF;
+
+   Frequency[ch] &= 0x07FF;
+   EffFreq[ch] &= 0x07FF;
+   Envelope[ch] &= 0xF;
+   EnvControl[ch] &= ((ch >= 4) ? 0x73FF : 0x03FF);
+
+   RAMAddress[ch] &= 0xF;
+   //
+   //
+   if(FreqCounter[ch] < 1)
+    FreqCounter[ch] = 1;
+
+   if(IntervalCounter[ch] <= 0)
+    IntlControl[ch] &= ~0x80;
+   else
+    IntervalCounter[ch] = (int32)MIN(0x20, IntervalCounter[ch]);
+      
+   EnvelopeCounter[ch] = (int32)MAX(0x1, (int32)MIN(0x8, EnvelopeCounter[ch]));
+
+   if(EffectsClockDivider[ch] < 1)
+    EffectsClockDivider[ch] = 1;
+
+   if(IntervalClockDivider[ch] < 1)
+    IntervalClockDivider[ch] = 1;
+
+   if(EnvelopeClockDivider[ch] < 1)
+    EnvelopeClockDivider[ch] = 1;
+
+   if(LatcherClockDivider[ch] < 1)
+    LatcherClockDivider[ch] = 1;
+  }
+
+  if(NoiseLatcherClockDivider < 1)
+   NoiseLatcherClockDivider = 1;
+
+  SweepControl &= 0xFF;
+  SweepModCounter &= 0x7;
+
+  if(SweepModClockDivider < 1)
+   SweepModClockDivider = 1;
+ }
+ return ret;
 }
+
+
 
 uint8 VSU::PeekWave(const unsigned int which, uint32 Address)
 {
