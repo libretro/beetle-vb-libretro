@@ -31,28 +31,28 @@ enum
 
 enum
 {
- INVALID_OP_HANDLER_ADDR = 0xFFFFFF90, // Invalid opcode/instruction code!
- ZERO_DIV_HANDLER_ADDR = 0xFFFFFF80, // Integer divide by 0 exception
- FPU_HANDLER_ADDR = 0xFFFFFF60, // FPU exception
- TRAP_HANDLER_BASE = 0xFFFFFFA0 // TRAP instruction
+   INVALID_OP_HANDLER_ADDR = 0xFFFFFF90, /* Invalid opcode/instruction code! */
+   ZERO_DIV_HANDLER_ADDR   = 0xFFFFFF80, /* Integer divide by 0 exception */
+   FPU_HANDLER_ADDR        = 0xFFFFFF60, /* FPU exception    */
+   TRAP_HANDLER_BASE       = 0xFFFFFFA0  /* TRAP instruction */
 };
 
-//System Register Defines (these are the only valid system registers!)
-#define EIPC     0       //Exeption/Interupt PC
-#define EIPSW    1       //Exeption/Interupt PSW
+/* System Register Defines (these are the only valid system registers!) */
+#define EIPC     0       /* Exception/Interupt PC */
+#define EIPSW    1       /* Exception/Interupt PSW */
 
-#define FEPC     2       //Fatal Error PC
-#define FEPSW    3       //Fatal Error PSW
+#define FEPC     2       /* Fatal Error PC */
+#define FEPSW    3       /* Fatal Error PSW */
 
-#define ECR      4       //Exception Cause Register
-#define PSW      5       //Program Status Word
-#define PIR      6       //Processor ID Register
-#define TKCW     7       //Task Controll Word
-#define CHCW     24      //Cashe Controll Word
-#define ADDTRE   25      //ADDTRE
+#define ECR      4       /* Exception Cause Register */
+#define PSW      5       /* Program Status Word */
+#define PIR      6       /* Processor ID Register */
+#define TKCW     7       /* Task Control Word */
+#define CHCW     24      /* Cache Control Word */
+#define ADDTRE   25      /* ADDTRE */
 
 /* PSW Specifics */
-#define PSW_IA  0xF0000 /* All Interupt bits... */
+#define PSW_IA  0xF0000  /* All Interupt bits... */
 #define PSW_I3  0x80000
 #define PSW_I2  0x40000
 #define PSW_I1  0x20000
@@ -65,20 +65,24 @@ enum
 
 #define PSW_ID  0x01000
 
-#define PSW_FRO 0x00200 // Floating point reserved operand(set on denormal, NaN, or indefinite)
-#define PSW_FIV 0x00100 // Floating point invalid operation(set when trying to convert a number too large to an (un)signed integer)
+#define PSW_FRO 0x00200 /* Floating point reserved operand
+                           (set on denormal, NaN,
+                           or indefinite) */
+#define PSW_FIV 0x00100 /* Floating point invalid operation
+                           (set when trying to convert a number 
+                           too large to an (un)signed integer) */
 
-#define PSW_FZD 0x00080 // Floating point divide by zero
-#define PSW_FOV 0x00040 // Floating point overflow
-#define PSW_FUD 0x00020 // Floating point underflow
-#define PSW_FPR	0x00010 // Floating point precision degradation
+#define PSW_FZD 0x00080   /* Floating point divide by zero */
+#define PSW_FOV 0x00040   /* Floating point overflow */
+#define PSW_FUD 0x00020   /* Floating point underflow */
+#define PSW_FPR	0x00010 /* Floating point precision degradation */
 
 #define PSW_CY  0x00008
 #define PSW_OV  0x00004
 #define PSW_S   0x00002
 #define PSW_Z   0x00001
 
-//condition codes
+/* condition codes */
 #define COND_V  0
 #define COND_C  1
 #define COND_Z  2
@@ -125,23 +129,24 @@ enum
 #define TESTCOND_GE             (!((!!(S_REG[PSW]&PSW_S))^(!!(S_REG[PSW]&PSW_OV))))
 #define TESTCOND_GT             (! (((!!(S_REG[PSW]&PSW_S))^(!!(S_REG[PSW]&PSW_OV))) || (S_REG[PSW]&PSW_Z)) )
 
-// Tag layout
-//  Bit 0-21: TAG31-TAG10
-//  Bit 22-23: Validity bits(one for each 4-byte subblock)
-//  Bit 24-27: NECRV("Reserved")
-//  Bit 28-31: 0
+/* Tag layout
+ *  Bit 0-21: TAG31-TAG10
+ *  Bit 22-23: Validity bits(one for each 4-byte subblock)
+ *  Bit 24-27: NECRV("Reserved")
+ *  Bit 28-31: 0
+ */
 
 typedef enum
 {
- V810_EMU_MODE_FAST = 0,
- V810_EMU_MODE_ACCURATE = 1,
- _V810_EMU_MODE_COUNT
+   V810_EMU_MODE_FAST     = 0,
+   V810_EMU_MODE_ACCURATE = 1,
+   _V810_EMU_MODE_COUNT
 } V810_Emu_Mode;
 
-//
-// WARNING: Do NOT instantiate this class in multiple threads in such a way that both threads can be inside a method of this class at the same time.
-// To fix this, you'll need to put locks or something(re-engineer it to use state passed in through pointers) around the SoftFloat code.
-//
+/*
+ * WARNING: Do NOT instantiate this class in multiple threads in such a way that both threads can be inside a method of this class at the same time.
+ * To fix this, you'll need to put locks or something(re-engineer it to use state passed in through pointers) around the SoftFloat code.
+ */
 
 
 class V810
@@ -151,7 +156,9 @@ class V810
  V810();
  ~V810();
 
- // Pass TRUE for vb_mode if we're emulating a VB-specific enhanced V810 CPU core
+ /* Pass TRUE for vb_mode if we're emulating a VB-specific 
+    enhanced V810 CPU core
+  */
  bool Init(V810_Emu_Mode mode, bool vb_mode);
  void Kill(void);
 
@@ -166,7 +173,9 @@ class V810
  void SetIOReadHandlers(uint8 MDFN_FASTCALL (*read8)(v810_timestamp_t &, uint32), uint16 MDFN_FASTCALL (*read16)(v810_timestamp_t &, uint32), uint32 MDFN_FASTCALL (*read32)(v810_timestamp_t &, uint32));
  void SetIOWriteHandlers(void MDFN_FASTCALL (*write8)(v810_timestamp_t &, uint32, uint8), void MDFN_FASTCALL (*write16)(v810_timestamp_t &, uint32, uint16), void MDFN_FASTCALL (*write32)(v810_timestamp_t &, uint32, uint32));
 
- // Length specifies the number of bytes to map in, at each location specified by addresses[] (for mirroring)
+ /* Length specifies the number of bytes to map in, 
+  * at each location specified
+  * by addresses[] (for mirroring) */
  uint8 *SetFastMap(uint32 addresses[], uint32 length, unsigned int num_addresses, const char *name);
 
  INLINE void ResetTS(v810_timestamp_t new_base_timestamp)
@@ -208,9 +217,12 @@ class V810
 
  private:
 
- // Make sure P_REG[] is the first variable/array in this class, so non-zerfo offset encoding(at assembly level) isn't necessary to access it.
- uint32 P_REG[32];  // Program registers pr0-pr31
- uint32 S_REG[32];  // System registers sr0-sr31
+ /* Make sure P_REG[] is the first variable/array in this class, 
+    so non-zero offset encoding (at assembly level) 
+    isn't necessary to access it.
+  */
+ uint32 P_REG[32];  /* Program registers PR0-PR31 */
+ uint32 S_REG[32];  /* System registers  SR0-SR31 */
  uint32 PC;
  uint8 *PC_ptr;
  uint8 *PC_base;
@@ -219,7 +231,7 @@ class V810
  void RecalcIPendingCache(void);
 
  public:
- v810_timestamp_t v810_timestamp;	// Will never be less than 0.
+ v810_timestamp_t v810_timestamp;	/* Will never be less than 0. */
 
  private:
  v810_timestamp_t next_event_ts;
@@ -261,10 +273,14 @@ class V810
  void MDFN_FASTCALL (*IOWrite16)(v810_timestamp_t &timestamp, uint32 A, uint16 V);
  void MDFN_FASTCALL (*IOWrite32)(v810_timestamp_t &timestamp, uint32 A, uint32 V);
 
- bool MemReadBus32[256];      // Corresponding to the upper 8 bits of the memory address map.
+ bool MemReadBus32[256];      /* Corresponding to the upper 8 bits 
+                                 of the memory address map. */
  bool MemWriteBus32[256];
 
- int32 lastop;    // Set to -1 on FP/MUL/DIV, 0x100 on LD, 0x200 on ST, 0x400 on in, 0x800 on out, and the actual opcode * 2(or >= 0) on everything else.
+ int32 lastop;    /* Set to -1 on FP/MUL/DIV, 0x100 on LD, 0x200 on ST, 
+                     0x400 on in,
+                     0x800 on out, and the actual 
+                     opcode * 2(or >= 0) on everything else. */
 
  #define LASTOP_LD       0x100
  #define LASTOP_ST       0x200
@@ -273,9 +289,9 @@ class V810
 
  enum
  {
-  HALT_NONE = 0,
-  HALT_HALT = 1,
-  HALT_FATAL_EXCEPTION = 2
+    HALT_NONE = 0,
+    HALT_HALT = 1,
+    HALT_FATAL_EXCEPTION = 2
  };
 
  uint8 Halted;
@@ -292,17 +308,17 @@ class V810
 
  void Exception(uint32 handler, uint16 eCode);
 
- // Caching-related:
+ /* Caching-related: */
  typedef struct
  {
-  uint32 tag;
-  uint32 data[2];
-  bool data_valid[2];
+    uint32 tag;
+    uint32 data[2];
+    bool data_valid[2];
  } V810_CacheEntry_t;
 
  V810_CacheEntry_t Cache[128];
 
- // Bitstring variables.
+ /* Bitstring variables. */
  uint32 src_cache;
  uint32 dst_cache;
  bool have_src_cache, have_dst_cache;
@@ -311,13 +327,12 @@ class V810
  uint8 *FastMapAllocList;
 
 
- #ifdef WANT_DEBUGGER
+#ifdef WANT_DEBUGGER
  void (*CPUHook)(const v810_timestamp_t timestamp, uint32 PC);
  void (*ADDBT)(uint32 old_PC, uint32 new_PC, uint32);
- #endif
+#endif
 
-
- // For CacheDump and CacheRestore
+ /* For CacheDump and CacheRestore */
  void CacheOpMemStore(v810_timestamp_t &timestamp, uint32 A, uint32 V);
  uint32 CacheOpMemLoad(v810_timestamp_t &timestamp, uint32 A);
 
@@ -326,9 +341,10 @@ class V810
  void CacheRestore(v810_timestamp_t &timestamp, const uint32 SA);
 
  uint32 RDCACHE(v810_timestamp_t &timestamp, uint32 addr);
- //
- // End caching related
- //
+
+ /*
+  * End caching related
+  */
 
  uint16 RDOP(v810_timestamp_t &timestamp, uint32 addr, uint32 meow);
  void SetFlag(uint32 n, bool condition);

@@ -1,8 +1,8 @@
-///////////////////////////////////////////////////////////////
-// File:  v810_opt.h
-// 
-// Description:  Defines used in v810_dis.cpp
-//
+/*
+ * File:  v810_opt.h
+ * 
+ * Description:  Defines used in v810_dis.cpp
+ */
 
 #ifndef V810_OPT_H_
 #define V810_OPT_H_  
@@ -15,24 +15,26 @@
 #define sign_8(_value) ((uint32)(int8)(_value))
 #define sign_5(num) ((uint32)sign_x_to_s32(5, num))
 
-///////////////////////////////////////////////////////////////////
-// Define Modes
+/*
+ * Define Modes
+ */
 #define AM_I    0x01
 #define AM_II   0x02
 #define AM_III  0x03
 #define AM_IV   0x04
 #define AM_V    0x05
-#define AM_VIa  0x06    // Mode6 form1
-#define AM_VIb  0x0A    // Mode6 form2
+#define AM_VIa  0x06    /* Mode6 form1 */
+#define AM_VIb  0x0A    /* Mode6 form2 */
 #define AM_VII  0x07
 #define AM_VIII 0x08
 #define AM_IX   0x09
-#define AM_BSTR 0x0B  // Bit String Instructions
-#define AM_FPP  0x0C  // Floating Point Instructions
-#define AM_UDEF 0x0D  // Unknown/Undefined Instructions
+#define AM_BSTR 0x0B    /* Bit String Instructions */
+#define AM_FPP  0x0C    /* Floating Point Instructions */
+#define AM_UDEF 0x0D    /* Unknown/Undefined Instructions */
 
-///////////////////////////////////////////////////////////////////
-// Table of Instructions Address Modes
+/*
+ * Table of Instructions Address Modes
+ */
 
 static const int addr_mode[80] = {
   AM_I,  AM_I,  AM_I,  AM_I,  AM_I,  AM_I,  AM_I,  AM_I,
@@ -46,11 +48,13 @@ static const int addr_mode[80] = {
   AM_III, AM_III, AM_III, AM_III, AM_III, AM_III, AM_III, AM_III,
   AM_III, AM_III, AM_III, AM_III, AM_III, AM_III, AM_III, AM_III
 };
-// All instructions greater than 0x50 are undefined (this should not be posible of cource)
+
+/* All instructions greater than 0x50 are undefined (this should not be posible of cource) */
 
 
-///////////////////////////////////////////////////////////////////
-// Opcodes for V810 Instruction set
+/*
+ * Opcodes for V810 Instruction set
+ */
 #define         MOV                             0x00
 #define         ADD                             0x01
 #define         SUB                             0x02
@@ -110,8 +114,9 @@ static const int addr_mode[80] = {
 #define         OUT_W                           0x3F
 
 
-//      Branch Instructions ( Extended opcode only for Branch command)
-//  Common instrcutions commented out
+/*      Branch Instructions ( Extended opcode only for Branch command)
+ *  Common instrcutions commented out
+ */
 
 #define         BV                              0x40
 #define         BL                              0x41
@@ -151,7 +156,7 @@ static const int addr_mode[80] = {
 #define         NOTBSU                          0x0F
 
 
-//  Floating Point Subopcodes
+/*  Floating Point Subopcodes */
 #define         CMPF_S                          0x00
 
 #define         CVT_WS                          0x02
@@ -166,5 +171,5 @@ static const int addr_mode[80] = {
 #define         TRNC_SW                         0x0B
 #define         MPYHW                           0x0C
 
-#endif //DEFINE_H
+#endif /* DEFINE_H */
 
