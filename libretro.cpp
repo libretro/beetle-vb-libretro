@@ -1850,17 +1850,6 @@ static int Load(const uint8_t *data, size_t size)
    if(size > (1 << 24))
       return(0);
 
-   VB_HeaderInfo hinfo;
-
-   log_cb(RETRO_LOG_INFO, "Title:     %s\n", hinfo.game_title);
-   log_cb(RETRO_LOG_INFO, "Game ID Code: %u\n", hinfo.game_code);
-   log_cb(RETRO_LOG_INFO, "Manufacturer Code: %d\n", hinfo.manf_code);
-   log_cb(RETRO_LOG_INFO, "Version:   %u\n", hinfo.version);
-
-   log_cb(RETRO_LOG_INFO, "ROM:       %dKiB\n", (int)(size / 1024));
-
-   log_cb(RETRO_LOG_INFO, "V810 Emulation Mode: %s\n", (cpu_mode == V810_EMU_MODE_ACCURATE) ? "Accurate" : "Fast");
-
    VB_V810 = new V810();
    VB_V810->Init(cpu_mode, true);
 

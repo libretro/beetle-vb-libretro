@@ -674,8 +674,6 @@ static INLINE void WriteRegister(int32 timestamp, uint32 A, uint16 V)
 
 uint8 VIP_Read8(int32 timestamp, uint32 A)
 {
-   uint8_t ret = 0; //0xFF;
-
    //VIP_Update(timestamp);
 
    switch(A >> 16)

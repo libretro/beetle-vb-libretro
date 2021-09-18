@@ -90,36 +90,6 @@ flag float32_is_signaling_nan( float32 a )
 }
 
 /*----------------------------------------------------------------------------
-| Returns the result of converting the single-precision floating-point NaN
-| `a' to the canonical NaN format.  If `a' is a signaling NaN, the invalid
-| exception is raised.
-*----------------------------------------------------------------------------*/
-
-static commonNaNT float32ToCommonNaN( float32 a )
-{
-    commonNaNT z;
-
-    if ( float32_is_signaling_nan( a ) ) float_raise( float_flag_invalid );
-    z.sign = a>>31;
-    z.low = 0;
-    z.high = a<<9;
-    return z;
-
-}
-
-/*----------------------------------------------------------------------------
-| Returns the result of converting the canonical NaN `a' to the single-
-| precision floating-point format.
-*----------------------------------------------------------------------------*/
-
-static float32 commonNaNToFloat32( commonNaNT a )
-{
-
-    return ( ( (bits32) a.sign )<<31 ) | 0x7FC00000 | ( a.high>>9 );
-
-}
-
-/*----------------------------------------------------------------------------
 | Takes two single-precision floating-point values `a' and `b', one of which
 | is a NaN, and returns the appropriate NaN result.  If either `a' or `b' is a
 | signaling NaN, the invalid exception is raised.
