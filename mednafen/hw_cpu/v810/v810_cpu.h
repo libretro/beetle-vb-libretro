@@ -1,5 +1,6 @@
-////////////////////////////////////////////////////////////////
-// Defines for the V810 CPU
+/*
+ * Defines for the V810 CPU
+ */
 
 #ifndef V810_CPU_H_
 #define V810_CPU_H_
@@ -12,7 +13,7 @@
 #define V810_FAST_MAP_PSIZE     (1 << V810_FAST_MAP_SHIFT)
 #define V810_FAST_MAP_TRAMPOLINE_SIZE	1024
 
-// Exception codes
+/* Exception codes */
 enum
 {
  ECODE_TRAP_BASE =	0xFFA0,
@@ -21,8 +22,10 @@ enum
  ECODE_FIV =		0xFF70, // Floating point invalid operation
  ECODE_FZD =		0xFF68, // Floating point zero division
  ECODE_FOV = 		0xFF64, // Floating point overflow
-//#define ECODE_FUD	0xFF62 // Floating point underflow(unused on V810)
-//#define ECODE_FPR	0xFF61 // Floating point precision degradation(unused on V810)
+#if 0
+#define ECODE_FUD	0xFF62 // Floating point underflow(unused on V810)
+#define ECODE_FPR	0xFF61 // Floating point precision degradation(unused on V810)
+#endif
  ECODE_FRO = 		0xFF60 // Floating point reserved operand
 };
 
@@ -48,8 +51,8 @@ enum
 #define CHCW     24      //Cashe Controll Word
 #define ADDTRE   25      //ADDTRE
 
-//PSW Specifics
-#define PSW_IA  0xF0000 // All Interupt bits...
+/* PSW Specifics */
+#define PSW_IA  0xF0000 /* All Interupt bits... */
 #define PSW_I3  0x80000
 #define PSW_I2  0x40000
 #define PSW_I1  0x20000
