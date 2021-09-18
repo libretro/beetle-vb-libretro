@@ -332,9 +332,6 @@ void VSU_Update(int32 timestamp)
             }
          }
 
-         if(ch == 5 && chunk_clocks > NoiseLatcherClockDivider)
-            chunk_clocks = NoiseLatcherClockDivider;
-
          FreqCounter[ch] -= chunk_clocks;
          while(FreqCounter[ch] <= 0)
          {
