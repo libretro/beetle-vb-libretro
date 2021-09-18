@@ -102,7 +102,7 @@
         #define DO_AM_FPP()							\
             const uint32 arg1 = (tmpop >> 5) & 0x1F;				\
             const uint32 arg2 = (tmpop & 0x1F);					\
-            const uint32 arg3 = ((RB_RDOP(2) >> 10)&0x3F);			\
+            const uint32 arg3 = ((RB_RDOP(2, 2) >> 10)&0x3F);			\
 	    RB_INCPCBY4();
 
 
@@ -118,18 +118,18 @@
 
 
         #define DO_AM_IV()					\
-	    const uint32 arg1 = ((tmpop & 0x000003FF) << 16) | RB_RDOP(2);	\
+	    const uint32 arg1 = ((tmpop & 0x000003FF) << 16) | RB_RDOP(2, 2);	\
 
 
         #define DO_AM_V()					\
             const uint32 arg3 = (tmpop >> 5) & 0x1F;		\
             const uint32 arg2 = tmpop & 0x1F;			\
-            const uint32 arg1 = RB_RDOP(2);	\
+            const uint32 arg1 = RB_RDOP(2, 2);	\
             RB_INCPCBY4();						
 
 
         #define DO_AM_VIa()					\
-            const uint32 arg1 = RB_RDOP(2);	\
+            const uint32 arg1 = RB_RDOP(2, 2);	\
             const uint32 arg2 = tmpop & 0x1F;			\
             const uint32 arg3 = (tmpop >> 5) & 0x1F;		\
             RB_INCPCBY4();						\
@@ -137,7 +137,7 @@
 
         #define DO_AM_VIb()					\
             const uint32 arg1 = (tmpop >> 5) & 0x1F;		\
-            const uint32 arg2 = RB_RDOP(2);	\
+            const uint32 arg2 = RB_RDOP(2, 2);	\
             const uint32 arg3 = (tmpop & 0x1F);			\
             RB_INCPCBY4();					\
 

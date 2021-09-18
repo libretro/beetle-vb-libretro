@@ -329,7 +329,7 @@ class V810
  // End caching related
  //
 
- uint16 RDOP(v810_timestamp_t &timestamp, uint32 addr, uint32 meow = 2);
+ uint16 RDOP(v810_timestamp_t &timestamp, uint32 addr, uint32 meow);
  void SetFlag(uint32 n, bool condition);
  void SetSZ(uint32 value);
 
