@@ -1833,6 +1833,8 @@ static INLINE uint32 round_up_pow2(uint32 v)
 
 static int Load(const uint8_t *data, size_t size)
 {
+   uint32_t* Map_Addresses;
+   uint32_t map_size = 0;
    int i;
    uint64 A, sub_A;
    V810_Emu_Mode cpu_mode = (V810_Emu_Mode)MDFN_GetSettingI("vb.cpu_emulation");
@@ -1864,30 +1866,31 @@ static int Load(const uint8_t *data, size_t size)
       VB_V810->SetMemWriteBus32(i, false);
    }
 
-   std::vector<uint32> Map_Addresses;
+   Map_Addresses = (uint32_t*)malloc(8192 * 4);
 
-   for(A = 0; A < 1ULL << 32; A += (1 << 27))
+   for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
    {
-      for(sub_A = 5 << 24; sub_A < (6 << 24); sub_A += 65536)
-         Map_Addresses.push_back(A + sub_A);
+      for(uint64 sub_A = 5 << 24; sub_A < (6 << 24); sub_A += 65536)
+      {
+         Map_Addresses[map_size++] = A + sub_A;
+      }
    }
-
-   WRAM = VB_V810->SetFastMap(&Map_Addresses[0], 65536, Map_Addresses.size(), "WRAM");
-   Map_Addresses.clear();
-
+   WRAM = VB_V810->SetFastMap(Map_Addresses, 65536, map_size, "WRAM");
 
    // Round up the ROM size to 65536(we mirror it a little later)
    GPROM_Mask = (size < 65536) ? (65536 - 1) : (size - 1);
 
-   for(A = 0; A < 1ULL << 32; A += (1 << 27))
+   map_size = 0;
+   for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
    {
-      for(sub_A = 7 << 24; sub_A < (8 << 24); sub_A += GPROM_Mask + 1)
-         Map_Addresses.push_back(A + sub_A);
+      for(uint64 sub_A = 7 << 24; sub_A < (8 << 24); sub_A += GPROM_Mask + 1)
+      {
+         Map_Addresses[map_size++] = A + sub_A;
+      }
    }
 
-
-   GPROM = VB_V810->SetFastMap(&Map_Addresses[0], GPROM_Mask + 1, Map_Addresses.size(), "Cart ROM");
-   Map_Addresses.clear();
+	GPROM = VB_V810->SetFastMap(Map_Addresses, GPROM_Mask + 1, map_size, "Cart ROM");
+	map_size = 0;
 
    // Mirror ROM images < 64KiB to 64KiB
    for(uint64 i = 0; i < 65536; i += size)
@@ -1895,15 +1898,20 @@ static int Load(const uint8_t *data, size_t size)
 
    GPRAM_Mask = 0xFFFF;
 
-   for(A = 0; A < 1ULL << 32; A += (1 << 27))
+   for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
    {
-      for(sub_A = 6 << 24; sub_A < (7 << 24); sub_A += GPRAM_Mask + 1)
-         Map_Addresses.push_back(A + sub_A);
+      for(uint64 sub_A = 6 << 24; sub_A < (7 << 24); sub_A += GPRAM_Mask + 1)
+      {
+         Map_Addresses[map_size++] = A + sub_A;
+      }
    }
+   GPRAM = VB_V810->SetFastMap(Map_Addresses, GPRAM_Mask + 1, map_size, "Cart RAM");
 
-
-   GPRAM = VB_V810->SetFastMap(&Map_Addresses[0], GPRAM_Mask + 1, Map_Addresses.size(), "Cart RAM");
-   Map_Addresses.clear();
+   if (Map_Addresses)
+   {
+      free(Map_Addresses);
+      Map_Addresses = NULL;
+   }
 
    memset(GPRAM, 0, GPRAM_Mask + 1);
 
@@ -1986,7 +1994,7 @@ static int Load(const uint8_t *data, size_t size)
    MDFNMP_AddRAM(65536, 5 << 24, WRAM);
    if((GPRAM_Mask + 1) >= 32768)
       MDFNMP_AddRAM(GPRAM_Mask + 1, 6 << 24, GPRAM);
-   return(1);
+   return 1;
 }
 
 static void CloseGame(void)
