@@ -136,7 +136,7 @@ static int32_t smem_write(StateMem *st, void *buffer, uint32_t len)
 {
    if ((len + st->loc) > st->malloced)
    {
-      uint32_t newsize = (st->malloced >= 32768) ? st->malloced : (st->initial_malloc ? st->initial_malloc : 32768);
+      uint32_t newsize = (st->malloced >= 32768) ? st->malloced : 32768;
 
       while(newsize < (len + st->loc))
          newsize *= 2;

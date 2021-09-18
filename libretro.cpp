@@ -158,30 +158,25 @@ extern "C" void VBIRQ_Assert(int source, bool assert)
 
 static uint8 HWCTRL_Read(v810_timestamp_t &timestamp, uint32 A)
 {
-   uint8 ret = 0;
-
    /* HWCtrl Bogus Read? */
    if(A & 0x3)
-      return(ret);
+      return 0;
 
    switch(A & 0xFF)
    {
       case 0x18:
       case 0x1C:
       case 0x20:
-         ret = TIMER_Read(timestamp, A);
-         break;
+         return TIMER_Read(timestamp, A);
       case 0x24:
-         ret = WCR | 0xFC;
-         break;
+         return WCR | 0xFC;
       case 0x10:
       case 0x14:
       case 0x28:
-         ret = VBINPUT_Read(timestamp, A);
-         break;
+         return VBINPUT_Read(timestamp, A);
    }
 
-   return(ret);
+   return 0;
 }
 
 static void HWCTRL_Write(v810_timestamp_t &timestamp, uint32 A, uint8 V)
@@ -210,71 +205,56 @@ static void HWCTRL_Write(v810_timestamp_t &timestamp, uint32 A, uint8 V)
 
 uint8 MDFN_FASTCALL MemRead8(v810_timestamp_t &timestamp, uint32 A)
 {
-   uint8 ret = 0;
    A &= (1 << 27) - 1;
 
    switch(A >> 24)
    {
       case 0:
-         ret = VIP_Read8(timestamp, A);
-         break;
-
+         return VIP_Read8(timestamp, A);
       case 2:
-         ret = HWCTRL_Read(timestamp, A);
-         break;
-
+         return HWCTRL_Read(timestamp, A);
       case 1:
       case 3:
       case 4:
          break;
-
       case 5:
-         ret = WRAM[A & 0xFFFF];
-         break;
-
+         return WRAM[A & 0xFFFF];
       case 6:
          if(GPRAM)
-            ret = GPRAM[A & GPRAM_Mask];
+            return GPRAM[A & GPRAM_Mask];
          break;
-
       case 7:
-         ret = GPROM[A & GPROM_Mask];
-         break;
+         return GPROM[A & GPROM_Mask];
    }
-   return(ret);
+   return 0;
 }
 
 uint16 MDFN_FASTCALL MemRead16(v810_timestamp_t &timestamp, uint32 A)
 {
-   uint16 ret = 0;
-
    A &= (1 << 27) - 1;
 
    switch(A >> 24)
    {
       case 0:
-         ret = VIP_Read16(timestamp, A);
-         break;
+         return VIP_Read16(timestamp, A);
       case 2:
-         ret = HWCTRL_Read(timestamp, A);
-         break;
+         return HWCTRL_Read(timestamp, A);
       case 1:
       case 3:
       case 4:
          break;
       case 5:
-         ret = LoadU16_LE((uint16 *)&WRAM[A & 0xFFFF]);
-         break;
+         return LoadU16_LE((uint16 *)&WRAM[A & 0xFFFF]);
       case 6:
          if(GPRAM)
-            ret = LoadU16_LE((uint16 *)&GPRAM[A & GPRAM_Mask]);
+            return LoadU16_LE((uint16 *)&GPRAM[A & GPRAM_Mask]);
          break;
 
       case 7:
-         ret = LoadU16_LE((uint16 *)&GPROM[A & GPROM_Mask]);
-         break;
+         return LoadU16_LE((uint16 *)&GPROM[A & GPROM_Mask]);
    }
-   return(ret);
+
+   return 0;
 }
 
 void MDFN_FASTCALL MemWrite8(v810_timestamp_t &timestamp, uint32 A, uint8 V)
@@ -354,7 +334,7 @@ static void FixNonEvents(void)
 
 static void EventReset(void)
 {
-   next_vip_ts = VB_EVENT_NONONO;
+   next_vip_ts   = VB_EVENT_NONONO;
    next_timer_ts = VB_EVENT_NONONO;
    next_input_ts = VB_EVENT_NONONO;
 }
@@ -369,16 +349,16 @@ static INLINE int32 CalcNextTS(void)
    if(next_timestamp > next_input_ts)
       next_timestamp  = next_input_ts;
 
-   return(next_timestamp);
+   return next_timestamp;
 }
 
 static void RebaseTS(const v810_timestamp_t timestamp)
 {
-   assert(next_vip_ts > timestamp);
+   assert(next_vip_ts   > timestamp);
    assert(next_timer_ts > timestamp);
    assert(next_input_ts > timestamp);
 
-   next_vip_ts -= timestamp;
+   next_vip_ts   -= timestamp;
    next_timer_ts -= timestamp;
    next_input_ts -= timestamp;
 }
@@ -386,11 +366,11 @@ static void RebaseTS(const v810_timestamp_t timestamp)
 extern "C" void VB_SetEvent(const int type,
       const v810_timestamp_t next_timestamp)
 {
-   if(type == VB_EVENT_VIP)
+   if      (type == VB_EVENT_VIP)
       next_vip_ts = next_timestamp;
-   else if(type == VB_EVENT_TIMER)
+   else if (type == VB_EVENT_TIMER)
       next_timer_ts = next_timestamp;
-   else if(type == VB_EVENT_INPUT)
+   else if (type == VB_EVENT_INPUT)
       next_input_ts = next_timestamp;
 
    if(next_timestamp < VB_V810->GetEventNT())
@@ -399,22 +379,20 @@ extern "C" void VB_SetEvent(const int type,
 
 static int32 MDFN_FASTCALL EventHandler(const v810_timestamp_t timestamp)
 {
-   if(timestamp >= next_vip_ts)
+   if (timestamp >= next_vip_ts)
       next_vip_ts = VIP_Update(timestamp);
-
-   if(timestamp >= next_timer_ts)
+   if (timestamp >= next_timer_ts)
       next_timer_ts = TIMER_Update(timestamp);
-
-   if(timestamp >= next_input_ts)
+   if (timestamp >= next_input_ts)
       next_input_ts = VBINPUT_Update(timestamp);
 
-   return(CalcNextTS());
+   return CalcNextTS();
 }
 
-// Called externally from debug.cpp in some cases.
+/* Called externally from debug.cpp in some cases. */
 static void ForceEventUpdates(const v810_timestamp_t timestamp)
 {
-   next_vip_ts = VIP_Update(timestamp);
+   next_vip_ts   = VIP_Update(timestamp);
    next_timer_ts = TIMER_Update(timestamp);
    next_input_ts = VBINPUT_Update(timestamp);
 
@@ -445,8 +423,8 @@ static void SettingChanged(const char *name)
 {
    if(!strcmp(name, "vb.3dmode"))
    {
-      VB3DMode = MDFN_GetSettingUI("vb.3dmode");
-      uint32 prescale = MDFN_GetSettingUI("vb.liprescale");
+      VB3DMode              = MDFN_GetSettingUI("vb.3dmode");
+      uint32 prescale       = MDFN_GetSettingUI("vb.liprescale");
       uint32 sbs_separation = MDFN_GetSettingUI("vb.sidebyside.separation");
 
       VIP_Set3DMode(VB3DMode, MDFN_GetSettingUI("vb.3dreverse"), prescale, sbs_separation);
@@ -459,7 +437,7 @@ static void SettingChanged(const char *name)
          !strcmp(name, "vb.anaglyph.preset") || !strcmp(name, "vb.default_color"))
    {
       uint32 lcolor = MDFN_GetSettingUI("vb.anaglyph.lcolor"), rcolor = MDFN_GetSettingUI("vb.anaglyph.rcolor");
-      int preset = MDFN_GetSettingI("vb.anaglyph.preset");
+      int preset    = MDFN_GetSettingI("vb.anaglyph.preset");
 
       if(preset != ANAGLYPH_PRESET_DISABLED)
       {
@@ -1949,45 +1927,45 @@ static int Load(const uint8_t *data, size_t size)
 #endif
 
 
-   EmulatedVB.nominal_width = 384;
-   EmulatedVB.nominal_height = 224;
-   EmulatedVB.fb_width = 384;
-   EmulatedVB.fb_height = 224;
+   EmulatedVB.nominal_width        = 384;
+   EmulatedVB.nominal_height       = 224;
+   EmulatedVB.fb_width             = 384;
+   EmulatedVB.fb_height            = 224;
 
    switch(VB3DMode)
    {
       case VB3DMODE_VLI:
-         EmulatedVB.nominal_width = 768 * prescale;
+         EmulatedVB.nominal_width  = 768 * prescale;
          EmulatedVB.nominal_height = 224;
-         EmulatedVB.fb_width = 768 * prescale;
-         EmulatedVB.fb_height = 224;
+         EmulatedVB.fb_width       = 768 * prescale;
+         EmulatedVB.fb_height      = 224;
          break;
 
       case VB3DMODE_HLI:
-         EmulatedVB.nominal_width = 384;
+         EmulatedVB.nominal_width  = 384;
          EmulatedVB.nominal_height = 448 * prescale;
-         EmulatedVB.fb_width = 384;
-         EmulatedVB.fb_height = 448 * prescale;
+         EmulatedVB.fb_width       = 384;
+         EmulatedVB.fb_height      = 448 * prescale;
          break;
 
       case VB3DMODE_CSCOPE:
-         EmulatedVB.nominal_width = 512;
+         EmulatedVB.nominal_width  = 512;
          EmulatedVB.nominal_height = 384;
-         EmulatedVB.fb_width = 512;
-         EmulatedVB.fb_height = 384;
+         EmulatedVB.fb_width       = 512;
+         EmulatedVB.fb_height      = 384;
          break;
 
       case VB3DMODE_SIDEBYSIDE:
-         EmulatedVB.nominal_width = 384 * 2 + sbs_separation;
+         EmulatedVB.nominal_width  = 384 * 2 + sbs_separation;
          EmulatedVB.nominal_height = 224;
-         EmulatedVB.fb_width = 384 * 2 + sbs_separation;
-         EmulatedVB.fb_height = 224;
+         EmulatedVB.fb_width       = 384 * 2 + sbs_separation;
+         EmulatedVB.fb_height      = 224;
          break;
       default:
          break;
    }
-   EmulatedVB.lcm_width = EmulatedVB.fb_width;
-   EmulatedVB.lcm_height = EmulatedVB.fb_height;
+   EmulatedVB.lcm_width            = EmulatedVB.fb_width;
+   EmulatedVB.lcm_height           = EmulatedVB.fb_height;
 
 
    MDFNMP_Init(32768, ((uint64)1 << 27) / 32768);
@@ -2587,7 +2565,8 @@ static void update_input(void)
       for (i = 0; i < MAX_BUTTONS; i++)
          input_buf[j] |= (map[i] != -1u) && (joy_bits[j] & (1 << map[i])) ? (1 << i) : 0;
 
-      if (setting_vb_right_analog_to_digital) {
+      if (setting_vb_right_analog_to_digital)
+      {
          int16_t analog_x = input_state_cb(j, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
          int16_t analog_y = input_state_cb(j, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
 
@@ -2606,17 +2585,19 @@ static void update_input(void)
       input_buf[j] = u.b[0] | u.b[1] << 8;
 #endif
    }
-   // For low-battery mode switch
+
+   /* For low-battery mode switch */
    {
       static int pressed;
       if (joy_bits[0] & (1 << RETRO_DEVICE_ID_JOYPAD_X))
       {
          if (!pressed)
          {
-            pressed ^= 1;
+            pressed     ^= 1;
             low_battery ^= 1;
          }
-      } else
+      }
+      else
          pressed = 0;
    }
 }
@@ -2641,45 +2622,45 @@ static uint64_t video_frames, audio_frames;
 
 void retro_run(void)
 {
+   static int16_t sound_buf[0x10000];
+   static MDFN_Rect rects[FB_MAX_HEIGHT];
+   static unsigned width   = 0, height = 0;
+   EmulateSpecStruct spec  = {0};
+   bool resolution_changed = false;
+
    input_poll_cb();
 
    update_input();
 
-   static int16_t sound_buf[0x10000];
-   static MDFN_Rect rects[FB_MAX_HEIGHT];
-   static unsigned width = 0, height = 0;
-   bool resolution_changed = false;
-   rects[0].w = ~0;
+   rects[0].w              = ~0;
 
-   EmulateSpecStruct spec = {0};
-   spec.surface    = &surf;
-   spec.SoundRate  = 44100;
-   spec.LineWidths = rects;
-   spec.SoundBufMaxSize = sizeof(sound_buf) / 2;
-   spec.SoundBufSize = 0;
+   spec.surface            = &surf;
+   spec.SoundRate          = 44100;
+   spec.LineWidths         = rects;
+   spec.SoundBufMaxSize    = sizeof(sound_buf) / 2;
+   spec.SoundBufSize       = 0;
    spec.VideoFormatChanged = false;
    spec.SoundFormatChanged = false;
 
    if (memcmp(&last_pixel_format, &spec.surface->format, sizeof(struct MDFN_PixelFormat)))
    {
       spec.VideoFormatChanged = true;
-
-      last_pixel_format = spec.surface->format;
+      last_pixel_format       = spec.surface->format;
    }
 
    if (spec.SoundRate != last_sound_rate)
    {
       spec.SoundFormatChanged = true;
-      last_sound_rate = spec.SoundRate;
+      last_sound_rate         = spec.SoundRate;
    }
 
    Emulate(&spec, sound_buf);
 
-   int16 *const SoundBuf = sound_buf + spec.SoundBufSizeALMS * EmulatedVB.soundchan;
-   int32 SoundBufSize = spec.SoundBufSize - spec.SoundBufSizeALMS;
+   int16 *const SoundBuf       = sound_buf            + spec.SoundBufSizeALMS * EmulatedVB.soundchan;
+   int32 SoundBufSize          = spec.SoundBufSize    - spec.SoundBufSizeALMS;
    const int32 SoundBufMaxSize = spec.SoundBufMaxSize - spec.SoundBufSizeALMS;
 
-   spec.SoundBufSize = spec.SoundBufSizeALMS + SoundBufSize;
+   spec.SoundBufSize           = spec.SoundBufSizeALMS + SoundBufSize;
 
    if (width != spec.DisplayRect.w || height != spec.DisplayRect.h)
       resolution_changed = true;
@@ -2742,12 +2723,12 @@ void retro_deinit(void)
    if(surf.pixels)
       free(surf.pixels);
 #endif
-   surf.pixels8    = NULL;
-   surf.pixels16   = NULL;
-   surf.pixels     = NULL;
-   surf.w          = 0;
-   surf.h          = 0;
-   surf.pitchinpix = 0;
+   surf.pixels8           = NULL;
+   surf.pixels16          = NULL;
+   surf.pixels            = NULL;
+   surf.w                 = 0;
+   surf.h                 = 0;
+   surf.pitchinpix        = 0;
    surf.format.bpp        = 0;
    surf.format.colorspace = 0;
    surf.format.Rshift     = 0;
@@ -2817,7 +2798,6 @@ size_t retro_serialize_size(void)
    st.loc            = 0;
    st.len            = 0;
    st.malloced       = 0;
-   st.initial_malloc = 0;
 
    if (!MDFNSS_SaveSM(&st, 0, 0, NULL, NULL, NULL))
       return 0;
@@ -2840,7 +2820,6 @@ bool retro_serialize(void *data, size_t size)
    st.loc            = 0;
    st.len            = 0;
    st.malloced       = size;
-   st.initial_malloc = 0;
 
    ret = MDFNSS_SaveSM(&st, 0, 0, NULL, NULL, NULL);
 
@@ -2858,7 +2837,6 @@ bool retro_unserialize(const void *data, size_t size)
    st.loc            = 0;
    st.len            = size;
    st.malloced       = 0;
-   st.initial_malloc = 0;
 
    return MDFNSS_LoadSM(&st, 0, 0);
 }
@@ -2894,20 +2872,8 @@ size_t retro_get_memory_size(unsigned type)
 }
 
 void retro_cheat_reset(void) { }
-void retro_cheat_set(unsigned, bool, const char *) { }
-
-void MDFND_DispMessage(unsigned char *str)
-{
-   if (log_cb)
-      log_cb(RETRO_LOG_INFO, "%s\n", str);
-}
+void retro_cheat_set(unsigned a, bool b, const char *c) { }
 
 void MDFND_MidSync(const EmulateSpecStruct *) { }
 
 void MDFN_MidLineUpdate(EmulateSpecStruct *espec, int y) { }
-
-void MDFND_PrintError(const char* err)
-{
-   if (log_cb)
-      log_cb(RETRO_LOG_ERROR, "%s\n", err);
-}

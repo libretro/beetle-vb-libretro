@@ -21,7 +21,6 @@ typedef struct
    uint32_t loc;
    uint32_t len;
    uint32_t malloced;
-   uint32_t initial_malloc; /* A setting! */
 } StateMem;
 
 typedef struct
