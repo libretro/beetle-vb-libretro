@@ -58,7 +58,7 @@ v810_timestamp_t TIMER_Update(v810_timestamp_t timestamp)
          }
 
          VBIRQ_Assert(VBIRQ_SOURCE_TIMER, TimerStatusShadow && (TimerControl & TC_TIMZINT));
-         TimerDivider += (TimerControl & TC_TCLKSEL) ? 500 : 2000;
+         TimerDivider += (TimerControl & TC_TCLKSEL) ? 400 : 2000;
       }
    }
 
