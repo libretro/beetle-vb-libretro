@@ -103,7 +103,6 @@ static uint32 GPROM_Mask;
 
 V810 *VB_V810 = NULL;
 
-VSU *VB_VSU = NULL;
 static uint32 VSU_CycleFix;
 
 static uint8 WCR;
@@ -288,7 +287,7 @@ void MDFN_FASTCALL MemWrite8(v810_timestamp_t &timestamp, uint32 A, uint8 V)
          VIP_Write8(timestamp, A, V);
          break;
       case 1:
-         VB_VSU->Write((timestamp + VSU_CycleFix) >> 2, A, V);
+         VSU_Write((timestamp + VSU_CycleFix) >> 2, A, V);
          break;
       case 2:
          HWCTRL_Write(timestamp, A, V);
@@ -320,7 +319,7 @@ void MDFN_FASTCALL MemWrite16(v810_timestamp_t &timestamp, uint32 A, uint16 V)
          VIP_Write16(timestamp, A, V);
          break;
       case 1:
-         VB_VSU->Write((timestamp + VSU_CycleFix) >> 2, A, V);
+         VSU_Write((timestamp + VSU_CycleFix) >> 2, A, V);
          break;
       case 2:
          HWCTRL_Write(timestamp, A, V);
@@ -427,7 +426,7 @@ static void VB_Power(void)
    memset(WRAM, 0, 65536);
 
    VIP_Power();
-   VB_VSU->Power();
+   VSU_Power();
    TIMER_Power();
    VBINPUT_Power();
 
@@ -1909,7 +1908,7 @@ static int Load(const uint8_t *data, size_t size)
    memset(GPRAM, 0, GPRAM_Mask + 1);
 
    VIP_Init();
-   VB_VSU = new VSU(&sbuf[0], &sbuf[1]);
+   VSU_Init(&sbuf[0], &sbuf[1]);
    VBINPUT_Init();
 
    VB3DMode = MDFN_GetSettingUI("vb.3dmode");
@@ -1996,12 +1995,6 @@ static void CloseGame(void)
    VIP_Kill();
 #endif
 
-   if(VB_VSU)
-   {
-      delete VB_VSU;
-      VB_VSU = NULL;
-   }
-
 #if 0
    if(GPRAM)
    {
@@ -2055,7 +2048,7 @@ static void Emulate(EmulateSpecStruct *espec, int16_t *sound_buf)
    FixNonEvents();
    ForceEventUpdates(v810_timestamp);
 
-   VB_VSU->EndFrame((v810_timestamp + VSU_CycleFix) >> 2);
+   VSU_EndFrame((v810_timestamp + VSU_CycleFix) >> 2);
 
    if(sound_buf)
    {
@@ -2125,7 +2118,7 @@ extern "C" int StateAction(StateMem *sm, int load, int data_only)
 
    ret &= VB_V810->StateAction(sm, load, data_only);
 
-   ret &= VB_VSU->StateAction(sm, load, data_only);
+   ret &= VSU_StateAction(sm, load, data_only);
    ret &= TIMER_StateAction(sm, load, data_only);
    ret &= VBINPUT_StateAction(sm, load, data_only);
    ret &= VIP_StateAction(sm, load, data_only);
