@@ -556,7 +556,7 @@ INLINE uint32 V810::GetSREG(unsigned int which)
 /* Define accurate mode defines */
 #define RB_GETPC()      PC
 #ifdef _MSC_VER
-#define RB_RDOP(PC_offset) RDOP(timestamp, PC + PC_offset)
+#define RB_RDOP(PC_offset, ...) RDOP(timestamp, PC + PC_offset, ## __VA_ARGS__)
 #else
 #define RB_RDOP(PC_offset, ...) RDOP(timestamp, PC + PC_offset, ## __VA_ARGS__)
 #endif
