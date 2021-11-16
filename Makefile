@@ -428,7 +428,6 @@ export LIB := $(LIB);$(WindowsSdkDir);$(INETSDK)/Lib
 TARGET := $(TARGET_NAME)_libretro.dll
 LDFLAGS += -DLL
 CFLAGS += -D_CRT_SECURE_NO_DEPRECATE
-WINDOWS_VERSION=1
 
 # Windows MSVC 2017 all architectures
 else ifneq (,$(findstring windows_msvc2017,$(platform)))
@@ -436,7 +435,6 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
     NO_GCC := 1
     CFLAGS += -DNOMINMAX
     CXXFLAGS += -DNOMINMAX
-    WINDOWS_VERSION = 1
 
 	PlatformSuffix = $(subst windows_msvc2017_,,$(platform))
 	ifneq (,$(findstring desktop,$(PlatformSuffix)))
