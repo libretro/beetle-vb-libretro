@@ -15,7 +15,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,6 +22,7 @@
 #include <boolean.h>
 
 #include <compat/msvc.h>
+#include <compat/strl.h>
 #include <retro_inline.h>
 
 #include "state.h"
@@ -219,7 +219,7 @@ static bool SubWrite(StateMem *st, SFORMAT *sf)
       }
 
       bytesize    = sf->size;
-      nameo[0]    = snprintf(nameo + 1, 256, "%s", sf->name);
+      nameo[0]    = strlcpy(nameo + 1, sf->name, 256);
 
       smem_write(st, nameo, 1 + nameo[0]);
       smem_write32le(st, bytesize);
