@@ -39,8 +39,8 @@ these four paragraphs for those parts of this code that are retained.
 */
 
 
-#include "mednafen-gcc.h"
 #include "softfloat.h"
+#include "mednafen-gcc.h"
 
 /*----------------------------------------------------------------------------
 | Floating-point rounding mode and exception flags.
