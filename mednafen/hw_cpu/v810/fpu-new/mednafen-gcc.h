@@ -9,12 +9,14 @@
 | to the same as `int'.
 *----------------------------------------------------------------------------*/
 typedef char flag;
+#ifndef __MDFN_TYPES
 typedef uint8_t uint8;
 typedef int8_t int8;
 typedef uint16_t uint16;
 typedef int16_t int16;
 typedef uint32_t uint32;
 typedef int32_t int32;
+#endif
 
 /*----------------------------------------------------------------------------
 | Each of the following `typedef's defines a type that holds integers
