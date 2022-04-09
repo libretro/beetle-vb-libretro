@@ -30,8 +30,8 @@ static uint8 FB[2][2][0x6000];
 static uint16 CHR_RAM[0x8000 / sizeof(uint16)];
 static uint16 DRAM[0x20000 / sizeof(uint16)];
 
-// Helper functions for the V810 VIP RAM read/write handlers.
-//  "Memory Array 16 (Write/Read) (16/8)"
+/* Helper functions for the V810 VIP RAM read/write handlers.
+ *  "Memory Array 16 (Write/Read) (16/8)" */
 #define VIP__GETP16(array, address) ( (uint16 *)&((uint8 *)(array))[(address)] )
 
 #ifdef MSB_FIRST
@@ -96,7 +96,7 @@ static uint32 BrightCLUT[2][4];
 static double ColorLUTNoGC[2][256][3];
 static uint32 AnaSlowColorLUT[256][256];
 
-// A few settings:
+/* A few settings: */
 static bool InstantDisplayHack;
 static bool AllowDrawSkip;
 
@@ -143,7 +143,7 @@ static void MakeColorLUT(void)
       }
    }
 
-   // Anaglyph slow-mode LUT calculation
+   /* Anaglyph slow-mode LUT calculation */
    for(l_b = 0; l_b < 256; l_b++)
    {
       for(r_b = 0; r_b < 256; r_b++)
@@ -172,7 +172,6 @@ static void MakeColorLUT(void)
 static void RecalcBrightnessCache(void)
 {
    unsigned i, lr;
-   //printf("BRTA: %d, BRTB: %d, BRTC: %d, Rest: %d\n", BRTA, BRTB, BRTC, REST);
    int32 CumulativeTime = (BRTA + 1 + BRTB + 1 + BRTC + 1 + REST + 1) + 1;
    int32 MaxTime = 128;
 
@@ -203,13 +202,6 @@ static void RecalcBrightnessCache(void)
       if(btemp[2] < 0)
          btemp[2] = 0;
 
-      //btemp[3] = (i * CumulativeTime) + BRTA + 1 + BRTB + 1 + BRTC;
-      //if(btemp[3] > MaxTime)
-      // btemp[3] = MaxTime;
-      //btemp[3] -= (i * CumulativeTime);
-      //if(btemp[3] < 0)
-      // btemp[3] = 0;
-
       btemp[3] = (i * CumulativeTime) + BRTA + BRTB + BRTC + 1;
       if(btemp[3] > MaxTime)
          btemp[3] = MaxTime;
@@ -221,8 +213,6 @@ static void RecalcBrightnessCache(void)
       BrightnessCache[2] += btemp[2];
       BrightnessCache[3] += btemp[3];
    }
-
-   //printf("BC: %d %d %d %d\n", BrightnessCache[0], BrightnessCache[1], BrightnessCache[2], BrightnessCache[3]);
 
    for(i = 0; i < 4; i++)
       BrightnessCache[i] = 255 * BrightnessCache[i] / MaxTime;
@@ -339,9 +329,9 @@ static bool DisplayActive;
 #define XPCTRL_XP_RST	0x0001
 #define XPCTRL_XP_EN	0x0002
 static uint16 XPCTRL;
-static uint16 SBCMP;	// Derived from XPCTRL
+static uint16 SBCMP;	/* Derived from XPCTRL */
 
-static uint16 SPT[4];	// SPT0~SPT3, 5f848~5f84e
+static uint16 SPT[4];	/* SPT0~SPT3, 5f848~5f84e */
 static uint16 GPLT[4];
 static uint8 GPLT_Cache[4][4];
 
@@ -383,8 +373,6 @@ static bool DrawingFB;
 static uint32 DrawingBlock;
 static int32 SB_Latch;
 static int32 SBOUT_InactiveTime;
-
-//static uint8 CTA_L, CTA_R;
 
 static void CheckIRQ(void)
 {
@@ -469,7 +457,7 @@ void VIP_Power(void)
 
 static INLINE uint16 ReadRegister(int32 timestamp, uint32 A)
 {
-   uint16_t ret = 0;	//0xFFFF;
+   uint16_t ret = 0;
 
    switch(A & 0xFE)
    {
@@ -482,7 +470,6 @@ static INLINE uint16 ReadRegister(int32 timestamp, uint32 A)
          break;
 
       case 0x20:
-         //printf("Read DPSTTS at %d\n", timestamp);
          ret = DPCTRL & 0x702;
          if((DisplayRegion & 1) && DisplayActive)
          {
@@ -493,11 +480,13 @@ static INLINE uint16 ReadRegister(int32 timestamp, uint32 A)
 
             ret |= DPBSY << 2;
          }
-         //if(!(DisplayRegion & 1))	// FIXME? (Had to do it this way for Galactic Pinball...)
+#if 0
+         if(!(DisplayRegion & 1))	/* FIXME? (Had to do it this way for Galactic Pinball...) */
+#endif
          ret |= 1 << 6;
          break;
 
-         // Note: Upper bits of BRTA, BRTB, BRTC, and REST(?) are 0 when read(on real hardware)
+         /* Note: Upper bits of BRTA, BRTB, BRTC, and REST(?) are 0 when read(on real hardware) */
       case 0x24:
          ret = BRTA;
          break;
@@ -529,10 +518,10 @@ static INLINE uint16 ReadRegister(int32 timestamp, uint32 A)
             ret |= 0x8000;
             ret |= /*DrawingBlock*/SB_Latch << 8;
          }
-         break;     // XPSTTS, read-only
+         break;     /* XPSTTS, read-only */
 
       case 0x44:
-         ret = 2;	// VIP version.  2 is a known valid version, while the validity of other numbers is unknown, so we'll just go with 2.
+         ret = 2;	/* VIP version.  2 is a known valid version, while the validity of other numbers is unknown, so we'll just go with 2. */
          break;
 
       case 0x48:
@@ -569,7 +558,7 @@ static INLINE void WriteRegister(int32 timestamp, uint32 A, uint16 V)
    switch(A & 0xFE)
    {
       case 0x00:
-         break; // Interrupt pending, read-only
+         break; /* Interrupt pending, read-only */
       case 0x02:
          InterruptEnable = V & 0xE01F;
          CheckIRQ();
@@ -580,10 +569,10 @@ static INLINE void WriteRegister(int32 timestamp, uint32 A, uint16 V)
          break;
 
       case 0x20:
-         break; // Display control, read-only.
+         break; /* Display control, read-only. */
 
       case 0x22:
-         DPCTRL = V & (0x703); // Display-control, write-only
+         DPCTRL = V & (0x703); /* Display-control, write-only */
          if(V & 1)
          {
             DisplayActive = false;
@@ -593,37 +582,37 @@ static INLINE void WriteRegister(int32 timestamp, uint32 A, uint16 V)
          break;
 
       case 0x24:
-         BRTA = V & 0xFF;	// BRTA
+         BRTA = V & 0xFF;	/* BRTA */
          RecalcBrightnessCache();
          break;
 
       case 0x26:
-         BRTB = V & 0xFF;	// BRTB
+         BRTB = V & 0xFF;	/* BRTB */
          RecalcBrightnessCache();
          break;
 
       case 0x28:
-         BRTC = V & 0xFF;	// BRTC
+         BRTC = V & 0xFF;	/* BRTC */
          RecalcBrightnessCache();
          break;
 
       case 0x2A:
-         REST = V & 0xFF;	// REST
+         REST = V & 0xFF;	/* REST */
          RecalcBrightnessCache();
          break;
 
       case 0x2E:
-         FRMCYC = V & 0xF;	// FRMCYC, write-only?
+         FRMCYC = V & 0xF;	/* FRMCYC, write-only? */
          break;
 
       case 0x30:
-         break;	// CTA, read-only(
+         break;	/* CTA, read-only( */
 
       case 0x40:
-         break;	// XPSTTS, read-only
+         break;	/* XPSTTS, read-only */
 
       case 0x42:
-         XPCTRL = V & 0x0002;	// XPCTRL, write-only
+         XPCTRL = V & 0x0002;	/* XPCTRL, write-only */
          SBCMP = (V >> 8) & 0x1F;
 
          if(V & 1)
@@ -636,7 +625,7 @@ static INLINE void WriteRegister(int32 timestamp, uint32 A, uint16 V)
          break;
 
       case 0x44:
-         break;	// Version Control, read-only?
+         break;	/* Version Control, read-only? */
 
       case 0x48:
       case 0x4a:
@@ -674,8 +663,6 @@ static INLINE void WriteRegister(int32 timestamp, uint32 A, uint16 V)
 
 uint8 VIP_Read8(int32 timestamp, uint32 A)
 {
-   //VIP_Update(timestamp);
-
    switch(A >> 16)
    {
       case 0x0:
@@ -702,14 +689,11 @@ uint8 VIP_Read8(int32 timestamp, uint32 A)
          break;
    }
 
-   //VB_SetEvent(VB_EVENT_VIP, timestamp + CalcNextEvent());
    return 0;
 }
 
 uint16 VIP_Read16(int32 timestamp, uint32 A)
 {
-   //VIP_Update(timestamp); 
-
    switch(A >> 16)
    {
       case 0x0:
@@ -735,17 +719,11 @@ uint16 VIP_Read16(int32 timestamp, uint32 A)
          break;
    }
 
-   //VB_SetEvent(VB_EVENT_VIP, timestamp + CalcNextEvent());
    return 0;
 }
 
 void VIP_Write8(int32 timestamp, uint32 A, uint8 V)
 {
-   //VIP_Update(timestamp); 
-
-   //if(A >= 0x3DC00 && A < 0x3E000)
-   // printf("%08x %02x\n", A, V);
-
    switch(A >> 16)
    {
       case 0x0:
@@ -775,17 +753,10 @@ void VIP_Write8(int32 timestamp, uint32 A, uint8 V)
             VIP_MA16W8(CHR_RAM, A & 0x7FFF, V);
          break;
    }
-
-   //VB_SetEvent(VB_EVENT_VIP, timestamp + CalcNextEvent());
 }
 
 void VIP_Write16(int32 timestamp, uint32 A, uint16 V)
 {
-   //VIP_Update(timestamp); 
-
-   //if(A >= 0x3DC00 && A < 0x3E000)
-   // printf("%08x %04x\n", A, V);
-
    switch(A >> 16)
    {
       case 0x0:
@@ -812,9 +783,6 @@ void VIP_Write16(int32 timestamp, uint32 A, uint16 V)
             VIP_MA16W16(CHR_RAM, A & 0x7FFF, V);
          break;
    }
-
-
-   //VB_SetEvent(VB_EVENT_VIP, timestamp + CalcNextEvent());
 }
 
 static struct MDFN_Surface *surface;
@@ -1361,7 +1329,7 @@ v810_timestamp_t MDFN_FASTCALL VIP_Update(const v810_timestamp_t timestamp)
          DrawingCounter -= chunk_clocks;
          if(DrawingCounter <= 0)
          {
-            MDFN_ALIGN(8) uint8 DrawingBuffers[2][512 * 8];	// Don't decrease this from 512 unless you adjust vip_draw.inc(including areas that draw off-visible >= 384 and >= -7 for speed reasons)
+            MDFN_ALIGN(8) uint8 DrawingBuffers[2][512 * 8];	/* Don't decrease this from 512 unless you adjust vip_draw.inc(including areas that draw off-visible >= 384 and >= -7 for speed reasons) */
 
             if(skip && InstantDisplayHack && AllowDrawSkip) { }
             else
@@ -1391,7 +1359,7 @@ v810_timestamp_t MDFN_FASTCALL VIP_Update(const v810_timestamp_t timestamp)
             }
 
             SBOUT_InactiveTime = running_timestamp + 1120;
-            SB_Latch = DrawingBlock;	// Not exactly correct, but probably doesn't matter.
+            SB_Latch = DrawingBlock;	/* Not exactly correct, but probably doesn't matter. */
 
             DrawingBlock++;
             if(DrawingBlock == 28)
@@ -1434,11 +1402,11 @@ v810_timestamp_t MDFN_FASTCALL VIP_Update(const v810_timestamp_t timestamp)
 
             if(DisplayActive)
             {
-               if(DisplayRegion & 1)	// Did we just finish displaying an active region?
+               if(DisplayRegion & 1)	/* Did we just finish displaying an active region? */
                {
-                  if(DisplayRegion & 2)	// finished displaying right eye
+                  if(DisplayRegion & 2)	/* finished displaying right eye */
                      InterruptPending |= INT_RFB_END;
-                  else		// Otherwise, left eye
+                  else		/* Otherwise, left eye */
                      InterruptPending |= INT_LFB_END;
 
                   CheckIRQ();
@@ -1447,7 +1415,7 @@ v810_timestamp_t MDFN_FASTCALL VIP_Update(const v810_timestamp_t timestamp)
 
             DisplayRegion = (DisplayRegion + 1) & 3;
 
-            if(DisplayRegion == 0)	// New frame start
+            if(DisplayRegion == 0)	/* New frame start */
             {
                DisplayActive = DPCTRL & 0x2;
 
@@ -1457,7 +1425,7 @@ v810_timestamp_t MDFN_FASTCALL VIP_Update(const v810_timestamp_t timestamp)
                   CheckIRQ();
                }
                GameFrameCounter++;
-               if(GameFrameCounter > FRMCYC) // New game frame start?
+               if(GameFrameCounter > FRMCYC) /* New game frame start? */
                {
                   InterruptPending |= INT_GAME_START;
                   CheckIRQ();
@@ -1478,7 +1446,7 @@ v810_timestamp_t MDFN_FASTCALL VIP_Update(const v810_timestamp_t timestamp)
                if(!skip && InstantDisplayHack)
                {
                   int lr;
-                  // Ugly kludge, fix in the future.
+                  /* Ugly kludge, fix in the future. */
                   int32 save_DisplayRegion = DisplayRegion;
                   int32 save_Column = Column;
                   uint8 save_Repeat = Repeat;
@@ -1545,7 +1513,7 @@ int VIP_StateAction(StateMem *sm, int load, int data_only)
       SFVAR(XPCTRL),
       SFVAR(SBCMP),
       SFARRAY16(SPT, 4),
-      SFARRAY16(GPLT, 4),	// FIXME
+      SFARRAY16(GPLT, 4),	/* FIXME */
       SFARRAY16(JPLT, 4),
 
       SFVAR(BKCOL),
@@ -1646,7 +1614,7 @@ void VIP_SetRegister(const unsigned int id, const uint32 value)
          break;
 
       case VIP_GSREG_DPCTRL:
-         DPCTRL = value & 0x703;	// FIXME(Lower bit?)
+         DPCTRL = value & 0x703;	/* FIXME(Lower bit?) */
          break;
 
       case VIP_GSREG_BRTA:

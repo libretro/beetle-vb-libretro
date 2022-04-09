@@ -18,14 +18,7 @@
  */
 
 
-    // Macro test taken from http://gcc.gnu.org/viewcvs/trunk/gcc/testsuite/gcc.dg/20020919-1.c?view=markup&pathrev=142696
-    //#if defined (__powerpc__) || defined (__PPC__) || defined (__ppc__)	|| defined (__POWERPC__) || defined (PPC) || defined (_IBMR2) 
-    //	v810_timestamp_t timestamp_rl asm("15") = v810_timestamp;
-    //#elif defined(__x86_64__)
-    //	v810_timestamp_t timestamp_rl asm("r11") = v810_timestamp;
-    //#else
-	v810_timestamp_t timestamp_rl = v810_timestamp;
-    //#endif
+    v810_timestamp_t timestamp_rl = v810_timestamp;
 
     uint32 opcode;
     uint32 tmp2;
@@ -63,12 +56,11 @@
 	old_PC = RB_GETPC();
 	#endif
 
-        P_REG[0] = 0; //Zero the Zero Reg!!!
+        P_REG[0] = 0; /* Zero the Zero Reg!!! */
 
 	RB_CPUHOOK(RB_GETPC());
 
 	{
-	 //printf("%08x\n", RB_GETPC());
 	 {
 	  v810_timestamp_t timestamp = timestamp_rl;
 
@@ -78,8 +70,6 @@
 	 }
 
        	 opcode = (tmpop >> 9) | IPendingCache;
-
-	 //printf("%02x\n", opcode >> 1);
 
           #ifdef _MSC_VER
              #include "v810_op_table_msvc.inc"
@@ -92,7 +82,7 @@
              goto *op_goto_table[opcode];
              #endif
 
-	// Bit string subopcodes
+	/* Bit string subopcodes */
         #define DO_AM_BSTR()							\
             const uint32 arg1 = (tmpop >> 5) & 0x1F;				\
             const uint32 arg2 = (tmpop & 0x1F);					\
@@ -198,7 +188,7 @@
             ADDCLOCK(1);
             val = P_REG[arg1] & 0x1F;
 
-            // set CY before we destroy the regisrer info....
+            /* set CY before we destroy the regisrer info.... */
             SetFlag(PSW_CY, (val != 0) && ((P_REG[arg2] >> (32 - val))&0x01) );
 	    SetFlag(PSW_OV, false);
             SetPREG(arg2, P_REG[arg2] << val);
@@ -208,7 +198,7 @@
 	BEGIN_OP(SHR);
             ADDCLOCK(1);
             val = P_REG[arg1] & 0x1F;
-            // set CY before we destroy the regisrer info....
+            /* set CY before we destroy the regisrer info.... */
             SetFlag(PSW_CY, (val) && ((P_REG[arg2] >> (val-1))&0x01));
 	    SetFlag(PSW_OV, false);
 	    SetPREG(arg2, P_REG[arg2] >> val);
@@ -217,7 +207,7 @@
 
 	BEGIN_OP(JMP);
 
-	    (void)arg2;		// arg2 is unused.
+	    (void)arg2;		/* arg2 is unused. */
 
             ADDCLOCK(3);
             RB_SETPC((P_REG[arg1] & 0xFFFFFFFE));
@@ -332,7 +322,7 @@
 				if (TESTCOND_NS) P_REG[arg2] = 1;
 				break;
 			case COND_F:
-				//always false! do nothing more
+				/*always false! do nothing more */
 				break;
 			case COND_GE:
 				if (TESTCOND_GE) P_REG[arg2] = 1;
@@ -355,7 +345,7 @@
 	BEGIN_OP(SHR_I);
             ADDCLOCK(1);
 	    SetFlag(PSW_CY, arg1 && ((P_REG[arg2] >> (arg1-1))&0x01) );
-            // set CY before we destroy the regisrer info....
+            /* set CY before we destroy the regisrer info.... */
             SetPREG(arg2, P_REG[arg2] >> arg1);
 	    SetFlag(PSW_OV, false);
 	    SetSZ(P_REG[arg2]);
@@ -364,7 +354,7 @@
 	BEGIN_OP(SHL_I);
             ADDCLOCK(1);
             SetFlag(PSW_CY, arg1 && ((P_REG[arg2] >> (32 - arg1))&0x01) );
-            // set CY before we destroy the regisrer info....
+            /* set CY before we destroy the regisrer info.... */
 
             SetPREG(arg2, P_REG[arg2] << arg1);
 	    SetFlag(PSW_OV, false);
@@ -381,20 +371,20 @@
 	    SetSZ(P_REG[arg2]);
 	END_OP();
 
-	BEGIN_OP(LDSR);		// Loads a Sys Reg with the value in specified PR
-             ADDCLOCK(1);	// ?
+	BEGIN_OP(LDSR);		/* Loads a Sys Reg with the value in specified PR */
+             ADDCLOCK(1);	/* ? */
 
 	     SetSREG(timestamp, arg1 & 0x1F, P_REG[arg2 & 0x1F]);
 	END_OP();
 
-	BEGIN_OP(STSR);		// Loads a PR with the value in specified Sys Reg
-             ADDCLOCK(1);	// ?
+	BEGIN_OP(STSR);		/* Loads a PR with the value in specified Sys Reg */
+             ADDCLOCK(1);	/* ? */
              P_REG[arg2 & 0x1F] = GetSREG(arg1 & 0x1F);
 	END_OP();
 
         BEGIN_OP(EI);
-	    (void)arg1;         // arg1 is unused.
-	    (void)arg2;         // arg2 is unused.
+	    (void)arg1;         /* arg1 is unused. */
+	    (void)arg2;         /* arg2 is unused. */
 
 	    if(VBMode)
 	    {
@@ -412,8 +402,8 @@
         END_OP();
 
 	BEGIN_OP(DI);
-            (void)arg1;         // arg1 is unused.
-            (void)arg2;         // arg2 is unused.
+            (void)arg1;         /* arg1 is unused. */
+            (void)arg2;         /* arg2 is unused. */
 
             if(VBMode)
             {
@@ -572,15 +562,15 @@
             SetPREG(arg3, (arg1 << 16) + P_REG[arg2]);
 	END_OP();
 
-	// LD.B
+	/* LD.B */
 	BEGIN_OP(LD_B);
 		        ADDCLOCK(1);
 			tmp2 = (sign_16(arg1)+P_REG[arg2])&0xFFFFFFFF;
 			
 			SetPREG(arg3, sign_8(MemRead8(timestamp, tmp2)));
 
-			//should be 3 clocks when executed alone, 2 when precedes another LD, or 1
-			//when precedes an instruction with many clocks (I'm guessing FP, MUL, DIV, etc)
+			/*should be 3 clocks when executed alone, 2 when precedes another LD, or 1
+			 *when precedes an instruction with many clocks (I'm guessing FP, MUL, DIV, etc) */
 			if(lastop >= 0)
 			{
 				if(lastop == LASTOP_LD)
@@ -595,7 +585,7 @@
 			lastop = LASTOP_LD;
 	END_OP_SKIPLO();
 
-	// LD.H
+	/* LD.H */
 	BEGIN_OP(LD_H);
                         ADDCLOCK(1);
 			tmp2 = (sign_16(arg1)+P_REG[arg2]) & 0xFFFFFFFE;
@@ -616,7 +606,7 @@
 	END_OP_SKIPLO();
 
 
-	// LD.W
+	/* LD.W */
 	BEGIN_OP(LD_W);
                         ADDCLOCK(1);
 
@@ -657,7 +647,7 @@
 			lastop = LASTOP_LD;
 	END_OP_SKIPLO();
 
-	// ST.B
+	/* ST.B */
 	BEGIN_OP(ST_B);
              ADDCLOCK(1);
              MemWrite8(timestamp, sign_16(arg2)+P_REG[arg3], P_REG[arg1] & 0xFF);
@@ -669,7 +659,7 @@
 	     lastop = LASTOP_ST;
 	END_OP_SKIPLO();
 
-	// ST.H
+	/* ST.H */
 	BEGIN_OP(ST_H);
              ADDCLOCK(1);
 
@@ -682,7 +672,7 @@
 	     lastop = LASTOP_ST;
 	END_OP_SKIPLO();
 
-	// ST.W
+	/* ST.W */
 	BEGIN_OP(ST_W);
              ADDCLOCK(1);
   	     tmp2 = (sign_16(arg2)+P_REG[arg3]) & 0xFFFFFFFC;
@@ -709,7 +699,7 @@
 	     lastop = LASTOP_ST;
 	END_OP_SKIPLO();
 
-	// IN.B
+	/* IN.B */
 	BEGIN_OP(IN_B);
 	    {
              ADDCLOCK(3);
@@ -719,7 +709,7 @@
 	END_OP_SKIPLO();
 
 
-	// IN.H
+	/* IN.H */
 	BEGIN_OP(IN_H);
 	    {
              ADDCLOCK(3);
@@ -729,7 +719,7 @@
 	END_OP_SKIPLO();
 
 
-	// IN.W
+	/* IN.W */
 	BEGIN_OP(IN_W);
 	     if(IORead32)
 	     {
@@ -747,7 +737,7 @@
 	END_OP_SKIPLO();
 
 
-	// OUT.B
+	/* OUT.B */
 	BEGIN_OP(OUT_B);
              ADDCLOCK(1);
              IOWrite8(timestamp, sign_16(arg2)+P_REG[arg3],P_REG[arg1]&0xFF);
@@ -760,7 +750,7 @@
 	END_OP_SKIPLO();
 
 
-	// OUT.H
+	/* OUT.H */
 	BEGIN_OP(OUT_H);
              ADDCLOCK(1);
              IOWrite16(timestamp, (sign_16(arg2)+P_REG[arg3])&0xFFFFFFFE,P_REG[arg1]&0xFFFF);
@@ -773,7 +763,7 @@
 	END_OP_SKIPLO();
 
 
-	// OUT.W
+	/* OUT.W */
 	BEGIN_OP(OUT_W);
              ADDCLOCK(1);
 
@@ -801,22 +791,22 @@
 	END_OP_SKIPLO();
 
 	BEGIN_OP(NOP);
-            (void)arg1;         // arg1 is unused.
+            (void)arg1;         /* arg1 is unused. */
 
             ADDCLOCK(1);
 	    RB_INCPCBY2();
 	END_OP();
 
 	BEGIN_OP(RETI);
-            (void)arg1;         // arg1 is unused.
+            (void)arg1;         /* arg1 is unused. */
 
             ADDCLOCK(10);
 
-            //Return from Trap/Interupt
-            if(S_REG[PSW] & PSW_NP) { // Read the FE Reg
+            /*Return from Trap/Interupt */
+            if(S_REG[PSW] & PSW_NP) { /* Read the FE Reg */
                 RB_SETPC(S_REG[FEPC] & 0xFFFFFFFE);
                 S_REG[PSW] = S_REG[FEPSW];
-            } else { 	//Read the EI Reg Interupt
+            } else { 	/*Read the EI Reg Interupt */
                 RB_SETPC(S_REG[EIPC] & 0xFFFFFFFE);
                 S_REG[PSW] = S_REG[EIPSW];
             }
@@ -851,7 +841,7 @@
 
 	BEGIN_OP(DIVU);
             ADDCLOCK(36);
-            if(P_REG[arg1] == 0) // Divide by zero!
+            if(P_REG[arg1] == 0) /* Divide by zero! */
 	    {
 	     RB_DECPCBY2();
 	     Exception(ZERO_DIV_HANDLER_ADDR, ECODE_ZERO_DIV);
@@ -859,7 +849,7 @@
             } 
 	    else 
 	    {
-	     // Careful here, since arg2 can be == 30
+	     /* Careful here, since arg2 can be == 30 */
 	     uint32 quotient = (uint32)P_REG[arg2] / (uint32)P_REG[arg1];
 	     uint32 remainder = (uint32)P_REG[arg2] % (uint32)P_REG[arg1];
 
@@ -873,13 +863,8 @@
 	END_OP_SKIPLO();
 
 	BEGIN_OP(DIV);
-             //if(P_REG[arg1] & P_REG[arg2] & 0x80000000)
-             //{
-             // printf("Div: %08x %08x\n", P_REG[arg1], P_REG[arg2]);
-             //}
-
             ADDCLOCK(38);
-            if((uint32)P_REG[arg1] == 0) // Divide by zero!
+            if((uint32)P_REG[arg1] == 0) /* Divide by zero! */
 	    { 
 	     RB_DECPCBY2();
 	     Exception(ZERO_DIV_HANDLER_ADDR, ECODE_ZERO_DIV);
@@ -896,7 +881,7 @@
 		}
 		else
 		{
-		     // Careful here, since arg2 can be == 30
+		     /* Careful here, since arg2 can be == 30 */
         	     uint32 quotient = (int32)P_REG[arg2] / (int32)P_REG[arg1];
 	             uint32 remainder = (int32)P_REG[arg2] % (int32)P_REG[arg1];
 
@@ -937,15 +922,14 @@
 	END_OP();
 
 	BEGIN_OP(HALT);
-            (void)arg1;         // arg1 is unused.
+            (void)arg1;         /* arg1 is unused. */
 
             ADDCLOCK(1);
 	    Halted = HALT_HALT;
-            //printf("Untested opcode: HALT\n");
 	END_OP();
 
 	BEGIN_OP(TRAP);
-            (void)arg2;         // arg2 is unused.
+            (void)arg2;         /* arg2 is unused. */
 
             ADDCLOCK(15);
 
@@ -954,9 +938,7 @@
 	END_OP();
 
 	BEGIN_OP(CAXI);
-            //printf("Untested opcode: caxi\n");
-
-	    // Lock bus(N/A)
+	    /* Lock bus(N/A) */
 
             ADDCLOCK(26);
 
@@ -978,7 +960,7 @@
              SetFlag(PSW_OV, ((P_REG[arg3]^tmp)&(P_REG[arg3]^compare_temp))&0x80000000);
              SetFlag(PSW_CY, compare_temp > P_REG[arg3]);
 
-	     if(!compare_temp) // If they're equal...
+	     if(!compare_temp) /* If they're equal... */
 	      to_write = P_REG[30];
 	     else
 	      to_write = tmp;
@@ -993,7 +975,7 @@
 	     P_REG[arg3] = tmp;
 	    }
 
-	    // Unlock bus(N/A)
+	    /* Unlock bus(N/A) */
 
 	END_OP();
 
@@ -1016,8 +998,8 @@
 	 S_REG[PSW] |= PSW_ID;
 	 S_REG[PSW] &= ~PSW_AE;
 
-	 // Now, set need to set the interrupt enable level to he level that is being processed + 1,
-	 // saturating at 15.
+	 /* Now, set need to set the interrupt enable level to he level that is being processed + 1,
+	  * saturating at 15. */
 	 iNum++;
 
 	 if(iNum > 0x0F) 
@@ -1026,10 +1008,10 @@
 	 S_REG[PSW] &= ~PSW_IA;
 	 S_REG[PSW] |= iNum << 16;
 
-	 // Accepting an interrupt takes us out of normal HALT status, of course!
+	 /* Accepting an interrupt takes us out of normal HALT status, of course! */
 	 Halted = HALT_NONE;
 
-	 // Invalidate our bitstring state(forces the instruction to be re-read, and the r/w buffers reloaded).
+	 /* Invalidate our bitstring state(forces the instruction to be re-read, and the r/w buffers reloaded). */
 	 in_bstr = false;
 	 have_src_cache = false;
 	 have_dst_cache = false;
@@ -1045,11 +1027,7 @@
 	    if(!RB_AccurateMode)
 	    {
 	     RB_SETPC(RB_GETPC());
-	     if((uint32)(RB_RDOP(0, 0) >> 9) != opcode)
-	     {
-	      //printf("Trampoline: %08x %02x\n", RB_GETPC(), opcode >> 1);
-	     }
-	     else
+	     if((uint32)(RB_RDOP(0, 0) >> 9) == opcode)
 	     {
               ADDCLOCK(1);
               Exception(INVALID_OP_HANDLER_ADDR, ECODE_INVALID_OP);
@@ -1069,9 +1047,8 @@
 	OpFinished:	;
 	lastop = opcode;
 	OpFinishedSkipLO: ;
-     }	// end  while(timestamp_rl < next_event_ts)
+     }	/* end  while(timestamp_rl < next_event_ts) */
      next_event_ts = event_handler(timestamp_rl);
-     //printf("Next: %d, Cur: %d\n", next_event_ts, timestamp);
     }
 
 v810_timestamp = timestamp_rl;

@@ -22,8 +22,6 @@ static void DrawBG(uint8 *target, uint16 RealY, bool lr, uint8 bgmap_base_raw, b
  if((uint16)(RealY - DestY) > DestHeight)
   return;
 
- //printf("%d, %d, %d, %d\n", overplane, srcXSize, srcYSize, bgmap_base_raw);
-
  DestX = sign_10_to_s16(DestX);
 
  if(DestX & 0x8000)
@@ -41,7 +39,7 @@ static void DrawBG(uint8 *target, uint16 RealY, bool lr, uint8 bgmap_base_raw, b
  if(start_x > final_x)
   return;
 
- // Optimization:
+ /* Optimization: */
  SourceY &= SourceY_Mask;
  BGMap_Base |= (((SourceY >> 3) & 0x3F) * 0x40) | (((SourceY << 3) & ~0xFFF) << scx);
 
@@ -63,8 +61,8 @@ static void DrawBG(uint8 *target, uint16 RealY, bool lr, uint8 bgmap_base_raw, b
 
   char_no = bgsc & 0x7FF;
   palette_selector = bgsc >> 14;
-  hflip_xor = (bgsc & 0x2000) ? 7 : 0;	//(((int32)bgsc << 18) >> 31) & 0x7;
-  vflip_xor = (bgsc & 0x1000) ? 7 : 0;	//(((int32)bgsc << 19) >> 31) & 0x7;
+  hflip_xor = (bgsc & 0x2000) ? 7 : 0;
+  vflip_xor = (bgsc & 0x1000) ? 7 : 0;
 
   char_sub_y = vflip_xor ^ (SourceY & 0x7);
 
@@ -104,7 +102,7 @@ static void DrawBG(uint8 *target, uint16 RealY, bool lr, uint8 bgmap_base_raw, b
    uint8 pixel = (CHR16[char_no * 8 + char_sub_y] >> (char_sub_x * 2)) & 0x3;
 
    if(pixel)
-    target[x] = GPLT_Cache[palette_selector][pixel];	//target[x] = (GPLT[palette_selector] >> (pixel * 2)) & 0x3;
+    target[x] = GPLT_Cache[palette_selector][pixel];
    SourceX++;
   }
  }
@@ -158,8 +156,8 @@ static void DrawAffine(uint8 *target, uint16 RealY, bool lr, uint32 ParamBase, u
 
  if(OverplaneMode)
  {
-  SourceX_Mask = 0x3FFFFFF; //(((uint32)SourceX_Size << 9) * 2) - 1;
-  SourceY_Mask = 0x3FFFFFF; //(((uint32)SourceY_Size << 9) * 2) - 1;
+  SourceX_Mask = 0x3FFFFFF;
+  SourceY_Mask = 0x3FFFFFF;
  }
  else
  {
@@ -176,7 +174,7 @@ static void DrawAffine(uint8 *target, uint16 RealY, bool lr, uint32 ParamBase, u
  if(final_x > 383)
   final_x = 383;
 
-if(dy == 0)	// Optimization for no rotation.
+if(dy == 0)	/* Optimization for no rotation. */
 {
  int x;
  SourceY &= SourceY_Mask;
@@ -201,8 +199,6 @@ if(dy == 0)	// Optimization for no rotation.
   if(SourceX < (SourceX_Size << 9))
    bgsc = BGMap[(BGMap_Base | ((SourceX >> 6) & ~0xFFF) | ((SourceX >> 12) & 0x3F)) & 0xFFFF];
 
-  //hflip_xor = bgsc & 0x2000 ? 0xE : 0;
-  //vflip_xor = bgsc & 0x1000 ? 0x7 : 0;
   hflip_xor = ((int32)(bgsc << 18) >> 30) & 0xE;
   vflip_xor = ((int32)(bgsc << 19) >> 31) & 0x7;
 
@@ -242,13 +238,11 @@ else
    uint32 sub_index = ((SourceX >> 12) & 0x3F) + (((SourceY >> 12) & 0x3F) * 0x40);
 
    bgsc = BGMap[(BGMap_Base | m_index | sub_index) & 0xFFFF];
-
-   //bgsc = BGMap[(BGMapBase + (SourceX >> 12) + (SourceY >> 12) * (SourceX_Size >> 3)) & 0xFFFF ];
   }
   char_no = bgsc & 0x7FF;
   palette_selector = bgsc >> 14;
-  hflip_xor = bgsc & 0x2000 ? 7 : 0;    //(((int32)bgsc << 18) >> 31) & 0x7;
-  vflip_xor = bgsc & 0x1000 ? 7 : 0;    //(((int32)bgsc << 19) >> 31) & 0x7;
+  hflip_xor = bgsc & 0x2000 ? 7 : 0;
+  vflip_xor = bgsc & 0x1000 ? 7 : 0;
 
   char_sub_y = vflip_xor ^ ((SourceY >> 9) & 0x7);
   char_sub_x = hflip_xor ^ ((SourceX >> 9) & 0x7);
@@ -293,7 +287,7 @@ static void DrawOBJ(uint8 *fb[2], uint16 Y, bool lron[2])
   bool jlron[2];
   const uint16 *oam_ptr = &DRAM[(0x1E000 + (oam * 8)) >> 1];
   const uint32 jy = oam_ptr[2];
-  const uint32 tile_y = (Y - jy) & 0xFF;	// I think this mask is right.  See: http://www.planetvb.com/modules/newbb/viewtopic.php?topic_id=3797&forum=2
+  const uint32 tile_y = (Y - jy) & 0xFF;
 
   if(tile_y >= 8)
    continue;
@@ -316,9 +310,9 @@ static void DrawOBJ(uint8 *fb[2], uint16 Y, bool lron[2])
     continue;
 
    pixels = pixels_save;
-   x = sign_x_to_s32(10, (jx + (lr ? jp : -jp)));		// It may actually be 9, TODO?
+   x = sign_x_to_s32(10, (jx + (lr ? jp : -jp))); /* It may actually be 9, TODO? */
 
-   if(x >= -7 && x < 384)	// Make sure we always keep the pitch of our 384x8 buffer large enough(with padding before and after the visible space)
+   if(x >= -7 && x < 384)	/* Make sure we always keep the pitch of our 384x8 buffer large enough(with padding before and after the visible space) */
    {
     uint8 *target = &fb[lr][x];
 
@@ -392,32 +386,14 @@ void VIP_DrawBlock(uint8 block_no, uint8 *fb_l, uint8 *fb_r)
   if(end)
    break;
 
-  //if(((512 << scx) + (512 << scy)) > 4096)
-  //{
-   //printf("BG Size too large for world: %d(scx=%d, scy=%d)\n", world, scx, scy);
-  //}
-
-//  if(world != 2)
-//   continue;
-
- // if(block_no == 8)
- //  printf("World: %d; gx: %d, gp: %d, gy: %d, mx: %d, mp: %d, my: %d, window_width: %d, window_height: %d\n", world, gx, gp, gy, mx, mp, my, window_width, window_height);
-
   for(y = 0; y < 8; y++)
   {
    uint8 *fb[2] = { &fb_l[y * 512], &fb_r[y * 512] };
 
    if(bgm == BGM_OBJ)
-   {
-    //if(!lron[0] || !lron[1])
-     //printf("Bad OBJ World? %d(%d/%d) %d~%d\n", world, lron[0], lron[1], SPT[obj_search_which], obj_search_which ? (SPT[obj_search_which - 1] + 1) : 0);
-    
     DrawOBJ(fb, (block_no * 8) + y, lron);
-   }
    else if(bgm == BGM_AFFINE)
    {
-    //if(((block_no * 8) + y) == 128)
-    // printf("Draw affine:  %d %d\n", gx, gp);
     for(lr = 0; lr < 2; lr++)
     {
      if(lron[lr])
@@ -443,7 +419,7 @@ void VIP_DrawBlock(uint8 block_no, uint8 *fb_l, uint8 *fb_r)
 
     if(lron[lr])
     {
-     if(bgm == 1)	// HBias
+     if(bgm == 1)	/* HBias */
       srcX += (int16)DRAM[(param_base + (((RealY - DestY) * 2) | lr)) & 0xFFFF];
 
      DrawBG(fb[lr], RealY, lr, bgmap_base, over, overplane_char, (int32)(int16)srcX, (int32)(int16)srcY, scx, scy, DestX, DestY, window_width, window_height);

@@ -89,7 +89,6 @@ uint8 VBINPUT_Read(v810_timestamp_t timestamp, uint32 A)
          break;
    }
 
-   // printf("Input Read: %08x %02x\n", A, ret);
    VB_SetEvent(VB_EVENT_INPUT, (ReadCounter > 0) ? (timestamp + ReadCounter) : VB_EVENT_NONONO);
 
    return(ret);
@@ -99,13 +98,11 @@ void VBINPUT_Write(v810_timestamp_t timestamp, uint32 A, uint8 V)
 {
    VBINPUT_Update(timestamp);
 
-   //printf("Input write: %d, %08x %02x\n", timestamp, A, V);
    switch(A & 0xFF)
    {
       case 0x28:
          if((V & SCR_HW_SI) && !(SCR & SCR_S_ABT_DIS) && ReadCounter <= 0)
          {
-            //printf("Start Read: %d\n", timestamp);
             PadLatched = PadData;
             ReadBitPos = 0;
             ReadCounter = 640;
@@ -158,10 +155,8 @@ v810_timestamp_t VBINPUT_Update(const v810_timestamp_t timestamp)
             ReadCounter += 640;
          else
          {
-            //printf("Read End: %d\n", timestamp);
             if(!(SCR & SCR_K_INT_INH))
             {
-               //printf("Input IRQ: %d\n", timestamp);
                IntPending = true;
                VBIRQ_Assert(VBIRQ_SOURCE_INPUT, IntPending);
             }

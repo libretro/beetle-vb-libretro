@@ -244,15 +244,6 @@ INLINE uint32 V810::RDCACHE(v810_timestamp_t &timestamp, uint32 addr)
       Cache[CI].data_valid[SBI ^ 1] = false;
    }
 
-#if 0
-   {
-      /* Caution: This can mess up DRAM page change penalty timings */
-      uint32 dummy_timestamp = 0;
-      if(Cache[CI].data[SBI] != mem_rword(addr & ~0x3, dummy_timestamp))
-         printf("Cache/Real Memory Mismatch: %08x %08x/%08x\n", addr & ~0x3, Cache[CI].data[SBI], mem_rword(addr & ~0x3, dummy_timestamp));
-   }
-#endif
-
    return Cache[CI].data[SBI];
 }
 
@@ -891,10 +882,6 @@ bool V810::bstr_subop(v810_timestamp_t &timestamp, int sub_op, int arg1)
       return(false);
    }
 
-#if 0
-   printf("BSTR: %02x, %02x %02x; src: %08x, dst: %08x, len: %08x\n", sub_op, P_REG[27], P_REG[26], P_REG[30], P_REG[29], P_REG[28]);
-#endif
-
    if(sub_op & 0x08)
    {
       uint32 dstoff = (P_REG[26] & 0x1F      );
@@ -1060,10 +1047,6 @@ INLINE void V810::FPU_Math_Template(float32 (*func)(float32, float32), uint32 ar
          float_exception_flags |= float_flag_underflow;
          float_exception_flags |= float_flag_inexact;
       }
-
-#if 0
-      printf("Result: %08x, %02x; %02x\n", result, (result >> 23) & 0xFF, float_exception_flags);
-#endif
 
       if(!FPU_DoesExceptionKillResult())
       {
@@ -1306,15 +1289,17 @@ void V810::Exception(uint32 handler, uint16 eCode)
 
 int V810::StateAction(StateMem *sm, int load, int data_only)
 {
-   uint32 *cache_tag_temp = NULL;
-   uint32 *cache_data_temp = NULL;
+   int ret;
+   int32 next_event_ts_delta;
+   uint32 *cache_tag_temp      = NULL;
+   uint32 *cache_data_temp     = NULL;
    bool *cache_data_valid_temp = NULL;
-   uint32 PC_tmp = GetPC();
+   uint32 PC_tmp               = GetPC();
 
    if(EmuMode == V810_EMU_MODE_ACCURATE)
    {
-      cache_tag_temp = (uint32 *)malloc(sizeof(uint32 *) * 128);
-      cache_data_temp = (uint32 *)malloc(sizeof(uint32 *) * 128 * 2);
+      cache_tag_temp        = (uint32 *)malloc(sizeof(uint32 *) * 128);
+      cache_data_temp       = (uint32 *)malloc(sizeof(uint32 *) * 128 * 2);
       cache_data_valid_temp = (bool *)malloc(sizeof(bool *) * 128 * 2);
 
       if(!cache_tag_temp || !cache_data_temp || !cache_data_valid_temp)
@@ -1355,7 +1340,7 @@ int V810::StateAction(StateMem *sm, int load, int data_only)
       }
    }
 
-   int32 next_event_ts_delta = next_event_ts - v810_timestamp;
+   next_event_ts_delta = next_event_ts - v810_timestamp;
 
    SFORMAT StateRegs[] =
    {
@@ -1384,7 +1369,7 @@ int V810::StateAction(StateMem *sm, int load, int data_only)
       SFEND
    };
 
-   int ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "V810", false);
+   ret = MDFNSS_StateAction(sm, load, data_only, StateRegs, "V810", false);
 
    if(load)
    {
@@ -1400,7 +1385,8 @@ int V810::StateAction(StateMem *sm, int load, int data_only)
       SetPC(PC_tmp);
       if(EmuMode == V810_EMU_MODE_ACCURATE)
       {
-         for(int i = 0; i < 128; i++)
+         int i;
+         for(i = 0; i < 128; i++)
          {
             Cache[i].tag = cache_tag_temp[i];
 

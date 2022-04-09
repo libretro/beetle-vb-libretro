@@ -74,8 +74,6 @@ void TIMER_ResetTS(void)
 
 uint8 TIMER_Read(const v810_timestamp_t timestamp, uint32 A)
 {
-   //if(A <= 0x1C)
-   //printf("Read: %d, %08x\n", timestamp, A);
    TIMER_Update(timestamp);
 
    switch(A & 0xFF)
@@ -97,9 +95,6 @@ void TIMER_Write(const v810_timestamp_t timestamp, uint32 A, uint8 V)
       return;
 
    TIMER_Update(timestamp);
-
-   //if((A & 0xFF) <= 0x1C)
-   //printf("Write: %d, %08x %02x\n", timestamp, A, V);
 
    switch(A & 0xFF)
    {
@@ -125,10 +120,7 @@ void TIMER_Write(const v810_timestamp_t timestamp, uint32 A, uint8 V)
             TimerStatusShadow = false;
          }
          if((V & TC_TENABLE) && !(TimerControl & TC_TENABLE))
-         {
-            //TimerCounter = TimerReloadValue;
             TimerDivider = (V & TC_TCLKSEL) ? 500 : 2000;
-         }
          TimerControl = V & (0x10 | 0x08 | 0x01);
 
          if(!(TimerControl & TC_TIMZINT))
@@ -144,17 +136,17 @@ void TIMER_Write(const v810_timestamp_t timestamp, uint32 A, uint8 V)
 
 void TIMER_Power(void)
 {
-   TimerLastTS = 0;
+   TimerLastTS       = 0;
 
-   TimerCounter = 0xFFFF;
-   TimerReloadValue = 0xFFFF;
-   TimerDivider = 2000;	//2150;	//2000;
+   TimerCounter      = 0xFFFF;
+   TimerReloadValue  = 0xFFFF;
+   TimerDivider      = 2000;
 
-   TimerStatus = false;
+   TimerStatus       = false;
    TimerStatusShadow = false;
-   TimerControl = 0;
+   TimerControl      = 0;
 
-   ReloadPending = false;
+   ReloadPending     = false;
 
    VBIRQ_Assert(VBIRQ_SOURCE_TIMER, false);
 }
