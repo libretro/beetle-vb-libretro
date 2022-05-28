@@ -2048,8 +2048,6 @@ static void Emulate(EmulateSpecStruct *espec, int16_t *sound_buf)
 
    VSU_CycleFix = (v810_timestamp + VSU_CycleFix) & 3;
 
-   espec->MasterCycles = v810_timestamp;
-
    TIMER_ResetTS();
    VBINPUT_ResetTS();
    VIP_ResetTS();
@@ -2618,29 +2616,27 @@ static void update_geometry(unsigned width, unsigned height)
    environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info);
 }
 
-static uint64_t video_frames, audio_frames;
-
 void retro_run(void)
 {
    static int16_t sound_buf[0x10000];
-   static MDFN_Rect rects[FB_MAX_HEIGHT];
+   EmulateSpecStruct spec;
    static unsigned width   = 0, height = 0;
-   EmulateSpecStruct spec  = {0};
    bool resolution_changed = false;
 
    input_poll_cb();
 
    update_input();
 
-   rects[0].w              = ~0;
-
    spec.surface            = &surf;
+   spec.VideoFormatChanged = false;
+   spec.DisplayRect.x      = 0;
+   spec.DisplayRect.y      = 0;
+   spec.DisplayRect.w      = 0;
+   spec.DisplayRect.h      = 0;
+   spec.SoundFormatChanged = false;
    spec.SoundRate          = 44100;
-   spec.LineWidths         = rects;
    spec.SoundBufMaxSize    = sizeof(sound_buf) / 2;
    spec.SoundBufSize       = 0;
-   spec.VideoFormatChanged = false;
-   spec.SoundFormatChanged = false;
 
    if (memcmp(&last_pixel_format, &spec.surface->format, sizeof(struct MDFN_PixelFormat)))
    {
@@ -2656,11 +2652,7 @@ void retro_run(void)
 
    Emulate(&spec, sound_buf);
 
-   int16 *const SoundBuf       = sound_buf            + spec.SoundBufSizeALMS * EmulatedVB.soundchan;
-   int32 SoundBufSize          = spec.SoundBufSize    - spec.SoundBufSizeALMS;
-   const int32 SoundBufMaxSize = spec.SoundBufMaxSize - spec.SoundBufSizeALMS;
-
-   spec.SoundBufSize           = spec.SoundBufSizeALMS + SoundBufSize;
+   const int32 SoundBufMaxSize = spec.SoundBufMaxSize;
 
    if (width != spec.DisplayRect.w || height != spec.DisplayRect.h)
       resolution_changed = true;
@@ -2675,9 +2667,6 @@ void retro_run(void)
    const uint16_t *pix = surf.pixels16;
    video_cb(pix, width, height, FB_WIDTH << 1);
 #endif
-
-   video_frames++;
-   audio_frames += spec.SoundBufSize;
 
    audio_batch_cb(sound_buf, spec.SoundBufSize);
 
@@ -2735,14 +2724,6 @@ void retro_deinit(void)
    surf.format.Gshift     = 0;
    surf.format.Bshift     = 0;
    surf.format.Ashift     = 0;
-
-   if (log_cb)
-   {
-      log_cb(RETRO_LOG_INFO, "[%s]: Samples / Frame: %.5f\n",
-            mednafen_core_str, (double)audio_frames / video_frames);
-      log_cb(RETRO_LOG_INFO, "[%s]: Estimated FPS: %.5f\n",
-            mednafen_core_str, (double)video_frames * 44100 / audio_frames);
-   }
 
    libretro_supports_bitmasks = false;
 }

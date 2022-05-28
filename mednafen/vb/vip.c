@@ -828,7 +828,7 @@ void VIP_StartFrame(EmulateSpecStruct *espec)
    }
 
    surface = espec->surface;
-   skip = espec->skip;
+   skip    = false;
    
    if(VidSettingsDirty)
    {

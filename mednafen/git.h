@@ -107,15 +107,6 @@ typedef struct
 	// are ignored while drawing the image.
 	MDFN_Rect DisplayRect;
 
-	// Pointer to an array of MDFN_Rect, number of elements = fb_height, set by the driver code.  Individual MDFN_Rect structs written
-	// to by system emulation code.  If the emulated system doesn't support multiple screen widths per frame, or if you handle
-	// such a situation by outputting at a constant width-per-frame that is the least-common-multiple of the screen widths, then
-	// you can ignore this.  If you do wish to use this, you must set all elements every frame.
-	MDFN_Rect *LineWidths;
-
-	// Skip rendering this frame if true.  Set by the driver code.
-	int skip;
-
 	//
 	// If sound is disabled, the driver code must set SoundRate to false, SoundBuf to NULL, SoundBufMaxSize to 0.
 
@@ -131,14 +122,6 @@ typedef struct
 
 	// Number of frames currently in internal sound buffer.  Set by the system emulation code, to be read by the driver code.
 	int32 SoundBufSize;
-	int32 SoundBufSizeALMS;	// SoundBufSize value at last MidSync(), 0
-				// if mid sync isn't implemented for the emulation module in use.
-
-	// Number of cycles that this frame consumed, using MDFNGI::MasterClock as a time base.
-	// Set by emulation code.
-	int64 MasterCycles;
-	int64 MasterCyclesALMS;	// MasterCycles value at last MidSync(), 0
-				// if mid sync isn't implemented for the emulation module in use.
 } EmulateSpecStruct;
 
 #define MDFN_MASTERCLOCK_FIXED(n)	((int64)((double)(n) * (1LL << 32)))
