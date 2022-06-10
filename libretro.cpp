@@ -52,9 +52,6 @@ static struct MDFN_Surface surf;
 #include "mednafen/vb/timer.h"
 #include "mednafen/vb/vsu.h"
 #include "mednafen/vb/vip.h"
-#ifdef WANT_DEBUGGER
-#include "mednafen/vb/debug.h"
-#endif
 #include "mednafen/vb/input.h"
 #include "mednafen/mempatcher.h"
 #include "mednafen/hw_cpu/v810/v810_cpu.h"
@@ -1921,12 +1918,6 @@ static int Load(const uint8_t *data, size_t size)
 
    VB_Power();
 
-
-#ifdef WANT_DEBUGGER
-   VBDBG_Init();
-#endif
-
-
    EmulatedVB.nominal_width        = 384;
    EmulatedVB.nominal_height       = 224;
    EmulatedVB.fb_width             = 384;
@@ -2056,32 +2047,6 @@ static void Emulate(EmulateSpecStruct *espec, int16_t *sound_buf)
 
    VB_V810->ResetTS(0);
 }
-
-#ifdef WANT_DEBUGGER
-static DebuggerInfoStruct DBGInfo =
-{
-   "shift_jis",
-   4,
-   2,             // Instruction alignment(bytes)
-   32,
-   32,
-   0x00000000,
-   ~0U,
-
-   VBDBG_MemPeek,
-   VBDBG_Disassemble,
-   NULL,
-   NULL,  //ForceIRQ,
-   NULL,
-   VBDBG_FlushBreakPoints,
-   VBDBG_AddBreakPoint,
-   VBDBG_SetCPUCallback,
-   VBDBG_EnableBranchTrace,
-   VBDBG_GetBranchTrace,
-   NULL,  //KING_SetGraphicsDecode,
-   VBDBG_SetLogFunc,
-};
-#endif
 
 extern "C" int StateAction(StateMem *sm, int load, int data_only)
 {
