@@ -355,8 +355,6 @@ static INLINE void Recalc_JPLT_Cache(int which)
 
 static uint16 BKCOL;
 
-static int32 CalcNextEvent(void);
-
 static int32 last_ts;
 
 static int32 Column;
@@ -847,11 +845,6 @@ void VIP_ResetTS(void)
    if(SBOUT_InactiveTime >= 0)
       SBOUT_InactiveTime -= last_ts;
    last_ts = 0;
-}
-
-static int32 CalcNextEvent(void)
-{
-   return(ColumnCounter);
 }
 
 #include "vip_draw.inc"
@@ -1486,7 +1479,7 @@ v810_timestamp_t MDFN_FASTCALL VIP_Update(const v810_timestamp_t timestamp)
 
    last_ts = timestamp;
 
-   return(timestamp + CalcNextEvent());
+   return (timestamp + ColumnCounter);
 }
 
 int VIP_StateAction(StateMem *sm, int load, int data_only)

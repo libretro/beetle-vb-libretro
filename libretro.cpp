@@ -26,7 +26,6 @@ static retro_input_state_t input_state_cb;
 static bool libretro_supports_bitmasks = false;
 
 static bool overscan;
-static double last_sound_rate;
 static struct MDFN_PixelFormat last_pixel_format;
 
 static struct MDFN_Surface surf;
@@ -110,9 +109,6 @@ static uint32 IRQ_Asserted;
 
 MDFNGI EmulatedVB =
 {
-   MDFN_MASTERCLOCK_FIXED(VB_MASTER_CLOCK),
-   0,
-
    0,   // lcm_width
    0,   // lcm_height
 
@@ -1913,9 +1909,6 @@ static int Load(const uint8_t *data, size_t size)
 
    SettingChanged("vb.input.instant_read_hack");
 
-   EmulatedVB.fps = (int64)20000000 * 65536 * 256 / (259 * 384 * 4);
-
-
    VB_Power();
 
    EmulatedVB.nominal_width        = 384;
@@ -2006,17 +1999,6 @@ static void Emulate(EmulateSpecStruct *espec, int16_t *sound_buf)
    MDFNMP_ApplyPeriodicCheats();
 
    VBINPUT_Frame();
-
-   if(espec->SoundFormatChanged)
-   {
-      int y;
-      for(y = 0; y < 2; y++)
-      {
-         Blip_Buffer_set_sample_rate(&sbuf[y], espec->SoundRate ? espec->SoundRate : 44100, 50);
-         Blip_Buffer_set_clock_rate(&sbuf[y], (long)(VB_MASTER_CLOCK / 4));
-         Blip_Buffer_bass_freq(&sbuf[y], 20);
-      }
-   }
 
    VIP_StartFrame(espec);
 
@@ -2478,6 +2460,17 @@ bool retro_load_game(const struct retro_game_info *info)
 
    check_variables();
 
+   {
+      int y;
+      for(y = 0; y < 2; y++)
+      {
+         Blip_Buffer_set_sample_rate(&sbuf[y], 44100, 50);
+         Blip_Buffer_set_clock_rate(&sbuf[y], (long)(VB_MASTER_CLOCK / 4));
+         Blip_Buffer_bass_freq(&sbuf[y], 20);
+      }
+   }
+
+
    return true;
 }
 
@@ -2598,8 +2591,6 @@ void retro_run(void)
    spec.DisplayRect.y      = 0;
    spec.DisplayRect.w      = 0;
    spec.DisplayRect.h      = 0;
-   spec.SoundFormatChanged = false;
-   spec.SoundRate          = 44100;
    spec.SoundBufMaxSize    = sizeof(sound_buf) / 2;
    spec.SoundBufSize       = 0;
 
@@ -2607,12 +2598,6 @@ void retro_run(void)
    {
       spec.VideoFormatChanged = true;
       last_pixel_format       = spec.surface->format;
-   }
-
-   if (spec.SoundRate != last_sound_rate)
-   {
-      spec.SoundFormatChanged = true;
-      last_sound_rate         = spec.SoundRate;
    }
 
    Emulate(&spec, sound_buf);
