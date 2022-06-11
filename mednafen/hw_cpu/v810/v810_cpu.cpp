@@ -232,9 +232,6 @@ INLINE uint32 V810::RDCACHE(v810_timestamp_t &timestamp, uint32 addr)
          timestamp++;
          Cache[CI].data[SBI] = MemRead16(timestamp, addr & ~0x3) | ((MemRead16(timestamp, (addr & ~0x3) | 0x2) << 16));
       }
-#if 0
-      Cache[CI].data[SBI] = MemRead32(timestamp, addr & ~0x3);
-#endif
       Cache[CI].data_valid[SBI] = true;
       Cache[CI].data_valid[SBI ^ 1] = false;
    }
@@ -603,13 +600,6 @@ void V810::SetPR(const unsigned int which, uint32 value)
 uint32 V810::GetSR(const unsigned int which)
 {
    return GetSREG(which);
-}
-
-void V810::SetSR(const unsigned int which, uint32 value)
-{
-#if 0
-   SetSREG(timestamp, which, value);
-#endif
 }
 
 #define BSTR_OP_MOV dst_cache &= ~(1 << dstoff); dst_cache |= ((src_cache >> srcoff) & 1) << dstoff;

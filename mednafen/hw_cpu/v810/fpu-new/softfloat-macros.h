@@ -39,21 +39,13 @@ these four paragraphs for those parts of this code that are retained.
 | The result is stored in the location pointed to by `zPtr'.
 *----------------------------------------------------------------------------*/
 
-static INLINE void shift32RightJamming( bits32 a, int16 count, bits32 *zPtr )
+static INLINE uint32_t shift32RightJamming( uint32_t a, int16 count)
 {
-    bits32 z;
-
-    if ( count == 0 ) {
-        z = a;
-    }
-    else if ( count < 32 ) {
-        z = ( a>>count ) | ( ( a<<( ( - count ) & 31 ) ) != 0 );
-    }
-    else {
-        z = ( a != 0 );
-    }
-    *zPtr = z;
-
+    if ( count == 0 )
+        return  a;
+    else if ( count < 32 )
+        return ( a>>count ) | ( ( a<<( ( - count ) & 31 ) ) != 0 );
+    return ( a != 0 );
 }
 
 /*----------------------------------------------------------------------------
@@ -65,13 +57,11 @@ static INLINE void shift32RightJamming( bits32 a, int16 count, bits32 *zPtr )
 
 static INLINE void
  shortShift64Left(
-     bits32 a0, bits32 a1, int16 count, bits32 *z0Ptr, bits32 *z1Ptr )
+     uint32_t a0, uint32_t a1, int16 count, uint32_t *z0Ptr, uint32_t *z1Ptr )
 {
-
     *z1Ptr = a1<<count;
     *z0Ptr =
         ( count == 0 ) ? a0 : ( a0<<count ) | ( a1>>( ( - count ) & 31 ) );
-
 }
 
 /*----------------------------------------------------------------------------
@@ -84,21 +74,19 @@ static INLINE void
 
 static INLINE void
  shortShift96Left(
-     bits32 a0,
-     bits32 a1,
-     bits32 a2,
+     uint32_t a0,
+     uint32_t a1,
+     uint32_t a2,
      int16 count,
-     bits32 *z0Ptr,
-     bits32 *z1Ptr,
-     bits32 *z2Ptr
+     uint32_t *z0Ptr,
+     uint32_t *z1Ptr,
+     uint32_t *z2Ptr
  )
 {
-    bits32 z0, z1, z2;
     int8 negCount;
-
-    z2 = a2<<count;
-    z1 = a1<<count;
-    z0 = a0<<count;
+    uint32_t z2 = a2<<count;
+    uint32_t z1 = a1<<count;
+    uint32_t z0 = a0<<count;
     if ( 0 < count ) {
         negCount = ( ( - count ) & 31 );
         z1 |= a2>>negCount;
@@ -119,11 +107,9 @@ static INLINE void
 
 static INLINE void
  add64(
-     bits32 a0, bits32 a1, bits32 b0, bits32 b1, bits32 *z0Ptr, bits32 *z1Ptr )
+     uint32_t a0, uint32_t a1, uint32_t b0, uint32_t b1, uint32_t *z0Ptr, uint32_t *z1Ptr )
 {
-    bits32 z1;
-
-    z1 = a1 + b1;
+    uint32_t z1 = a1 + b1;
     *z1Ptr = z1;
     *z0Ptr = a0 + b0 + ( z1 < a1 );
 
@@ -139,25 +125,22 @@ static INLINE void
 
 static INLINE void
  add96(
-     bits32 a0,
-     bits32 a1,
-     bits32 a2,
-     bits32 b0,
-     bits32 b1,
-     bits32 b2,
-     bits32 *z0Ptr,
-     bits32 *z1Ptr,
-     bits32 *z2Ptr
+     uint32_t a0,
+     uint32_t a1,
+     uint32_t a2,
+     uint32_t b0,
+     uint32_t b1,
+     uint32_t b2,
+     uint32_t *z0Ptr,
+     uint32_t *z1Ptr,
+     uint32_t *z2Ptr
  )
 {
-    bits32 z0, z1, z2;
-    int8 carry0, carry1;
-
-    z2 = a2 + b2;
-    carry1 = ( z2 < a2 );
-    z1 = a1 + b1;
-    carry0 = ( z1 < a1 );
-    z0 = a0 + b0;
+    uint32_t z2 = a2 + b2;
+    int8 carry1 = ( z2 < a2 );
+    uint32_t z1 = a1 + b1;
+    int8 carry0 = ( z1 < a1 );
+    uint32_t z0 = a0 + b0;
     z1 += carry1;
     z0 += ( z1 < carry1 );
     z0 += carry0;
@@ -177,7 +160,7 @@ static INLINE void
 
 static INLINE void
  sub64(
-     bits32 a0, bits32 a1, bits32 b0, bits32 b1, bits32 *z0Ptr, bits32 *z1Ptr )
+     uint32_t a0, uint32_t a1, uint32_t b0, uint32_t b1, uint32_t *z0Ptr, uint32_t *z1Ptr )
 {
 
     *z1Ptr = a1 - b1;
@@ -195,25 +178,22 @@ static INLINE void
 
 static INLINE void
  sub96(
-     bits32 a0,
-     bits32 a1,
-     bits32 a2,
-     bits32 b0,
-     bits32 b1,
-     bits32 b2,
-     bits32 *z0Ptr,
-     bits32 *z1Ptr,
-     bits32 *z2Ptr
+     uint32_t a0,
+     uint32_t a1,
+     uint32_t a2,
+     uint32_t b0,
+     uint32_t b1,
+     uint32_t b2,
+     uint32_t *z0Ptr,
+     uint32_t *z1Ptr,
+     uint32_t *z2Ptr
  )
 {
-    bits32 z0, z1, z2;
-    int8 borrow0, borrow1;
-
-    z2 = a2 - b2;
-    borrow1 = ( a2 < b2 );
-    z1 = a1 - b1;
-    borrow0 = ( a1 < b1 );
-    z0 = a0 - b0;
+    uint32_t z2  = a2 - b2;
+    int8 borrow1 = ( a2 < b2 );
+    uint32_t z1  = a1 - b1;
+    int8 borrow0 = ( a1 < b1 );
+    uint32_t z0  = a0 - b0;
     z0 -= ( z1 < borrow1 );
     z1 -= borrow1;
     z0 -= borrow0;
@@ -229,27 +209,24 @@ static INLINE void
 | `z0Ptr' and `z1Ptr'.
 *----------------------------------------------------------------------------*/
 
-static INLINE void mul32To64( bits32 a, bits32 b, bits32 *z0Ptr, bits32 *z1Ptr )
+static INLINE void mul32To64( uint32_t a, uint32_t b, uint32_t *z0Ptr, uint32_t *z1Ptr )
 {
-    bits16 aHigh, aLow, bHigh, bLow;
-    bits32 z0, zMiddleA, zMiddleB, z1;
+    uint16_t aLow     = a;
+    uint16_t aHigh    = a>>16;
+    uint16_t bLow     = b;
+    uint16_t bHigh    = b>>16;
+    uint32_t z1       = ( (uint32_t) aLow ) * bLow;
+    uint32_t zMiddleA = ( (uint32_t) aLow ) * bHigh;
+    uint32_t zMiddleB = ( (uint32_t) aHigh ) * bLow;
+    uint32_t z0       = ( (uint32_t) aHigh ) * bHigh;
 
-    aLow = a;
-    aHigh = a>>16;
-    bLow = b;
-    bHigh = b>>16;
-    z1 = ( (bits32) aLow ) * bLow;
-    zMiddleA = ( (bits32) aLow ) * bHigh;
-    zMiddleB = ( (bits32) aHigh ) * bLow;
-    z0 = ( (bits32) aHigh ) * bHigh;
-    zMiddleA += zMiddleB;
-    z0 += ( ( (bits32) ( zMiddleA < zMiddleB ) )<<16 ) + ( zMiddleA>>16 );
-    zMiddleA <<= 16;
-    z1 += zMiddleA;
-    z0 += ( z1 < zMiddleA );
-    *z1Ptr = z1;
-    *z0Ptr = z0;
-
+    zMiddleA         += zMiddleB;
+    z0               += ( ( (uint32_t) ( zMiddleA < zMiddleB ) )<<16 ) + ( zMiddleA>>16 );
+    zMiddleA        <<= 16;
+    z1               += zMiddleA;
+    z0               += ( z1 < zMiddleA );
+    *z1Ptr            = z1;
+    *z0Ptr            = z0;
 }
 
 /*----------------------------------------------------------------------------
@@ -261,15 +238,15 @@ static INLINE void mul32To64( bits32 a, bits32 b, bits32 *z0Ptr, bits32 *z1Ptr )
 
 static INLINE void
  mul64By32To96(
-     bits32 a0,
-     bits32 a1,
-     bits32 b,
-     bits32 *z0Ptr,
-     bits32 *z1Ptr,
-     bits32 *z2Ptr
+     uint32_t a0,
+     uint32_t a1,
+     uint32_t b,
+     uint32_t *z0Ptr,
+     uint32_t *z1Ptr,
+     uint32_t *z2Ptr
  )
 {
-    bits32 z0, z1, z2, more1;
+    uint32_t z0, z1, z2, more1;
 
     mul32To64( a1, b, &z1, &z2 );
     mul32To64( a0, b, &z0, &more1 );
@@ -289,18 +266,18 @@ static INLINE void
 
 static INLINE void
  mul64To128(
-     bits32 a0,
-     bits32 a1,
-     bits32 b0,
-     bits32 b1,
-     bits32 *z0Ptr,
-     bits32 *z1Ptr,
-     bits32 *z2Ptr,
-     bits32 *z3Ptr
+     uint32_t a0,
+     uint32_t a1,
+     uint32_t b0,
+     uint32_t b1,
+     uint32_t *z0Ptr,
+     uint32_t *z1Ptr,
+     uint32_t *z2Ptr,
+     uint32_t *z3Ptr
  )
 {
-    bits32 z0, z1, z2, z3;
-    bits32 more1, more2;
+    uint32_t z0, z1, z2, z3;
+    uint32_t more1, more2;
 
     mul32To64( a1, b1, &z2, &z3 );
     mul32To64( a1, b0, &z1, &more2 );
@@ -326,18 +303,18 @@ static INLINE void
 | unsigned integer is returned.
 *----------------------------------------------------------------------------*/
 
-static bits32 estimateDiv64To32( bits32 a0, bits32 a1, bits32 b )
+static uint32_t estimateDiv64To32( uint32_t a0, uint32_t a1, uint32_t b )
 {
-    bits32 b0, b1;
-    bits32 rem0, rem1, term0, term1;
-    bits32 z;
+    uint32_t b0, b1;
+    uint32_t rem0, rem1, term0, term1;
+    uint32_t z;
 
     if ( b <= a0 ) return 0xFFFFFFFF;
     b0 = b>>16;
     z = ( b0<<16 <= a0 ) ? 0xFFFF0000 : ( a0 / b0 )<<16;
     mul32To64( b, z, &term0, &term1 );
     sub64( a0, a1, term0, term1, &rem0, &rem1 );
-    while ( ( (sbits32) rem0 ) < 0 ) {
+    while ( ( (int32_t) rem0 ) < 0 ) {
         z -= 0x10000;
         b1 = b<<16;
         add64( rem0, rem1, b0, b1, &rem0, &rem1 );
@@ -358,20 +335,18 @@ static bits32 estimateDiv64To32( bits32 a0, bits32 a1, bits32 b )
 | value.
 *----------------------------------------------------------------------------*/
 
-static bits32 estimateSqrt32( int16 aExp, bits32 a )
+static uint32_t estimateSqrt32( int16 aExp, uint32_t a )
 {
-    static const bits16 sqrtOddAdjustments[] = {
+    static const uint16_t sqrtOddAdjustments[] = {
         0x0004, 0x0022, 0x005D, 0x00B1, 0x011D, 0x019F, 0x0236, 0x02E0,
         0x039C, 0x0468, 0x0545, 0x0631, 0x072B, 0x0832, 0x0946, 0x0A67
     };
-    static const bits16 sqrtEvenAdjustments[] = {
+    static const uint16_t sqrtEvenAdjustments[] = {
         0x0A2D, 0x08AF, 0x075A, 0x0629, 0x051A, 0x0429, 0x0356, 0x029E,
         0x0200, 0x0179, 0x0109, 0x00AF, 0x0068, 0x0034, 0x0012, 0x0002
     };
-    int8 index;
-    bits32 z;
-
-    index = ( a>>27 ) & 15;
+    uint32_t z;
+    int8 index = ( a>>27 ) & 15;
     if ( aExp & 1 ) {
         z = 0x4000 + ( a>>17 ) - sqrtOddAdjustments[ index ];
         z = ( ( a / z )<<14 ) + ( z<<15 );
@@ -381,7 +356,7 @@ static bits32 estimateSqrt32( int16 aExp, bits32 a )
         z = 0x8000 + ( a>>17 ) - sqrtEvenAdjustments[ index ];
         z = a / z + z;
         z = ( 0x20000 <= z ) ? 0xFFFF8000 : ( z<<15 );
-        if ( z <= a ) return (bits32) ( ( (sbits32) a )>>1 );
+        if ( z <= a ) return (uint32_t) ( ( (int32_t) a )>>1 );
     }
     return ( ( estimateDiv64To32( a, 0, z ) )>>1 ) + ( z>>1 );
 
@@ -392,7 +367,7 @@ static bits32 estimateSqrt32( int16 aExp, bits32 a )
 | `a'.  If `a' is zero, 32 is returned.
 *----------------------------------------------------------------------------*/
 
-static int8 countLeadingZeros32( bits32 a )
+static int8 countLeadingZeros32( uint32_t a )
 {
     static const int8 countLeadingZerosHigh[] = {
         8, 7, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -412,9 +387,7 @@ static int8 countLeadingZeros32( bits32 a )
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
-    int8 shiftCount;
-
-    shiftCount = 0;
+    int8 shiftCount = 0;
     if ( a < 0x10000 ) {
         shiftCount += 16;
         a <<= 16;
@@ -423,9 +396,7 @@ static int8 countLeadingZeros32( bits32 a )
         shiftCount += 8;
         a <<= 8;
     }
-    shiftCount += countLeadingZerosHigh[ a>>24 ];
-    return shiftCount;
-
+    return shiftCount + countLeadingZerosHigh[ a>>24 ];
 }
 
 /*----------------------------------------------------------------------------
@@ -434,11 +405,9 @@ static int8 countLeadingZeros32( bits32 a )
 | returns 0.
 *----------------------------------------------------------------------------*/
 
-static INLINE flag eq64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
+static INLINE char eq64( uint32_t a0, uint32_t a1, uint32_t b0, uint32_t b1 )
 {
-
     return ( a0 == b0 ) && ( a1 == b1 );
-
 }
 
 /*----------------------------------------------------------------------------
@@ -447,11 +416,9 @@ static INLINE flag eq64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
 | Otherwise, returns 0.
 *----------------------------------------------------------------------------*/
 
-static INLINE flag le64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
+static INLINE char le64( uint32_t a0, uint32_t a1, uint32_t b0, uint32_t b1 )
 {
-
     return ( a0 < b0 ) || ( ( a0 == b0 ) && ( a1 <= b1 ) );
-
 }
 
 /*----------------------------------------------------------------------------
@@ -460,11 +427,9 @@ static INLINE flag le64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
 | returns 0.
 *----------------------------------------------------------------------------*/
 
-static INLINE flag lt64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
+static INLINE char lt64( uint32_t a0, uint32_t a1, uint32_t b0, uint32_t b1 )
 {
-
     return ( a0 < b0 ) || ( ( a0 == b0 ) && ( a1 < b1 ) );
-
 }
 
 /*----------------------------------------------------------------------------
@@ -473,10 +438,8 @@ static INLINE flag lt64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
 | returns 0.
 *----------------------------------------------------------------------------*/
 
-static INLINE flag ne64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
+static INLINE char ne64( uint32_t a0, uint32_t a1, uint32_t b0, uint32_t b1 )
 {
-
     return ( a0 != b0 ) || ( a1 != b1 );
-
 }
 

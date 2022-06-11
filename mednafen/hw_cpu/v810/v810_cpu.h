@@ -208,8 +208,6 @@ class V810
  void SetPR(const unsigned int which, uint32 value);
 
  uint32 GetSR(const unsigned int which);
- void SetSR(const unsigned int which, uint32 value);
-
 
  private:
 

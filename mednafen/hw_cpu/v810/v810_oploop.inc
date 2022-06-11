@@ -31,9 +31,6 @@
 
     while(Running)
     {
-     #ifdef RB_DEBUGMODE
-     uint32 old_PC = RB_GETPC();
-     #endif
      uint32 tmpop;
 
      if(!IPendingCache)
@@ -52,10 +49,6 @@
 
      while(timestamp_rl < next_event_ts)
      {
-	#ifdef RB_DEBUGMODE
-	old_PC = RB_GETPC();
-	#endif
-
         P_REG[0] = 0; /* Zero the Zero Reg!!! */
 
 	RB_CPUHOOK(RB_GETPC());

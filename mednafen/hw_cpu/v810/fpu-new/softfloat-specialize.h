@@ -31,31 +31,20 @@ these four paragraphs for those parts of this code that are retained.
 =============================================================================*/
 
 /*----------------------------------------------------------------------------
-| Underflow tininess-detection mode, statically initialized to default value.
-| (The declaration in `softfloat.h' must match the `int8' type here.)
-*----------------------------------------------------------------------------*/
-int8 float_detect_tininess = float_tininess_after_rounding;
-
-/*----------------------------------------------------------------------------
 | Raises the exceptions specified by `flags'.  Floating-point traps can be
 | defined here if desired.  It is currently not possible for such a trap
 | to substitute a result value.  If traps are not implemented, this routine
 | should be simply `float_exception_flags |= flags;'.
 *----------------------------------------------------------------------------*/
 
-void float_raise( int8 flags )
-{
-
-    float_exception_flags |= flags;
-
-}
+#define float_raise(flags) (float_exception_flags |= (flags))
 
 /*----------------------------------------------------------------------------
 | Internal canonical NaN format.
 *----------------------------------------------------------------------------*/
 typedef struct {
-    flag sign;
-    bits32 high, low;
+    char sign;
+    uint32_t high, low;
 } commonNaNT;
 
 /*----------------------------------------------------------------------------
@@ -70,11 +59,9 @@ enum {
 | otherwise returns 0.
 *----------------------------------------------------------------------------*/
 
-flag float32_is_nan( float32 a )
+char float32_is_nan( float32 a )
 {
-
-    return ( 0xFF000000 < (bits32) ( a<<1 ) );
-
+    return ( 0xFF000000 < (uint32_t) ( a<<1 ) );
 }
 
 /*----------------------------------------------------------------------------
@@ -82,11 +69,9 @@ flag float32_is_nan( float32 a )
 | NaN; otherwise returns 0.
 *----------------------------------------------------------------------------*/
 
-flag float32_is_signaling_nan( float32 a )
+char float32_is_signaling_nan( float32 a )
 {
-
     return ( ( ( a>>22 ) & 0x1FF ) == 0x1FE ) && ( a & 0x003FFFFF );
-
 }
 
 /*----------------------------------------------------------------------------
@@ -97,20 +82,15 @@ flag float32_is_signaling_nan( float32 a )
 
 static float32 propagateFloat32NaN( float32 a, float32 b )
 {
-    flag aIsNaN, aIsSignalingNaN, bIsNaN, bIsSignalingNaN;
-
-    aIsNaN = float32_is_nan( a );
-    aIsSignalingNaN = float32_is_signaling_nan( a );
-    bIsNaN = float32_is_nan( b );
-    bIsSignalingNaN = float32_is_signaling_nan( b );
+    char aIsNaN          = float32_is_nan( a );
+    char aIsSignalingNaN = float32_is_signaling_nan( a );
+    char bIsNaN          = float32_is_nan( b );
+    char bIsSignalingNaN = float32_is_signaling_nan( b );
     a |= 0x00400000;
     b |= 0x00400000;
-    if ( aIsSignalingNaN | bIsSignalingNaN ) float_raise( float_flag_invalid );
-    if ( aIsNaN ) {
+    if ( aIsSignalingNaN | bIsSignalingNaN )
+	    float_raise( float_flag_invalid );
+    if ( aIsNaN )
         return ( aIsSignalingNaN & bIsNaN ) ? b : a;
-    }
-    else {
-        return b;
-    }
-
+    return b;
 }

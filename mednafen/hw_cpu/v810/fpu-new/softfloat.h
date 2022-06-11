@@ -42,18 +42,8 @@ extern "C" {
 typedef uint32 float32;
 
 /*----------------------------------------------------------------------------
-| Software IEC/IEEE floating-point underflow tininess-detection mode.
-*----------------------------------------------------------------------------*/
-extern int8 float_detect_tininess;
-enum {
-    float_tininess_after_rounding  = 0,
-    float_tininess_before_rounding = 1
-};
-
-/*----------------------------------------------------------------------------
 | Software IEC/IEEE floating-point rounding mode.
 *----------------------------------------------------------------------------*/
-extern int8 float_rounding_mode;
 enum {
     float_round_nearest_even = 0,
     float_round_to_zero      = 1,

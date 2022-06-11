@@ -33,26 +33,6 @@
 #define AM_UDEF 0x0D    /* Unknown/Undefined Instructions */
 
 /*
- * Table of Instructions Address Modes
- */
-
-static const int addr_mode[80] = {
-  AM_I,  AM_I,  AM_I,  AM_I,  AM_I,  AM_I,  AM_I,  AM_I,
-  AM_I,  AM_I,  AM_I,  AM_I,  AM_I,  AM_I,  AM_I,  AM_I,
-  AM_II, AM_II, AM_II, AM_II, AM_II, AM_II, AM_II, AM_II,
-  AM_II, AM_IX, AM_IX, AM_UDEF, AM_II, AM_II, AM_II, AM_BSTR,
-  AM_UDEF, AM_UDEF, AM_UDEF, AM_UDEF, AM_UDEF, AM_UDEF, AM_UDEF, AM_UDEF,
-  AM_V,  AM_V,  AM_IV, AM_IV, AM_V,  AM_V,  AM_V,  AM_V,
-  AM_VIa, AM_VIa, AM_UDEF, AM_VIa, AM_VIb, AM_VIb, AM_UDEF, AM_VIb,
-  AM_VIa, AM_VIa, AM_VIa, AM_VIa, AM_VIb, AM_VIb, AM_FPP, AM_VIb, 
-  AM_III, AM_III, AM_III, AM_III, AM_III, AM_III, AM_III, AM_III,
-  AM_III, AM_III, AM_III, AM_III, AM_III, AM_III, AM_III, AM_III
-};
-
-/* All instructions greater than 0x50 are undefined (this should not be posible of cource) */
-
-
-/*
  * Opcodes for V810 Instruction set
  */
 #define         MOV                             0x00
@@ -135,12 +115,7 @@ static const int addr_mode[80] = {
 #define         BGE                             0x4E
 #define         BGT                             0x4F
 
-//#define       BC                              0x41
-//#define       BZ                              0x42
-//#define       BNC                             0x49
-//#define       BNZ                             0x4A
-
-//  Bit String Subopcodes
+/*  Bit String Subopcodes */
 #define         SCH0BSU                         0x00
 #define         SCH0BSD                         0x01
 #define         SCH1BSU                         0x02
