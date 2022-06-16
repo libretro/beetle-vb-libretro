@@ -116,25 +116,6 @@ typedef struct
 
 #define MDFN_MASTERCLOCK_FIXED(n)	((int64)((double)(n) * (1LL << 32)))
 
-typedef struct
-{
- int lcm_width;
- int lcm_height;
-
- int nominal_width;
- int nominal_height;
-
- int fb_width;		// Width of the framebuffer(not necessarily width of the image).  MDFN_Surface width should be >= this.
- int fb_height;		// Height of the framebuffer passed to the Emulate() function(not necessarily height of the image)
-
- int soundchan; 	// Number of output sound channels.
-
-
- int rotated;
-
- int soundrate;  /* For Ogg Vorbis expansion sound wacky support.  0 for default. */
-} MDFNGI;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

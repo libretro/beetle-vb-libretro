@@ -65,7 +65,7 @@ enum
  ANAGLYPH_PRESET_RED_ELECTRICCYAN,
  ANAGLYPH_PRESET_RED_GREEN,
  ANAGLYPH_PRESET_GREEN_MAGENTA,
- ANAGLYPH_PRESET_YELLOW_BLUE,
+ ANAGLYPH_PRESET_YELLOW_BLUE
 };
 
 static const uint32 AnaglyphPreset_Colors[][2] =
@@ -106,20 +106,6 @@ static uint8 WCR;
 static int32 next_vip_ts, next_timer_ts, next_input_ts;
 
 static uint32 IRQ_Asserted;
-
-MDFNGI EmulatedVB =
-{
-   0,   // lcm_width
-   0,   // lcm_height
-
-   384,   // Nominal width
-   224,   // Nominal height
-
-   384,   // Framebuffer width
-   256,   // Framebuffer height
-
-   2,     // Number of output sound channels
-};
 
 static INLINE void RecalcIntLevel(void)
 {
@@ -265,9 +251,6 @@ void MDFN_FASTCALL MemWrite8(v810_timestamp_t &timestamp, uint32 A, uint8 V)
       case 2:
          HWCTRL_Write(timestamp, A, V);
          break;
-      case 3:
-      case 4:
-         break;
       case 5:
          WRAM[A & 0xFFFF] = V;
          break;
@@ -278,6 +261,8 @@ void MDFN_FASTCALL MemWrite8(v810_timestamp_t &timestamp, uint32 A, uint8 V)
 
       case 7:
          // ROM, no writing allowed!
+      case 3:
+      case 4:
          break;
    }
 }
@@ -297,9 +282,6 @@ void MDFN_FASTCALL MemWrite16(v810_timestamp_t &timestamp, uint32 A, uint16 V)
       case 2:
          HWCTRL_Write(timestamp, A, V);
          break;
-      case 3:
-      case 4:
-         break;
       case 5:
          StoreU16_LE((uint16 *)&WRAM[A & 0xFFFF], V);
          break;
@@ -307,6 +289,8 @@ void MDFN_FASTCALL MemWrite16(v810_timestamp_t &timestamp, uint32 A, uint16 V)
          if(GPRAM)
             StoreU16_LE((uint16 *)&GPRAM[A & GPRAM_Mask], V);
          break;
+      case 3:
+      case 4:
       case 7:
          /* ROM, no writing allowed! */
          break;
@@ -316,7 +300,7 @@ void MDFN_FASTCALL MemWrite16(v810_timestamp_t &timestamp, uint32 A, uint16 V)
 static void FixNonEvents(void)
 {
    if(next_vip_ts & 0x40000000)
-      next_vip_ts = VB_EVENT_NONONO;
+      next_vip_ts   = VB_EVENT_NONONO;
 
    if(next_timer_ts & 0x40000000)
       next_timer_ts = VB_EVENT_NONONO;
@@ -441,9 +425,7 @@ static void SettingChanged(const char *name)
       VIP_SetDefaultColor(MDFN_GetSettingUI("vb.default_color"));
    }
    else if(!strcmp(name, "vb.input.instant_read_hack"))
-   {
       VBINPUT_SetInstantReadHack(MDFN_GetSettingB("vb.input.instant_read_hack"));
-   }
    else if(!strcmp(name, "vb.instant_display_hack"))
       VIP_SetInstantDisplayHack(MDFN_GetSettingB("vb.instant_display_hack"));
    else if(!strcmp(name, "vb.allow_draw_skip"))
@@ -1812,15 +1794,15 @@ static int Load(const uint8_t *data, size_t size)
 
    /* VB ROM image size is not a power of 2??? */
    if(size != round_up_pow2(size))
-      return(0);
+      return 0;
 
    /* VB ROM image size is too small?? */
    if(size < 256)
-      return(0);
+      return 0;
 
    /* VB ROM image size is too large?? */
    if(size > (1 << 24))
-      return(0);
+      return 0;
 
    VB_V810 = new V810();
    VB_V810->Init(cpu_mode, true);
@@ -1842,9 +1824,7 @@ static int Load(const uint8_t *data, size_t size)
    for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
    {
       for(uint64 sub_A = 5 << 24; sub_A < (6 << 24); sub_A += 65536)
-      {
          Map_Addresses[map_size++] = A + sub_A;
-      }
    }
    WRAM = VB_V810->SetFastMap(Map_Addresses, 65536, map_size, "WRAM");
 
@@ -1855,13 +1835,11 @@ static int Load(const uint8_t *data, size_t size)
    for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
    {
       for(uint64 sub_A = 7 << 24; sub_A < (8 << 24); sub_A += GPROM_Mask + 1)
-      {
          Map_Addresses[map_size++] = A + sub_A;
-      }
    }
 
-	GPROM = VB_V810->SetFastMap(Map_Addresses, GPROM_Mask + 1, map_size, "Cart ROM");
-	map_size = 0;
+   GPROM = VB_V810->SetFastMap(Map_Addresses, GPROM_Mask + 1, map_size, "Cart ROM");
+   map_size = 0;
 
    // Mirror ROM images < 64KiB to 64KiB
    for(uint64 i = 0; i < 65536; i += size)
@@ -1872,9 +1850,7 @@ static int Load(const uint8_t *data, size_t size)
    for(uint64 A = 0; A < 1ULL << 32; A += (1 << 27))
    {
       for(uint64 sub_A = 6 << 24; sub_A < (7 << 24); sub_A += GPRAM_Mask + 1)
-      {
          Map_Addresses[map_size++] = A + sub_A;
-      }
    }
    GPRAM = VB_V810->SetFastMap(Map_Addresses, GPRAM_Mask + 1, map_size, "Cart RAM");
 
@@ -1896,7 +1872,6 @@ static int Load(const uint8_t *data, size_t size)
 
    VIP_Set3DMode(VB3DMode, MDFN_GetSettingUI("vb.3dreverse"), prescale, sbs_separation);
 
-
    SettingChanged("vb.3dmode");
    SettingChanged("vb.disable_parallax");
    SettingChanged("vb.anaglyph.lcolor");
@@ -1910,47 +1885,6 @@ static int Load(const uint8_t *data, size_t size)
    SettingChanged("vb.input.instant_read_hack");
 
    VB_Power();
-
-   EmulatedVB.nominal_width        = 384;
-   EmulatedVB.nominal_height       = 224;
-   EmulatedVB.fb_width             = 384;
-   EmulatedVB.fb_height            = 224;
-
-   switch(VB3DMode)
-   {
-      case VB3DMODE_VLI:
-         EmulatedVB.nominal_width  = 768 * prescale;
-         EmulatedVB.nominal_height = 224;
-         EmulatedVB.fb_width       = 768 * prescale;
-         EmulatedVB.fb_height      = 224;
-         break;
-
-      case VB3DMODE_HLI:
-         EmulatedVB.nominal_width  = 384;
-         EmulatedVB.nominal_height = 448 * prescale;
-         EmulatedVB.fb_width       = 384;
-         EmulatedVB.fb_height      = 448 * prescale;
-         break;
-
-      case VB3DMODE_CSCOPE:
-         EmulatedVB.nominal_width  = 512;
-         EmulatedVB.nominal_height = 384;
-         EmulatedVB.fb_width       = 512;
-         EmulatedVB.fb_height      = 384;
-         break;
-
-      case VB3DMODE_SIDEBYSIDE:
-         EmulatedVB.nominal_width  = 384 * 2 + sbs_separation;
-         EmulatedVB.nominal_height = 224;
-         EmulatedVB.fb_width       = 384 * 2 + sbs_separation;
-         EmulatedVB.fb_height      = 224;
-         break;
-      default:
-         break;
-   }
-   EmulatedVB.lcm_width            = EmulatedVB.fb_width;
-   EmulatedVB.lcm_height           = EmulatedVB.fb_height;
-
 
    MDFNMP_Init(32768, ((uint64)1 << 27) / 32768);
    MDFNMP_AddRAM(65536, 5 << 24, WRAM);
@@ -2054,12 +1988,10 @@ extern "C" int StateAction(StateMem *sm, int load, int data_only)
    ret &= VBINPUT_StateAction(sm, load, data_only);
    ret &= VIP_StateAction(sm, load, data_only);
 
+   // Needed to recalculate next_*_ts since we don't bother storing their deltas in save states.
    if(load)
-   {
-      // Needed to recalculate next_*_ts since we don't bother storing their deltas in save states.
       ForceEventUpdates(timestamp);
-   }
-   return(ret);
+   return ret;
 }
 
 static void SetLayerEnableMask(uint64 mask) { }
@@ -2127,10 +2059,10 @@ static bool initial_ports_hookup = false;
 #define MEDNAFEN_CORE_VERSION "v1.27.1"
 #define MEDNAFEN_CORE_EXTENSIONS "vb|vboy|bin"
 #define MEDNAFEN_CORE_TIMING_FPS 50.27
-#define MEDNAFEN_CORE_GEOMETRY_BASE_W (EmulatedVB.nominal_width)
-#define MEDNAFEN_CORE_GEOMETRY_BASE_H (EmulatedVB.nominal_height)
-#define MEDNAFEN_CORE_GEOMETRY_MAX_W 384 * 2
-#define MEDNAFEN_CORE_GEOMETRY_MAX_H 224 * 2
+#define MEDNAFEN_CORE_GEOMETRY_BASE_W 384
+#define MEDNAFEN_CORE_GEOMETRY_BASE_H 224
+#define MEDNAFEN_CORE_GEOMETRY_MAX_W (384 * 2)
+#define MEDNAFEN_CORE_GEOMETRY_MAX_H (224 * 2)
 #define MEDNAFEN_CORE_GEOMETRY_ASPECT_RATIO (12.0 / 7.0)
 #define FB_WIDTH 384 * 2
 #define FB_HEIGHT 224 * 2
@@ -2470,7 +2402,6 @@ bool retro_load_game(const struct retro_game_info *info)
       }
    }
 
-
    return true;
 }
 
@@ -2602,8 +2533,6 @@ void retro_run(void)
 
    Emulate(&spec, sound_buf);
 
-   const int32 SoundBufMaxSize = spec.SoundBufMaxSize;
-
    if (width != spec.DisplayRect.w || height != spec.DisplayRect.h)
       resolution_changed = true;
 
@@ -2680,7 +2609,7 @@ void retro_deinit(void)
 
 unsigned retro_get_region(void)
 {
-   return RETRO_REGION_NTSC; // FIXME: Regions for other cores.
+   return RETRO_REGION_PAL; /* 50fps so default this to PAL 50Hz */
 }
 
 unsigned retro_api_version(void)
@@ -2804,7 +2733,3 @@ size_t retro_get_memory_size(unsigned type)
 
 void retro_cheat_reset(void) { }
 void retro_cheat_set(unsigned a, bool b, const char *c) { }
-
-void MDFND_MidSync(const EmulateSpecStruct *) { }
-
-void MDFN_MidLineUpdate(EmulateSpecStruct *espec, int y) { }
