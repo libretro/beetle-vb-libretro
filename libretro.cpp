@@ -1994,66 +1994,6 @@ extern "C" int StateAction(StateMem *sm, int load, int data_only)
    return ret;
 }
 
-static void SetLayerEnableMask(uint64 mask) { }
-
-static void DoSimpleCommand(int cmd)
-{
-   switch(cmd)
-   {
-      case MDFN_MSC_POWER:
-      case MDFN_MSC_RESET:
-         VB_Power();
-         break;
-   }
-}
-
-static const InputDeviceInputInfoStruct IDII[] =
-{
- { "a", "A", 7, IDIT_BUTTON_CAN_RAPID,  NULL },
- { "b", "B", 6, IDIT_BUTTON_CAN_RAPID, NULL },
- { "rt", "Right-Back", 13, IDIT_BUTTON, NULL },
- { "lt", "Left-Back", 12, IDIT_BUTTON, NULL },
-
- { "up-r", "UP ↑ (Right D-Pad)", 8, IDIT_BUTTON, "down-r" },
- { "right-r", "RIGHT → (Right D-Pad)", 11, IDIT_BUTTON, "left-r" },
-
- { "right-l", "RIGHT → (Left D-Pad)", 3, IDIT_BUTTON, "left-l" },
- { "left-l", "LEFT ← (Left D-Pad)", 2, IDIT_BUTTON, "right-l" },
- { "down-l", "DOWN ↓ (Left D-Pad)", 1, IDIT_BUTTON, "up-l" },
- { "up-l", "UP ↑ (Left D-Pad)", 0, IDIT_BUTTON, "down-l" },
-
- { "start", "Start", 5, IDIT_BUTTON, NULL },
- { "select", "Select", 4, IDIT_BUTTON, NULL },
-
- { "left-r", "LEFT ← (Right D-Pad)", 10, IDIT_BUTTON, "right-r" },
- { "down-r", "DOWN ↓ (Right D-Pad)", 9, IDIT_BUTTON, "up-r" },
-};
-
-static InputDeviceInfoStruct InputDeviceInfo[] =
-{
- {
-  "gamepad",
-  "Gamepad",
-  NULL,
-  NULL,
-  sizeof(IDII) / sizeof(InputDeviceInputInfoStruct),
-  IDII,
- }
-};
-
-static const InputPortInfoStruct PortInfo[] =
-{
- { "builtin", "Built-In", sizeof(InputDeviceInfo) / sizeof(InputDeviceInfoStruct), InputDeviceInfo, "gamepad" }
-};
-
-static InputInfoStruct InputInfo =
-{
- sizeof(PortInfo) / sizeof(InputPortInfoStruct),
- PortInfo
-};
-
-static bool initial_ports_hookup = false;
-
 #define MEDNAFEN_CORE_NAME_MODULE "vb"
 #define MEDNAFEN_CORE_NAME "Beetle VB"
 #define MEDNAFEN_CORE_VERSION "v1.27.1"
@@ -2107,7 +2047,7 @@ void retro_init(void)
 
 void retro_reset(void)
 {
-   DoSimpleCommand(MDFN_MSC_RESET);
+   VB_Power();
 }
 
 bool retro_load_game_special(unsigned, const struct retro_game_info *, size_t)
@@ -2288,18 +2228,6 @@ static void check_variables(void)
 static uint16_t input_buf[MAX_PLAYERS];
 static uint16_t low_battery;
 
-static void hookup_ports(bool force)
-{
-   if (initial_ports_hookup && !force)
-      return;
-
-   /* Possible endian bug ... */
-   VBINPUT_SetInput(0, "gamepad", &input_buf[0]);
-   VBINPUT_SetInput(1, "gamepad", &low_battery);
-
-   initial_ports_hookup = true;
-}
-
 bool retro_load_game(const struct retro_game_info *info)
 {
    struct MDFN_PixelFormat pix_fmt;
@@ -2388,7 +2316,9 @@ bool retro_load_game(const struct retro_game_info *info)
    surf.h                       = FB_HEIGHT;
    surf.pitchinpix              = FB_WIDTH;
 
-   hookup_ports(true);
+   /* Possible endian bug ... */
+   VBINPUT_SetInput(0, "gamepad", &input_buf[0]);
+   VBINPUT_SetInput(1, "gamepad", &low_battery);
 
    check_variables();
 
