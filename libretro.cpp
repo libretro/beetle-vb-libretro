@@ -1996,7 +1996,7 @@ extern "C" int StateAction(StateMem *sm, int load, int data_only)
 
 #define MEDNAFEN_CORE_NAME_MODULE "vb"
 #define MEDNAFEN_CORE_NAME "Beetle VB"
-#define MEDNAFEN_CORE_VERSION "v1.27.1"
+#define MEDNAFEN_CORE_VERSION "v1.31.0"
 #define MEDNAFEN_CORE_EXTENSIONS "vb|vboy|bin"
 #define MEDNAFEN_CORE_TIMING_FPS 50.27
 #define MEDNAFEN_CORE_GEOMETRY_BASE_W 384

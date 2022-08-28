@@ -615,8 +615,10 @@ static INLINE void WriteRegister(int32 timestamp, uint32 A, uint16 V)
 
          if(V & 1)
          {
-            DrawingActive = 0;
-            DrawingCounter = 0;
+            DrawingFB         = DisplayFB;
+            DisplayFB        ^= 1;
+            DrawingActive     = 0;
+            DrawingCounter    = 0;
             InterruptPending &= ~(INT_SB_HIT | INT_XP_END | INT_TIME_ERR);
             CheckIRQ();
          }
@@ -1425,12 +1427,11 @@ v810_timestamp_t MDFN_FASTCALL VIP_Update(const v810_timestamp_t timestamp)
 
                   if(XPCTRL & XPCTRL_XP_EN)
                   {
-                     DisplayFB ^= 1;
-
-                     DrawingBlock = 0;
-                     DrawingActive = true;
+                     DisplayFB      = DrawingFB;
+                     DrawingFB     ^= 1;
+                     DrawingBlock   = 0;
+                     DrawingActive  = true;
                      DrawingCounter = 1120 * 4;
-                     DrawingFB = DisplayFB ^ 1;
                   }
 
                   GameFrameCounter = 0;
