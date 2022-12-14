@@ -43,7 +43,6 @@ found freely through public domain sources.
  */
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <algorithm>
 
 #include <boolean.h>
