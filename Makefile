@@ -6,15 +6,20 @@ CORE_DIR := .
 # system platform
 ifeq ($(platform),)
    platform = unix
-   ifeq ($(shell uname -a),)
+   ifeq ($(shell uname -s),)
       EXE_EXT = .exe
       platform = win
+   else ifneq ($(findstring Darwin,$(shell uname -s)),)
+      platform = osx
+      arch = intel
+      ifeq ($(shell uname -p),arm64)
+	arch = arm
+      endif
+      ifeq ($(shell uname -p),powerpc)
+	arch = ppc
+      endif
    else ifneq ($(findstring MINGW,$(shell uname -a)),)
       platform = win
-   else ifneq ($(findstring win,$(shell uname -a)),)
-      platform = win
-   else ifneq ($(findstring Darwin,$(shell uname -a)),)
-      platform = osx
    endif
 else ifneq (,$(findstring armv,$(platform)))
    ifeq (,$(findstring classic_,$(platform)))
@@ -23,13 +28,6 @@ else ifneq (,$(findstring armv,$(platform)))
 else ifneq (,$(findstring rpi,$(platform)))
    override platform += unix
 endif
-
-ifeq ($(shell uname -p),powerpc)
-   arch = ppc
-else
-   arch = intel
-endif
-
 
 NEED_BPP = 32
 NEED_BLIP = 1
@@ -537,6 +535,7 @@ ifneq (,$(findstring msvc,$(platform)))
 WARNINGS :=
 else
 WARNINGS := -Wall \
+	-Wno-missing-braces \
 	-Wno-sign-compare \
 	-Wno-unused-variable \
 	-Wno-unused-function \
