@@ -909,13 +909,9 @@ static INLINE void CopyFBColumnToTarget_Anaglyph_BASE(const bool DisplayActive_a
       {
          for(y = 56; y; y--)
          {
-            uint32 source_bits = *fb_source;
-
             for(y_sub = 4; y_sub; y_sub--)
             {
                *target      |= 0;
-
-               source_bits >>= 2;
                target       += pitchinpix;
             }
             fb_source++;
@@ -925,13 +921,9 @@ static INLINE void CopyFBColumnToTarget_Anaglyph_BASE(const bool DisplayActive_a
       {
          for(y = 56; y; y--)
          {
-            uint32 source_bits = *fb_source;
-
             for(y_sub = 4; y_sub; y_sub--)
             {
                *target       = 0;
-
-               source_bits >>= 2;
                target       += pitchinpix;
             }
             fb_source++;
@@ -985,12 +977,10 @@ static INLINE void CopyFBColumnToTarget_AnaglyphSlow_BASE(const bool DisplayActi
          for(y = 56; y; y--)
          {
             int y_sub;
-            uint32 source_bits = *fb_source;
 
             for(y_sub = 4; y_sub; y_sub--)
             {
                *target       = 0;
-               source_bits >>= 2;
                target++;
             }
             fb_source++;
@@ -1065,12 +1055,9 @@ static void CopyFBColumnToTarget_CScope_BASE(const bool DisplayActive_arg, const
       {
          for(y = 56; y; y--)
          {
-            uint32 source_bits = *fb_source;
-
             for(y_sub = 4; y_sub; y_sub--)
             {
                *target       = 0;
-               source_bits >>= 2;
                target--;
             }
             fb_source++;
@@ -1099,12 +1086,9 @@ static void CopyFBColumnToTarget_CScope_BASE(const bool DisplayActive_arg, const
       {
          for(y = 56; y; y--)
          {
-            uint32 source_bits = *fb_source;
-
             for(y_sub = 4; y_sub; y_sub--)
             {
                *target       = 0;
-               source_bits >>= 2;
                target++;
             }
             fb_source++;
@@ -1153,12 +1137,10 @@ static void CopyFBColumnToTarget_SideBySide_BASE(const bool DisplayActive_arg, c
       for(y = 56; y; y--)
       {
          int y_sub;
-         uint32 source_bits = *fb_source;
 
          for(y_sub = 4; y_sub; y_sub--)
          {
             *target       = 0;
-            source_bits >>= 2;
             target       += pitch32;
          }
          fb_source++;
@@ -1210,7 +1192,6 @@ static INLINE void CopyFBColumnToTarget_VLI_BASE(const bool DisplayActive_arg, c
       for(y = 56; y; y--)
       {
          int y_sub;
-         uint32 source_bits = *fb_source;
 
          for(y_sub = 4; y_sub; y_sub--)
          {
@@ -1219,7 +1200,6 @@ static INLINE void CopyFBColumnToTarget_VLI_BASE(const bool DisplayActive_arg, c
             for(ps = 0; ps < VBPrescale; ps++)
                target[ps * 2] = tv;
 
-            source_bits >>= 2;
             target       += pitch32;
          }
          fb_source++;
