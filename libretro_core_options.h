@@ -184,6 +184,17 @@ struct retro_core_option_definition option_defs_us[] = {
       "disabled",
    },
    {
+      "vb_opposite_directions",
+      "Allow Opposite Directions",
+      "Allow pressing up and down or left and right directions at the same time. This may cause glitches.",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       "vb_cpu_emulation",
       "CPU emulation  (Restart)",
       "Choose between faster and accurate (slower) emulation.",
