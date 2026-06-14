@@ -80,10 +80,22 @@ static const uint32 AnaglyphPreset_Colors[][2] =
 };
 
 #define STICK_DEADZONE 0x4000
+#define LEFT_DPAD_LEFT 0x0080
+#define LEFT_DPAD_RIGHT 0x0040
+#define LEFT_DPAD_UP 0x0200
+#define LEFT_DPAD_DOWN 0x0100
 #define RIGHT_DPAD_LEFT 0x1000
 #define RIGHT_DPAD_RIGHT 0x0020
 #define RIGHT_DPAD_UP 0x0010
 #define RIGHT_DPAD_DOWN 0x2000
+
+// D-Pads opposite directions
+#define LEFT_DPAD_LEFT_RIGHT (LEFT_DPAD_LEFT | LEFT_DPAD_RIGHT)
+#define LEFT_DPAD_UP_DOWN (LEFT_DPAD_UP | LEFT_DPAD_DOWN)
+#define RIGHT_DPAD_LEFT_RIGHT (RIGHT_DPAD_LEFT | RIGHT_DPAD_RIGHT)
+#define RIGHT_DPAD_UP_DOWN (RIGHT_DPAD_UP | RIGHT_DPAD_DOWN)
+
+static bool opposite_directions = false;
 
 static uint32 VB3DMode;
 
@@ -2213,6 +2225,11 @@ static void check_variables(void)
          setting_vb_right_analog_to_digital = false;
    }
 
+   var.key = "vb_opposite_directions";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      opposite_directions = !strcmp(var.value, "enabled");
+
    var.key = "vb_cpu_emulation";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -2407,6 +2424,18 @@ static void update_input(void)
             input_buf[j] |= (analog_x < 0) ^ !setting_vb_right_invert_x ? RIGHT_DPAD_RIGHT : RIGHT_DPAD_LEFT;
          if (abs(analog_y) > STICK_DEADZONE)
             input_buf[j] |= (analog_y < 0) ^ !setting_vb_right_invert_y ? RIGHT_DPAD_DOWN : RIGHT_DPAD_UP;
+      }
+
+      if (!opposite_directions)
+      {
+         if ((input_buf[j] & LEFT_DPAD_LEFT_RIGHT) == LEFT_DPAD_LEFT_RIGHT)
+            input_buf[j] &= ~LEFT_DPAD_LEFT_RIGHT;
+         if ((input_buf[j] & LEFT_DPAD_UP_DOWN) == LEFT_DPAD_UP_DOWN)
+            input_buf[j] &= ~LEFT_DPAD_UP_DOWN;
+         if ((input_buf[j] & RIGHT_DPAD_LEFT_RIGHT) == RIGHT_DPAD_LEFT_RIGHT)
+            input_buf[j] &= ~RIGHT_DPAD_LEFT_RIGHT;
+         if ((input_buf[j] & RIGHT_DPAD_UP_DOWN) == RIGHT_DPAD_UP_DOWN)
+            input_buf[j] &= ~RIGHT_DPAD_UP_DOWN;
       }
 
 #ifdef MSB_FIRST
