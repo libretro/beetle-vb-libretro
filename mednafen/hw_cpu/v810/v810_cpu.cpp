@@ -976,7 +976,12 @@ void V810::fpu_subop(v810_timestamp_t &timestamp, int sub_op, int arg1, int arg2
             return;
          case MPYHW:
             timestamp += 9 - 1;	/* Unknown? */
-            P_REG[arg1] = (int32)(int16)(P_REG[arg1] & 0xFFFF) * (int32)(int16)(P_REG[arg2] & 0xFFFF);
+            {
+               /* interpret multiplier as 17-bit two's complement signed integer */
+               uint32 v = P_REG[arg2] & ((1<<17) - 1);
+               v -= (v & (1<<16)) << 1;
+               P_REG[arg1] *= v;
+            }
             return;
       }
    }
