@@ -51,7 +51,7 @@ extern "C" {
 struct retro_core_option_definition option_defs_us[] = {
    {
       "vb_3dmode",
-      "3D mode",
+      "3D mode (requires restart)",
       "Select the 3D mode. Anaglyph - used in conjunction with classic dual-lens-color glasses. Cyberscope - intended for use with the CyberScope 3D device. sidebyside - the left-eye image is displayed on the left, and the right-eye image is displayed on the right. vli - Vertical lines alternate between left and right view. hli - Horizontal lines alternate between left and right view.",
       {
          { "anaglyph",  NULL },
