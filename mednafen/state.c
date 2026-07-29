@@ -46,7 +46,8 @@ static INLINE void MDFN_en32lsb(uint8_t *buf, uint32_t morp)
 
 static INLINE uint32_t MDFN_de32lsb(const uint8_t *morp)
 {
-   return morp[0]|(morp[1]<<8)|(morp[2]<<16)|(morp[3]<<24);
+   return (uint32_t)morp[0] | ((uint32_t)morp[1] << 8) |
+          ((uint32_t)morp[2] << 16) | ((uint32_t)morp[3] << 24);
 }
 
 #ifdef MSB_FIRST
@@ -191,7 +192,8 @@ static int smem_read32le(StateMem *st, uint32_t *b)
    if(smem_read(st, s, 4) < 4)
       return 0;
 
-   *b = s[0] | (s[1] << 8) | (s[2] << 16) | (s[3] << 24);
+   *b = (uint32_t)s[0] | ((uint32_t)s[1] << 8) |
+        ((uint32_t)s[2] << 16) | ((uint32_t)s[3] << 24);
 
    return 4;
 }
