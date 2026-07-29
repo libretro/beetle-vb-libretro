@@ -1518,6 +1518,16 @@ int VIP_StateAction(StateMem *sm, int load, int data_only)
    if(load)
    {
       int i;
+
+      Column %= 384;
+      if(Column < 0)
+         Column += 384;
+
+      if(ColumnCounter < 1)
+         ColumnCounter = 1;
+      else if(ColumnCounter > 1000)
+         ColumnCounter = 1000;
+
       RecalcBrightnessCache();
       for(i = 0; i < 4; i++)
       {

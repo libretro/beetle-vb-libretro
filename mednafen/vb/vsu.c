@@ -516,7 +516,64 @@ int VSU_StateAction(StateMem *sm, int load, int data_only)
       SFEND
    };
 
-   return MDFNSS_StateAction(sm, load, data_only, StateRegs, "VSU", false);
+   if(!MDFNSS_StateAction(sm, load, data_only, StateRegs, "VSU", false))
+      return 0;
+
+   if(load)
+   {
+      int ch;
+
+      for(ch = 0; ch < 6; ch++)
+      {
+         WavePos[ch]     &= 0x1F;
+
+         LeftLevel[ch]   &= 0xF;
+         RightLevel[ch]  &= 0xF;
+
+         Frequency[ch]   &= 0x07FF;
+         EffFreq[ch]     &= 0x07FF;
+         Envelope[ch]    &= 0xF;
+         EnvControl[ch]  &= ((ch >= 4) ? 0x73FF : 0x03FF);
+
+         RAMAddress[ch]  &= 0xF;
+
+         if(FreqCounter[ch] < 1)
+            FreqCounter[ch] = 1;
+
+         if(IntervalCounter[ch] <= 0)
+            IntlControl[ch] &= ~0x80;
+         else if(IntervalCounter[ch] > 0x20)
+            IntervalCounter[ch] = 0x20;
+
+         if(EnvelopeCounter[ch] < 0x1)
+            EnvelopeCounter[ch] = 0x1;
+         else if(EnvelopeCounter[ch] > 0x8)
+            EnvelopeCounter[ch] = 0x8;
+
+         if(EffectsClockDivider[ch] < 1)
+            EffectsClockDivider[ch] = 1;
+
+         if(IntervalClockDivider[ch] < 1)
+            IntervalClockDivider[ch] = 1;
+
+         if(EnvelopeClockDivider[ch] < 1)
+            EnvelopeClockDivider[ch] = 1;
+
+         if(LatcherClockDivider[ch] < 1)
+            LatcherClockDivider[ch] = 1;
+      }
+
+      if(NoiseLatcherClockDivider < 1)
+         NoiseLatcherClockDivider = 1;
+
+      SweepControl    &= 0xFF;
+      SweepModCounter &= 0x7;
+
+      if(SweepModClockDivider < 1)
+         SweepModClockDivider = 1;
+   }
+
+   return 1;
 }
 
 uint8 VSU_PeekWave(const unsigned int which, uint32 Address)
