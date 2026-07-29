@@ -205,5 +205,17 @@ int VBINPUT_StateAction(StateMem *sm, int load, int data_only)
       SFEND
    };
 
-   return MDFNSS_StateAction(sm, load, data_only, StateRegs, "INPUT", false);
+   if(!MDFNSS_StateAction(sm, load, data_only, StateRegs, "INPUT", false))
+      return 0;
+
+   if(load)
+   {
+      /* ReadBitPos walks 0..15 while shifting the pad data out and comes to
+       * rest at 16. It is used as a shift exponent (1 << ReadBitPos), so an
+       * out-of-range value from a savestate would be undefined behavior. */
+      if(ReadBitPos > 16)
+         ReadBitPos = 16;
+   }
+
+   return 1;
 }

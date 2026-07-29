@@ -2002,7 +2002,16 @@ extern "C" int StateAction(StateMem *sm, int load, int data_only)
 
    // Needed to recalculate next_*_ts since we don't bother storing their deltas in save states.
    if(load)
+   {
+      /* VSU_CycleFix is a sub-4-cycle remainder: the emulation loop always
+       * leaves it as (timestamp + VSU_CycleFix) & 3, so only 0..3 is valid.
+       * A corrupt savestate could otherwise push
+       * (v810_timestamp + VSU_CycleFix) >> 2 far past the end of the Blip
+       * buffer, producing an out-of-bounds read when the frame is flushed. */
+      VSU_CycleFix &= 3;
+
       ForceEventUpdates(timestamp);
+   }
    return ret;
 }
 

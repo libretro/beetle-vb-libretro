@@ -1482,7 +1482,7 @@ int VIP_StateAction(StateMem *sm, int load, int data_only)
       SFVAR(FRMCYC),
       SFVAR(DPCTRL),
 
-      SFVAR(DisplayActive),
+      SFVARN_BOOL(DisplayActive, "DisplayActive"),
 
       SFVAR(XPCTRL),
       SFVAR(SBCMP),
@@ -1496,14 +1496,14 @@ int VIP_StateAction(StateMem *sm, int load, int data_only)
       SFVAR(ColumnCounter),
 
       SFVAR(DisplayRegion),
-      SFVAR(DisplayFB),
+      SFVARN_BOOL(DisplayFB, "DisplayFB"),
 
       SFVAR(GameFrameCounter),
 
       SFVAR(DrawingCounter),
 
-      SFVAR(DrawingActive),
-      SFVAR(DrawingFB),
+      SFVARN_BOOL(DrawingActive, "DrawingActive"),
+      SFVARN_BOOL(DrawingFB, "DrawingFB"),
       SFVAR(DrawingBlock),
 
       SFVAR(SB_Latch),
@@ -1527,6 +1527,17 @@ int VIP_StateAction(StateMem *sm, int load, int data_only)
          ColumnCounter = 1;
       else if(ColumnCounter > 1000)
          ColumnCounter = 1000;
+
+      /* DrawingBlock indexes the framebuffer via FB[..] + DrawingBlock * 2
+       * and only ever holds 0..27 in normal operation (it is reset when it
+       * reaches 28). An out-of-range value from a savestate would move the
+       * 384-pixel column store past the end of FB. SB_Latch shadows it and
+       * is left-shifted by 8 when read back, so clamp it the same way. */
+      if(DrawingBlock >= 28)
+         DrawingBlock = 0;
+
+      if(SB_Latch < 0 || SB_Latch >= 28)
+         SB_Latch = 0;
 
       RecalcBrightnessCache();
       for(i = 0; i < 4; i++)
