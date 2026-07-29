@@ -284,6 +284,8 @@ void V810::Reset()
    lastop = 0;
 
    in_bstr = false;
+   have_src_cache = false;
+   have_dst_cache = false;
 
    RecalcIPendingCache();
 }
@@ -295,6 +297,8 @@ bool V810::Init(V810_Emu_Mode mode, bool vb_mode)
 
    in_bstr = false;
    in_bstr_to = 0;
+   have_src_cache = false;
+   have_dst_cache = false;
 
    if(mode == V810_EMU_MODE_FAST)
    {
@@ -1250,7 +1254,12 @@ int V810::StateAction(StateMem *sm, int load, int data_only)
 
       RecalcIPendingCache();
 
-      SetPC(PC_tmp);
+      /* Instructions always begin on a 16-bit boundary, and the hardware
+       * forces the low bit of PC clear. Every runtime path that sets PC
+       * already masks it, so only a corrupt savestate can introduce an odd
+       * PC, which would make the instruction fetch issue a misaligned 16-bit
+       * load (undefined behavior, and a fault on strict-alignment targets). */
+      SetPC(PC_tmp & ~(uint32)1);
       if(EmuMode == V810_EMU_MODE_ACCURATE)
       {
          int i;
