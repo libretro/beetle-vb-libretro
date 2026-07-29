@@ -120,7 +120,7 @@ void TIMER_Write(const v810_timestamp_t timestamp, uint32 A, uint8 V)
             TimerStatusShadow = false;
          }
          if((V & TC_TENABLE) && !(TimerControl & TC_TENABLE))
-            TimerDivider = (V & TC_TCLKSEL) ? 500 : 2000;
+            TimerDivider = (V & TC_TCLKSEL) ? 400 : 2000;
          TimerControl = V & (0x10 | 0x08 | 0x01);
 
          if(!(TimerControl & TC_TIMZINT))
@@ -194,7 +194,7 @@ void TIMER_SetRegister(const unsigned int id, const uint32 value)
          break;
 
       case TIMER_GSREG_DIVCOUNTER:
-         TimerDivider = value % ((TimerControl & TC_TCLKSEL) ? 500 : 2000);
+         TimerDivider = value % ((TimerControl & TC_TCLKSEL) ? 400 : 2000);
          break;
 
       case TIMER_GSREG_RELOAD_VALUE:
