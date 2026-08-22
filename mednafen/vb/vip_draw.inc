@@ -380,7 +380,16 @@ void VIP_DrawBlock(uint8 block_no, uint8 *fb_l, uint8 *fb_r)
   uint16 my = world_ptr[6];
   uint16 window_width = sign_11_to_s16(world_ptr[7]);
   uint16 window_height = (world_ptr[8] & 0x3FF);
-  uint32 param_base = (world_ptr[9] & 0xFFF0);
+  /* PARAM_BASE is a halfword address into DRAM. Affine parameter elements are
+   * 8 halfwords (16 bytes) each and HBias elements are 2 halfwords (4 bytes),
+   * so only the low 3 bits are insignificant for affine and none are for HBias.
+   * Masking off 4 bits forced a 32-byte alignment the hardware does not impose,
+   * which collapsed every odd-numbered 16-byte parameter slot onto its even
+   * neighbour and rendered such worlds one row out of step. Dragon Hopper
+   * double-buffers and animates its affine parameter tables across bases like
+   * 0x93a0/0x93a8, so the tower layer snapped back and forth by a row between
+   * frames while the camera moved. */
+  uint32 param_base = world_ptr[9];
   uint16 overplane_char = world_ptr[10];
 
   if(end)
@@ -420,7 +429,11 @@ void VIP_DrawBlock(uint8 block_no, uint8 *fb_l, uint8 *fb_r)
     if(lron[lr])
     {
      if(bgm == 1)	/* HBias */
-      srcX += (int16)DRAM[(param_base + (((RealY - DestY) * 2) | lr)) & 0xFFFF];
+      /* The VIP forms HOFSTR's address by OR-ing HOFSTL's with 2, so an odd
+       * PARAM_BASE (byte address not divisible by 4) feeds HOFSTL to both eyes.
+       * Now that param_base is no longer forced even, OR rather than add.
+       * Identical to the previous expression for every even base. */
+      srcX += (int16)DRAM[((param_base + ((RealY - DestY) * 2)) | lr) & 0xFFFF];
 
      DrawBG(fb[lr], RealY, lr, bgmap_base, over, overplane_char, (int32)(int16)srcX, (int32)(int16)srcY, scx, scy, DestX, DestY, window_width, window_height);
     }
