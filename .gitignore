@@ -2,5 +2,6 @@
 *.so
 *.dll
 *.dylib
+/obj
 /old
 *.a
