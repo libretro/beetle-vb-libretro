@@ -60,7 +60,8 @@ endif
 ifneq ($(HAVE_GRIFFIN), 1)
 SOURCES_CXX += \
 	$(MEDNAFEN_DIR)/mempatcher.cpp \
-	$(CORE_DIR)/libretro.cpp
+	$(CORE_DIR)/libretro.cpp \
+	$(CORE_DIR)/libretro_vr.cpp
 
 SOURCES_C   += \
 	$(MEDNAFEN_DIR)/state.c \
@@ -71,4 +72,10 @@ SOURCES_C += \
 	$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
 	$(LIBRETRO_COMM_DIR)/compat/compat_snprintf.c
 endif
+endif
+
+ifeq ($(HAVE_GLES),1)
+   SOURCES_C += \
+        $(LIBRETRO_COMM_DIR)/glsym/glsym_es2.c \
+        $(LIBRETRO_COMM_DIR)/glsym/rglgen.c
 endif
