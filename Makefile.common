@@ -79,3 +79,9 @@ ifeq ($(HAVE_GLES),1)
         $(LIBRETRO_COMM_DIR)/glsym/glsym_es2.c \
         $(LIBRETRO_COMM_DIR)/glsym/rglgen.c
 endif
+
+ifeq ($(HAVE_OPENGL),1)
+   SOURCES_C += \
+        $(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c \
+        $(LIBRETRO_COMM_DIR)/glsym/rglgen.c
+endif

@@ -9,6 +9,7 @@
 #include "mednafen/masmem.h"
 #include "mednafen/settings.h"
 
+#include "libretro_vr.h"
 #include "vb_games.h"
 
 /* Forward declarations */
@@ -31,6 +32,8 @@ static bool overscan;
 static struct MDFN_PixelFormat last_pixel_format;
 
 static struct MDFN_Surface surf;
+
+bool vr_option_enabled = true;
 
 /* Mednafen - Multi-system Emulator
  *
@@ -781,7 +784,7 @@ static void check_variables(void)
 
    var.key = "vb_3dmode";
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   if (vb_vr_mode() != VB_PRESENT_VR && environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       unsigned old_3dmode = setting_vb_3dmode;
 
@@ -939,7 +942,7 @@ static void check_variables(void)
 
    var.key = "vb_sidebyside_separation";
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   if (vb_vr_mode() != VB_PRESENT_VR && environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       unsigned old_separation = setting_vb_sidebyside_separation;
 
@@ -951,6 +954,21 @@ static void check_variables(void)
 
          log_cb(RETRO_LOG_INFO, "[%s]: Side-by-side separation changed: %u pixels.\n", mednafen_core_str, setting_vb_sidebyside_separation);
       }
+   }
+
+   var.key = "vb_vr";
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+      vr_option_enabled = strcmp(var.value, "disabled") != 0;
+
+   {
+      float dist = 1.0f, width = 1.1f;
+      var.key = "vb_vr_screen_distance";
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+         dist = (float)atof(var.value);
+      var.key = "vb_vr_screen_width";
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+         width = (float)atof(var.value);
+      vb_vr_set_screen(dist, width);
    }
 }
 
@@ -1007,8 +1025,17 @@ bool retro_load_game(const struct retro_game_info *info)
 
    check_variables();
 
+   if (vb_vr_negotiate(environ_cb, vr_option_enabled) == VB_PRESENT_VR)
+   {
+      setting_vb_3dmode                = VB3DMODE_SIDEBYSIDE;
+      setting_vb_sidebyside_separation = 0;
+   }
+
    if (Load((const uint8_t*)info->data, info->size) <= 0)
+   {
+      vb_vr_unload();
       return false;
+   }
 
    MDFN_LoadGameCheats(NULL);
 
@@ -1047,7 +1074,10 @@ bool retro_load_game(const struct retro_game_info *info)
    surf.pixels                  = NULL;
 
    if(!(rpix = calloc(1, FB_WIDTH * FB_HEIGHT * (pix_fmt.bpp / 8))))
+   {
+      vb_vr_unload();
       return false;
+   }
 
 #if defined(WANT_16BPP)
    surf.pixels16                = (uint16 *)rpix;
@@ -1081,6 +1111,7 @@ void retro_unload_game(void)
 {
    MDFN_FlushGameCheats(0);
    CloseGame();
+   vb_vr_unload();
    MDFNMP_Kill();
 }
 
@@ -1208,6 +1239,15 @@ void retro_run(void)
 
    update_input();
 
+   bool vr_av_changed = false;
+   vb_vr_begin_frame(&vr_av_changed);
+   if (vr_av_changed)
+   {
+      struct retro_system_av_info av;
+      retro_get_system_av_info(&av);
+      environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &av);
+   }
+
    spec.surface            = &surf;
    spec.VideoFormatChanged = false;
    spec.DisplayRect.x      = 0;
@@ -1233,16 +1273,21 @@ void retro_run(void)
 
    /* Declare the new geometry before handing over a frame that already uses
     * it, otherwise the frontend scales one frame against the old dimensions. */
-   if (resolution_changed)
+   if (resolution_changed && vb_vr_mode() != VB_PRESENT_VR)
       update_geometry(width, height);
 
+   if (vb_vr_mode() != VB_PRESENT_SOFTWARE)
+      vb_vr_present(video_cb, surf.pixels, surf.pitchinpix, surf.h, width, height);
+   else
+   {
 #if defined(WANT_32BPP)
-   const uint32_t *pix = surf.pixels;
-   video_cb(pix, width, height, FB_WIDTH << 2);
+      const uint32_t *pix = surf.pixels;
+      video_cb(pix, width, height, FB_WIDTH << 2);
 #elif defined(WANT_16BPP)
-   const uint16_t *pix = surf.pixels16;
-   video_cb(pix, width, height, FB_WIDTH << 1);
+      const uint16_t *pix = surf.pixels16;
+      video_cb(pix, width, height, FB_WIDTH << 1);
 #endif
+   }
 
    audio_batch_cb(sound_buf, spec.SoundBufSize);
 
@@ -1274,6 +1319,15 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->geometry.max_width    = MEDNAFEN_CORE_GEOMETRY_MAX_W;
    info->geometry.max_height   = MEDNAFEN_CORE_GEOMETRY_MAX_H;
    info->geometry.aspect_ratio = MEDNAFEN_CORE_GEOMETRY_ASPECT_RATIO;
+
+   if (vb_vr_mode() == VB_PRESENT_VR)
+   {
+      unsigned w, h;
+      vb_vr_get_geometry(&w, &h);
+      info->geometry.base_width   = info->geometry.max_width  = w;
+      info->geometry.base_height  = info->geometry.max_height = h;
+      info->geometry.aspect_ratio = (float)w / (float)h;
+   }
 }
 
 void retro_deinit(void)
