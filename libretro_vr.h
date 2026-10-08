@@ -2,6 +2,7 @@
 #define LIBRETRO_VB_VR_H
 
 #include <libretro.h>
+#include <boolean.h>
 
 /*
  *  SOFTWARE : software framebuffer handed to video_cb.
