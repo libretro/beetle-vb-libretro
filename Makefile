@@ -31,6 +31,9 @@ endif
 
 NEED_BPP = 32
 NEED_BLIP = 1
+HAVE_GLES ?= 0
+HAVE_OPENGL ?= 0
+HAVE_VR ?= 0
 
 prefix := /usr
 libdir := $(prefix)/lib
@@ -575,6 +578,19 @@ endif
    FLAGS += -D_CRT_SECURE_NO_DEPRECATE
 endif
 
+ifeq ($(HAVE_GLES),1)
+   GL_LIB := -lGLESv2
+endif
+
+ifeq ($(HAVE_OPENGL),1)
+   GL_LIB := -lGL
+   FLAGS += -DHAVE_OPENGL
+endif
+
+ifeq ($(HAVE_VR),1)
+   FLAGS += -DHAVE_VR
+endif
+
 LDFLAGS += $(fpic) $(SHARED)
 FLAGS   += $(fpic) $(NEW_GCC_FLAGS)
 FLAGS   += $(INCFLAGS) $(INCFLAGS_PLATFORM)
@@ -605,7 +621,7 @@ $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
 else
-	$(LD) $(LINKOUT)$@ $^ $(LDFLAGS)
+	$(LD) $(LINKOUT)$@ $^ $(LDFLAGS) $(GL_LIB)
 endif
 
 
