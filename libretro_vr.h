@@ -1,10 +1,6 @@
 #ifndef LIBRETRO_VB_VR_H
 #define LIBRETRO_VB_VR_H
 
-#include <limits.h>
-#include <stdint.h>
-#include <stdbool.h>
-
 #include <libretro.h>
 
 /*

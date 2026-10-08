@@ -580,10 +580,17 @@ endif
 
 ifeq ($(HAVE_GLES),1)
    GL_LIB := -lGLESv2
-endif
-
-ifeq ($(HAVE_OPENGL),1)
-   GL_LIB := -lGL
+   FLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES2
+else ifeq ($(HAVE_OPENGL),1)
+   ifneq (,$(findstring osx,$(platform)))
+      GL_LIB := -framework OpenGL
+   else ifneq (,$(findstring msvc,$(platform)))
+      GL_LIB := opengl32.lib
+   else ifneq (,$(findstring win,$(platform)))
+      GL_LIB := -lopengl32
+   else
+      GL_LIB := -lGL
+   endif
    FLAGS += -DHAVE_OPENGL
 endif
 
