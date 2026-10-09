@@ -241,9 +241,7 @@ vb_present_mode vb_vr_negotiate(retro_environment_t env, bool allow_vr)
 
    views.views           = view;
    views.num_views       = 2;
-   views.flags           = vr_option_enabled ? 0 : RETRO_VIDEO_VIEWS_FLAG_REQUEST_FLAT;
    views.reference_space = RETRO_VR_REFERENCE_SPACE_LOCAL;
-   views.ipd_hint_m      = 0.0f;
 
    if (!env(RETRO_ENVIRONMENT_SET_VIDEO_VIEWS, &views))
    {
@@ -339,9 +337,7 @@ void vb_vr_begin_frame(bool *av_changed)
 
       views.views           = view;
       views.num_views       = 2;
-      views.flags           = vr_option_enabled ? 0 : RETRO_VIDEO_VIEWS_FLAG_REQUEST_FLAT;
       views.reference_space = RETRO_VR_REFERENCE_SPACE_LOCAL;
-      views.ipd_hint_m      = 0.0f;
 
       if (vr_environ_cb(RETRO_ENVIRONMENT_SET_VIDEO_VIEWS, &views))
       {
