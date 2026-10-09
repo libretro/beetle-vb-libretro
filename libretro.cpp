@@ -33,7 +33,7 @@ static struct MDFN_PixelFormat last_pixel_format;
 
 static struct MDFN_Surface surf;
 
-bool vr_option_enabled = true;
+static bool stereo_screen;   /* VIP draws both eyes side by side for the view map */
 
 /* Mednafen - Multi-system Emulator
  *
@@ -428,10 +428,12 @@ static void SettingChanged(const char *name)
 {
    if(!strcmp(name, "vb.3dmode"))
    {
-      VB3DMode              = MDFN_GetSettingUI("vb.3dmode");
+      /* The stereo screen needs both eyes side by side, whatever 3D mode
+       * is chosen. */
       uint32 prescale       = MDFN_GetSettingUI("vb.liprescale");
-      uint32 sbs_separation = MDFN_GetSettingUI("vb.sidebyside.separation");
+      uint32 sbs_separation = stereo_screen ? 0 : MDFN_GetSettingUI("vb.sidebyside.separation");
 
+      VB3DMode = stereo_screen ? VB3DMODE_SIDEBYSIDE : MDFN_GetSettingUI("vb.3dmode");
       VIP_Set3DMode(VB3DMode, MDFN_GetSettingUI("vb.3dreverse"), prescale, sbs_separation);
    }
    else if(!strcmp(name, "vb.disable_parallax"))
@@ -785,7 +787,7 @@ static void check_variables(void)
 
    var.key = "vb_3dmode";
 
-   if (vb_vr_mode() != VB_PRESENT_VR && environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       unsigned old_3dmode = setting_vb_3dmode;
 
@@ -943,7 +945,7 @@ static void check_variables(void)
 
    var.key = "vb_sidebyside_separation";
 
-   if (vb_vr_mode() != VB_PRESENT_VR && environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       unsigned old_separation = setting_vb_sidebyside_separation;
 
@@ -959,8 +961,16 @@ static void check_variables(void)
 
    var.key = "vb_vr";
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-      vr_option_enabled = strcmp(var.value, "disabled") != 0;
+   {
+      if (!strcmp(var.value, "disabled"))
+         vb_vr_set_option(VB_VR_OFF);
+      else if (!strcmp(var.value, "head-locked"))
+         vb_vr_set_option(VB_VR_HEAD_LOCKED);
+      else
+         vb_vr_set_option(VB_VR_SCREEN);
+   }
 
+#if VB_VR_ENABLED
    {
       float dist = 1.0f, width = 1.1f;
       var.key = "vb_vr_screen_distance";
@@ -971,6 +981,7 @@ static void check_variables(void)
          width = (float)atof(var.value);
       vb_vr_set_screen(dist, width);
    }
+#endif
 }
 
 #define MAX_PLAYERS 1
@@ -1026,11 +1037,8 @@ bool retro_load_game(const struct retro_game_info *info)
 
    check_variables();
 
-   if (vb_vr_negotiate(environ_cb, vr_option_enabled) == VB_PRESENT_VR)
-   {
-      setting_vb_3dmode                = VB3DMODE_SIDEBYSIDE;
-      setting_vb_sidebyside_separation = 0;
-   }
+   vb_vr_negotiate(environ_cb);
+   stereo_screen = false;
 
    if (Load((const uint8_t*)info->data, info->size) <= 0)
    {
@@ -1241,12 +1249,19 @@ void retro_run(void)
    update_input();
 
    bool vr_av_changed = false;
-   vb_vr_begin_frame(&vr_av_changed);
+   bool sbs           = vb_vr_begin_frame(&vr_av_changed);
    if (vr_av_changed)
    {
       struct retro_system_av_info av;
       retro_get_system_av_info(&av);
       environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &av);
+      resolution_changed = true;
+   }
+
+   if (sbs != stereo_screen)
+   {
+      stereo_screen = sbs;
+      SettingChanged("vb.3dmode");
    }
 
    spec.surface            = &surf;
