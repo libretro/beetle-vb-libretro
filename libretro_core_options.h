@@ -209,7 +209,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       "vb_vr",
       "VR",
-      "Enable or disable Virtual Boy VR presentation. Has no affect on platforms without VR support.",
+      "Enable or disable Virtual Boy VR presentation. Has no effect on platforms without VR support.",
       {
          { "disabled", NULL },
          { "enabled",  NULL },
