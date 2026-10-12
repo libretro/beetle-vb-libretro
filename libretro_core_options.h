@@ -205,22 +205,29 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "fast",
    },
-#if defined(VB_VR_ENABLED)
    {
       "vb_vr",
       "VR",
-      "Enable or disable Virtual Boy VR presentation. Has no effect on platforms without VR support.",
+      "Enabled shows both eyes as a stereo screen whenever the frontend presents them, in a headset or a stereo display mode. Disabled keeps the chosen 3D mode."
+#if VB_VR_ENABLED
+      " Head-locked holds the screen in front of the eyes in a headset (requires restart)."
+#endif
+      ,
       {
          { "disabled", NULL },
          { "enabled",  NULL },
+#if VB_VR_ENABLED
+         { "head-locked", NULL },
+#endif
          { NULL,       NULL },
       },
       "enabled",
    },
+#if VB_VR_ENABLED
    {
       "vb_vr_screen_distance",
       "VR screen distance",
-      "Apparent distance of the Virtual Boy screen from the viewer in metres. Closer values also pull the stereo image in.",
+      "Head-locked VR only. Apparent distance of the Virtual Boy screen from the viewer in metres. Closer values also pull the stereo image in.",
       {
          { "0.5", NULL },
          { "0.75", NULL },
@@ -237,7 +244,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       "vb_vr_screen_width",
       "VR screen width",
-      "Width of the Virtual Boy screen in metres, at the chosen distance. Larger values fill more of your view, up to the edge of the headset's field of view.",
+      "Head-locked VR only. Width of the Virtual Boy screen in metres, at the chosen distance. Larger values fill more of your view, up to the edge of the headset's field of view.",
       {
          { "0.5", NULL },
          { "0.75", NULL },

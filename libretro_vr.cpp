@@ -1,25 +1,73 @@
 #include "libretro_vr.h"
 
+#include <string.h>
+
+#define VB_EYE_W 384   /* native VB eye image width */
+#define VB_EYE_H 224
+
+static retro_environment_t vr_environ_cb;
+static unsigned vr_option = VB_VR_SCREEN;
+static vb_present_mode present_mode = VB_PRESENT_SOFTWARE;
+static bool stereo_map;   /* the frontend holds the untracked eye pair */
+static bool status_unsupported;
+
+static void clear_map(void)
+{
+   struct retro_video_views views;
+
+   memset(&views, 0, sizeof(views));
+   vr_environ_cb(RETRO_ENVIRONMENT_SET_VIDEO_VIEWS, &views);
+}
+
+/* The two eyes side by side as an untracked pair: the frontend shows them
+ * as one stereo screen. Sent every frame while wanted: it covers state
+ * loads and run-ahead. */
+static void set_stereo_map(bool stereo)
+{
+   struct retro_video_views views;
+   struct retro_video_view  view[2];
+
+   if (!stereo && !stereo_map)
+      return;
+
+   memset(&views, 0, sizeof(views));
+   memset(view, 0, sizeof(view));
+   if (stereo)
+   {
+      view[0].width   = VB_EYE_W;
+      view[0].height  = VB_EYE_H;
+      view[0].eye     = RETRO_VIDEO_VIEW_EYE_LEFT;
+      view[1].x       = VB_EYE_W;
+      view[1].width   = VB_EYE_W;
+      view[1].height  = VB_EYE_H;
+      view[1].eye     = RETRO_VIDEO_VIEW_EYE_RIGHT;
+      views.views     = view;
+      views.num_views = 2;
+   }
+
+   if (vr_environ_cb(RETRO_ENVIRONMENT_SET_VIDEO_VIEWS, &views) || !stereo)
+      stereo_map = stereo;
+}
+
 #if VB_VR_ENABLED
 
 #include <math.h>
-#include <string.h>
 
 #include <glsym/glsym.h>
 
 extern retro_log_printf_t log_cb;
 
 #define VR_LOG(lvl, ...) do { if (log_cb) log_cb((lvl), __VA_ARGS__); } while (0)
-#define VB_EYE_W 384   /* native VB eye image width */
 #define VB_VR_FILL 0.5f   /* fraction of the narrower side's half-FOV the image fills */
+#define VB_VR_HOLD_FRAMES 251   /* about 5 s at 50.27 Hz */
 
-static retro_environment_t vr_environ_cb;
 static struct retro_hw_render_callback hw_render;
-static vb_present_mode present_mode = VB_PRESENT_SOFTWARE;
 
 static struct retro_vr_frame_state  frame_state;
 static bool frame_valid;
 static unsigned eye_w = 1024, eye_h = 1024;
+static unsigned hold_missing;
+static bool refused;   /* not retried until HMD or head-locked drops */
 
 static bool   gl_ready;
 static GLuint gl_prog, gl_vbo, gl_tex;
@@ -29,8 +77,6 @@ static GLint  tex_filter;
 
 static float screen_distance = 1.0f;
 static float screen_width    = 1.1f;
-
-extern bool vr_option_enabled;
 
 #ifdef MSB_FIRST
 #define VB_SWIZZLE "gba"
@@ -175,110 +221,157 @@ static void draw_quad(float cx, float cy, float sx, float sy, const float rect[4
    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
-vb_present_mode vb_vr_negotiate(retro_environment_t env, bool allow_vr)
+enum vr_step
+{
+   VR_FLAT = 0,
+   VR_ENTER,
+   VR_TRACK,
+   VR_WAIT,   /* in VR, HMD missing: repeat the last frame */
+   VR_LEAVE
+};
+
+/* A video reinit restarts the headset session, and leaving VR changes the
+ * geometry, which reinits again, so a lost headset is waited for. */
+static enum vr_step hold_step(bool want, bool hmd)
+{
+   if (present_mode != VB_PRESENT_VR)
+   {
+      if (!want || !hmd)
+         return VR_FLAT;
+      hold_missing = 0;
+      return VR_ENTER;
+   }
+   if (!want || (!hmd && ++hold_missing >= VB_VR_HOLD_FRAMES))
+      return VR_LEAVE;
+   if (hmd)
+      hold_missing = 0;
+   return hmd ? VR_TRACK : VR_WAIT;
+}
+
+/*
+ * The core renders one packed framebuffer:
+ *
+ *   +----------------+----------------+
+ *   |      LEFT      |      RIGHT     |
+ *   +----------------+----------------+
+ *
+ * Each view is W x H, so the complete framebuffer is 2W x H.
+ */
+static bool send_tracked_map(unsigned ew, unsigned eh, unsigned *rec_w, unsigned *rec_h)
 {
    struct retro_video_views views;
    struct retro_video_view  view[2];
-   unsigned ew;
-   unsigned eh;
-
-   vr_environ_cb = env;
-   present_mode  = VB_PRESENT_SOFTWARE;
-   gl_ready      = false;
-   frame_valid   = false;
-
-   if (!allow_vr)
-      return present_mode;
-
-   memset(&hw_render, 0, sizeof(hw_render));
-
-#if defined(HAVE_OPENGLES2)
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES2;
-#else
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGL;
-#endif
-
-   hw_render.context_reset      = context_reset;
-   hw_render.context_destroy    = context_destroy;
-   hw_render.bottom_left_origin = true;
-
-   /* No HW context: stay on the software path. */
-   if (!env(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
-      return present_mode;
-
-   /*
-    * SET_VIDEO_VIEWS replaces SET_VR_CONTENT_INFO.
-    *
-    * The core renders one packed framebuffer:
-    *
-    *   +----------------+----------------+
-    *   |      LEFT      |      RIGHT     |
-    *   +----------------+----------------+
-    *
-    * Each view is W x H, so the complete framebuffer is 2W x H.
-    */
-   ew = eye_w ? eye_w : 1024;
-   eh = eye_h ? eye_h : 1024;
 
    memset(&views, 0, sizeof(views));
    memset(view, 0, sizeof(view));
-
-   view[0].x            = 0;
-   view[0].y            = 0;
-   view[0].width        = ew;
-   view[0].height       = eh;
-   view[0].screen       = 0;
-   view[0].eye          = RETRO_VIDEO_VIEW_EYE_LEFT;
-   view[0].aspect_ratio = 0.0f;
-
-   view[1].x            = ew;
-   view[1].y            = 0;
-   view[1].width        = ew;
-   view[1].height       = eh;
-   view[1].screen       = 0;
-   view[1].eye          = RETRO_VIDEO_VIEW_EYE_RIGHT;
-   view[1].aspect_ratio = 0.0f;
-
+   view[0].width         = ew;
+   view[0].height        = eh;
+   view[0].eye           = RETRO_VIDEO_VIEW_EYE_LEFT;
+   view[1].x             = ew;
+   view[1].width         = ew;
+   view[1].height        = eh;
+   view[1].eye           = RETRO_VIDEO_VIEW_EYE_RIGHT;
    views.views           = view;
    views.num_views       = 2;
-   views.flags           = vr_option_enabled ? 0 : RETRO_VIDEO_VIEWS_FLAG_REQUEST_FLAT;
+   views.flags           = RETRO_VIDEO_VIEWS_FLAG_TRACKED;
    views.reference_space = RETRO_VR_REFERENCE_SPACE_LOCAL;
-   views.ipd_hint_m      = 0.0f;
 
-   if (!env(RETRO_ENVIRONMENT_SET_VIDEO_VIEWS, &views))
-   {
-      present_mode = VB_PRESENT_GL_FLAT;
-
-      VR_LOG(RETRO_LOG_INFO,
-            "[Beetle VB] VR unavailable, presenting flat through GL.\n");
-
-      return present_mode;
-   }
-
-   /*
-    * Frontend returns the recommended size for one eye-tagged view.
-    * Keep our existing dimensions if the frontend does not provide one.
-    */
-   eye_w = views.recommended_view_width
-         ? views.recommended_view_width
-         : ew;
-
-   eye_h = views.recommended_view_height
-         ? views.recommended_view_height
-         : eh;
-
-   present_mode = VB_PRESENT_VR;
-
-   VR_LOG(RETRO_LOG_INFO,
-         "[Beetle VB] VR enabled, eye target %ux%u.\n",
-         eye_w, eye_h);
-
-   return present_mode;
+   if (!vr_environ_cb(RETRO_ENVIRONMENT_SET_VIDEO_VIEWS, &views))
+      return false;
+   *rec_w = views.recommended_view_width;
+   *rec_h = views.recommended_view_height;
+   return true;
 }
 
-vb_present_mode vb_vr_mode(void)
+/* Only a sent map returns the recommended eye size, so the last size is
+ * sent first and corrected. */
+static bool request_eyes(void)
 {
-   return present_mode;
+   unsigned ew = eye_w, eh = eye_h, rw = 0, rh = 0;
+
+   if (!send_tracked_map(ew, eh, &rw, &rh))
+      return false;
+   if (rw && rh && (rw != ew || rh != eh))
+   {
+      ew = rw;
+      eh = rh;
+      if (!send_tracked_map(ew, eh, &rw, &rh))
+         return false;
+   }
+   eye_w = ew;
+   eye_h = eh;
+   return true;
+}
+
+/* Returns true while the frame belongs to head-locked VR. */
+static bool tracked_begin_frame(unsigned status, bool *av_changed)
+{
+   const bool hmd = (status & RETRO_VIDEO_VIEWS_STATUS_HMD) != 0;
+   bool entered   = false, resized;
+
+   frame_valid = false;
+   if (!hmd || vr_option != VB_VR_HEAD_LOCKED)
+      refused = false;
+
+   switch (hold_step(vr_option == VB_VR_HEAD_LOCKED && !refused, hmd))
+   {
+      case VR_ENTER:
+         if (!request_eyes())
+         {
+            clear_map();   /* a first map may have been accepted */
+            stereo_map = false;
+            refused    = true;
+            return false;
+         }
+         stereo_map   = false;   /* the tracked map replaced it */
+         present_mode = VB_PRESENT_VR;
+         *av_changed  = true;
+         VR_LOG(RETRO_LOG_INFO, "[Beetle VB] VR enabled, eye target %ux%u.\n",
+               eye_w, eye_h);
+         entered      = true;
+         break;
+      case VR_TRACK:
+         break;
+      case VR_WAIT:
+         return true;
+      case VR_LEAVE:
+         clear_map();
+         present_mode = VB_PRESENT_GL_FLAT;
+         *av_changed  = true;
+         VR_LOG(RETRO_LOG_INFO, "[Beetle VB] Headset gone, VR off.\n");
+         return false;
+      default:
+         return false;
+   }
+
+   if (!vr_environ_cb(RETRO_ENVIRONMENT_GET_VR_FRAME_STATE, &frame_state))
+      return true;
+
+   resized = (frame_state.flags & RETRO_VR_FRAME_TARGET_RESIZED) != 0;
+   /* The map every frame, as for the stereo screen. A new size written
+    * back is a resize. */
+   if (!resized && !entered)
+   {
+      unsigned rw = 0, rh = 0;
+      resized = send_tracked_map(eye_w, eye_h, &rw, &rh)
+            && rw && rh && (rw != eye_w || rh != eye_h);
+   }
+   if (resized)
+   {
+      if (request_eyes())
+      {
+         *av_changed = true;
+         VR_LOG(RETRO_LOG_DEBUG,
+               "[Beetle VB] VR target resized, eye target %ux%u.\n",
+               eye_w, eye_h);
+      }
+      else
+         VR_LOG(RETRO_LOG_WARN,
+               "[Beetle VB] VR target resized but renegotiation failed.\n");
+   }
+
+   frame_valid = true;
+   return true;
 }
 
 void vb_vr_get_geometry(unsigned *width, unsigned *height)
@@ -295,78 +388,6 @@ void vb_vr_set_screen(float distance_m, float width_m)
    if (width_m > 20.0f)    width_m = 20.0f;
    screen_distance = distance_m;
    screen_width    = width_m;
-}
-
-void vb_vr_begin_frame(bool *av_changed)
-{
-   *av_changed = false;
-   frame_valid = false;
-
-   if (present_mode != VB_PRESENT_VR)
-      return;
-
-   if (!vr_environ_cb(RETRO_ENVIRONMENT_GET_VR_FRAME_STATE, &frame_state))
-      return;
-
-   if (frame_state.flags & RETRO_VR_FRAME_TARGET_RESIZED)
-   {
-      struct retro_video_views views;
-      struct retro_video_view  view[2];
-      unsigned ew;
-      unsigned eh;
-
-      ew = eye_w ? eye_w : 1024;
-      eh = eye_h ? eye_h : 1024;
-
-      memset(&views, 0, sizeof(views));
-      memset(view, 0, sizeof(view));
-
-      view[0].x            = 0;
-      view[0].y            = 0;
-      view[0].width        = ew;
-      view[0].height       = eh;
-      view[0].screen       = 0;
-      view[0].eye          = RETRO_VIDEO_VIEW_EYE_LEFT;
-      view[0].aspect_ratio = 0.0f;
-
-      view[1].x            = ew;
-      view[1].y            = 0;
-      view[1].width        = ew;
-      view[1].height       = eh;
-      view[1].screen       = 0;
-      view[1].eye          = RETRO_VIDEO_VIEW_EYE_RIGHT;
-      view[1].aspect_ratio = 0.0f;
-
-      views.views           = view;
-      views.num_views       = 2;
-      views.flags           = vr_option_enabled ? 0 : RETRO_VIDEO_VIEWS_FLAG_REQUEST_FLAT;
-      views.reference_space = RETRO_VR_REFERENCE_SPACE_LOCAL;
-      views.ipd_hint_m      = 0.0f;
-
-      if (vr_environ_cb(RETRO_ENVIRONMENT_SET_VIDEO_VIEWS, &views))
-      {
-         eye_w = views.recommended_view_width
-               ? views.recommended_view_width
-               : ew;
-
-         eye_h = views.recommended_view_height
-               ? views.recommended_view_height
-               : eh;
-
-         *av_changed = true;
-
-         VR_LOG(RETRO_LOG_DEBUG,
-               "[Beetle VB] VR target resized, eye target %ux%u.\n",
-               eye_w, eye_h);
-      }
-      else
-      {
-         VR_LOG(RETRO_LOG_WARN,
-               "[Beetle VB] VR target resized but renegotiation failed.\n");
-      }
-   }
-
-   frame_valid = true;
 }
 
 void vb_vr_present(retro_video_refresh_t video_cb, const uint32_t *pixels,
@@ -505,13 +526,87 @@ void vb_vr_present(retro_video_refresh_t video_cb, const uint32_t *pixels,
    video_cb(RETRO_HW_FRAME_BUFFER_VALID, out_w, out_h, 0);
 }
 
-void vb_vr_unload(void)
-{
-   if (present_mode == VB_PRESENT_VR && vr_environ_cb)
-      vr_environ_cb(RETRO_ENVIRONMENT_SET_VIDEO_VIEWS, NULL);
+#endif /* VB_VR_ENABLED */
 
-   present_mode = VB_PRESENT_SOFTWARE;
-   frame_valid  = false;
+void vb_vr_set_option(unsigned option)
+{
+   vr_option = option;
 }
 
-#endif /* VB_VR_ENABLED */
+vb_present_mode vb_vr_negotiate(retro_environment_t env)
+{
+   vr_environ_cb      = env;
+   present_mode       = VB_PRESENT_SOFTWARE;
+   stereo_map         = false;
+   status_unsupported = false;
+
+#if VB_VR_ENABLED
+   gl_ready      = false;
+   frame_valid   = false;
+   refused       = false;
+
+   if (vr_option != VB_VR_HEAD_LOCKED)
+      return present_mode;
+
+   memset(&hw_render, 0, sizeof(hw_render));
+
+#if defined(HAVE_OPENGLES2)
+   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES2;
+#else
+   hw_render.context_type = RETRO_HW_CONTEXT_OPENGL;
+#endif
+
+   hw_render.context_reset      = context_reset;
+   hw_render.context_destroy    = context_destroy;
+   hw_render.bottom_left_origin = true;
+
+   /* No HW context: stay on the software path. */
+   if (env(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
+      present_mode = VB_PRESENT_GL_FLAT;
+#endif
+
+   return present_mode;
+}
+
+vb_present_mode vb_vr_mode(void)
+{
+   return present_mode;
+}
+
+bool vb_vr_begin_frame(bool *av_changed)
+{
+   const unsigned both = RETRO_VIDEO_VIEWS_STATUS_PRESENTS
+                       | RETRO_VIDEO_VIEWS_STATUS_STEREO;
+   unsigned status     = 0;
+
+   *av_changed = false;
+   if (!vr_environ_cb)
+      return false;
+   /* Asked once on a frontend without the call: it logs every refusal. */
+   if (     !status_unsupported
+         && !vr_environ_cb(RETRO_ENVIRONMENT_GET_VIDEO_VIEWS_STATUS, &status))
+   {
+      status_unsupported = true;
+      status             = 0;
+   }
+
+#if VB_VR_ENABLED
+   if (present_mode != VB_PRESENT_SOFTWARE && tracked_begin_frame(status, av_changed))
+      return true;
+#endif
+
+   set_stereo_map(vr_option != VB_VR_OFF && (status & both) == both);
+   return stereo_map;   /* both eyes only with the map behind them */
+}
+
+void vb_vr_unload(void)
+{
+   if (vr_environ_cb && (stereo_map || present_mode == VB_PRESENT_VR))
+      clear_map();
+
+   present_mode = VB_PRESENT_SOFTWARE;
+   stereo_map   = false;
+#if VB_VR_ENABLED
+   frame_valid  = false;
+#endif
+}
