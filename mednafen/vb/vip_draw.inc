@@ -70,7 +70,11 @@ static void DrawBG(uint8 *target, uint16 RealY, bool lr, uint8 bgmap_base_raw, b
   {
    uint32 pixels = CHR16[char_no * 8 + char_sub_y];
 
-   if(bgsc & 0x2000)
+   /* A fully transparent character row writes nothing. Empty background
+    * areas are common, and testing the row once saves eight tests. */
+   if(!pixels)
+    ;
+   else if(bgsc & 0x2000)
    {
     if((pixels >> 14) & 3) target[0 + x] = GPLT_Cache[palette_selector][(pixels >> 14) & 3];
     if((pixels >> 12) & 3) target[1 + x] = GPLT_Cache[palette_selector][(pixels >> 12) & 3];
