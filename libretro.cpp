@@ -225,6 +225,76 @@ uint8 MDFN_FASTCALL MemRead8(v810_timestamp_t &timestamp, uint32 A)
    return 0;
 }
 
+/* Idle-loop skip. Games wait for the VIP by reading
+ * XPSTTS in a tight loop: Wario Land read it 29 000 times a frame, about
+ * 17 % of the time on a Cortex-A7. When the same instruction reads the same
+ * value again, with every program register as before and no memory written
+ * in between, the loop has no effect but time. Advance the clock by whole
+ * loop periods, staying before the next event and the next SBOUT change,
+ * so the loop reads the same values at the same cycle phase as it would
+ * have: emulation is unchanged, the host skips the iterations. Fast CPU
+ * mode only; accurate mode runs every iteration. */
+static bool IdleSkip;
+static uint32 MemWriteCount;
+static struct
+{
+   bool valid, regs_valid;
+   uint32 pc, writes, regs[32];
+   uint16 value;
+   v810_timestamp_t ts;
+} IdlePoll;
+
+static void IdlePollReset(void)
+{
+   IdlePoll.valid = false;
+   IdlePoll.regs_valid = false;
+}
+
+/* Out of line: inlined, it makes MemRead16 (every memory read) heavier. */
+static NO_INLINE uint16 ReadXPSTTS(v810_timestamp_t &timestamp, uint32 A)
+{
+   const uint16 value  = VIP_Read16(timestamp, A);
+   const uint32 pc     = VB_V810->GetPC();
+   const uint32 writes = MemWriteCount + VB_V810->DataFastWrites;
+   const uint32 *regs  = VB_V810->GetPRArray();
+
+   /* Cheap checks first. The 128-byte register snapshot is taken only once
+    * a loop repeats them, so loops doing real work (writing memory every
+    * round) do not pay for it; skipping then starts one round later. */
+   if (IdlePoll.valid && IdlePoll.pc == pc && IdlePoll.value == value && IdlePoll.writes == writes)
+   {
+      if (IdlePoll.regs_valid && !memcmp(IdlePoll.regs, regs, sizeof(IdlePoll.regs)))
+      {
+         const v810_timestamp_t period = timestamp - IdlePoll.ts;
+         v810_timestamp_t limit = VB_V810->GetEventNT();
+         const int32 sbout = VIP_PollLimit(timestamp);
+
+         if (sbout < limit)
+            limit = sbout;
+         if (period > 0 && period < 256 && limit > timestamp)
+         {
+            const int32 skip = (limit - 1 - timestamp) / period;
+            if (skip > 0)
+               timestamp += skip * period;
+         }
+      }
+      else
+      {
+         memcpy(IdlePoll.regs, regs, sizeof(IdlePoll.regs));
+         IdlePoll.regs_valid = true;
+      }
+      IdlePoll.ts = timestamp;
+      return value;
+   }
+   IdlePoll.valid      = true;
+   IdlePoll.regs_valid = false;
+   IdlePoll.pc         = pc;
+   IdlePoll.value      = value;
+   IdlePoll.writes     = writes;
+   IdlePoll.ts         = timestamp;
+   return value;
+}
+
 uint16 MDFN_FASTCALL MemRead16(v810_timestamp_t &timestamp, uint32 A)
 {
    A &= (1 << 27) - 1;
@@ -232,6 +302,8 @@ uint16 MDFN_FASTCALL MemRead16(v810_timestamp_t &timestamp, uint32 A)
    switch(A >> 24)
    {
       case 0:
+         if (IdleSkip && (A & 0x7FFFF) == 0x5F840)
+            return ReadXPSTTS(timestamp, A);
          return VIP_Read16(timestamp, A);
       case 2:
          return HWCTRL_Read(timestamp, A);
@@ -255,6 +327,7 @@ uint16 MDFN_FASTCALL MemRead16(v810_timestamp_t &timestamp, uint32 A)
 
 void MDFN_FASTCALL MemWrite8(v810_timestamp_t &timestamp, uint32 A, uint8 V)
 {
+   MemWriteCount++;
    A &= (1 << 27) - 1;
 
    switch(A >> 24)
@@ -286,6 +359,7 @@ void MDFN_FASTCALL MemWrite8(v810_timestamp_t &timestamp, uint32 A, uint8 V)
 
 void MDFN_FASTCALL MemWrite16(v810_timestamp_t &timestamp, uint32 A, uint16 V)
 {
+   MemWriteCount++;
    A &= (1 << 27) - 1;
 
    switch(A >> 24)
@@ -395,6 +469,7 @@ static void ForceEventUpdates(const v810_timestamp_t timestamp)
 
 static void VB_Power(void)
 {
+   IdlePollReset();
    memset(WRAM, 0, 65536);
 
    VIP_Power();
@@ -509,6 +584,7 @@ static int Load(const uint8_t *data, size_t size)
 
    VB_V810 = new V810();
    VB_V810->Init(cpu_mode, true);
+   IdleSkip = (cpu_mode == V810_EMU_MODE_FAST);
 
    VB_V810->SetMemReadHandlers(MemRead8, MemRead16, NULL);
    VB_V810->SetMemWriteHandlers(MemWrite8, MemWrite16, NULL);
@@ -589,6 +665,16 @@ static int Load(const uint8_t *data, size_t size)
 
    VB_Power();
 
+   /* Loads and stores of WRAM, cartridge RAM and ROM go straight to memory
+    * (the handlers do nothing else for these regions). */
+   for (unsigned r = 0; r < 8; r++)
+      VB_V810->SetDataFast(r, NULL, 0, false);
+   VB_V810->DataFastWrites = 0;
+   VB_V810->SetDataFast(5, WRAM, 0xFFFF, true);
+   VB_V810->SetDataFast(7, GPROM, GPROM_Mask, false);
+   if (GPRAM)
+      VB_V810->SetDataFast(6, GPRAM, GPRAM_Mask, true);
+
    MDFNMP_Init(32768, ((uint64)1 << 27) / 32768);
    MDFNMP_AddRAM(65536, 5 << 24, WRAM);
    if((GPRAM_Mask + 1) >= 32768)
@@ -668,10 +754,12 @@ static void Emulate(EmulateSpecStruct *espec, int16_t *sound_buf)
    RebaseTS(v810_timestamp);
 
    VB_V810->ResetTS(0);
+   IdlePollReset();	/* timestamps were rebased */
 }
 
 extern "C" int StateAction(StateMem *sm, int load, int data_only)
 {
+   IdlePollReset();
    const v810_timestamp_t timestamp = VB_V810->v810_timestamp;
    int ret = 1;
 

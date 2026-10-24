@@ -692,6 +692,13 @@ uint8 VIP_Read8(int32 timestamp, uint32 A)
    return 0;
 }
 
+/* The latest timestamp up to which XPSTTS cannot change without an event:
+ * its SBOUT bit flips at SBOUT_InactiveTime (idle-loop skip, libretro.cpp). */
+int32 VIP_PollLimit(int32 timestamp)
+{
+   return timestamp < SBOUT_InactiveTime ? SBOUT_InactiveTime : INT32_MAX;
+}
+
 uint16 VIP_Read16(int32 timestamp, uint32 A)
 {
    switch(A >> 16)
