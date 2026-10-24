@@ -78,6 +78,11 @@ static uint8 BRTA, BRTB, BRTC, REST;
 static uint8 Repeat;
 
 static void CopyFBColumnToTarget_Anaglyph(void) NO_INLINE;
+#if !defined(WANT_8BPP)
+static void CopyFBColumnToTarget_AnaglyphStaged(void) NO_INLINE;
+static void AnaglyphFlush(void);
+static void AnaglyphReset(void);
+#endif
 static void CopyFBColumnToTarget_AnaglyphSlow(void) NO_INLINE;
 static void CopyFBColumnToTarget_CScope(void) NO_INLINE;
 static void CopyFBColumnToTarget_SideBySide(void) NO_INLINE;
@@ -227,7 +232,11 @@ static void Recalc3DModeStuff(bool non_rgb_output)
    switch(VB3DMode)
    {
       default: 
+#if defined(WANT_8BPP)
          CopyFBColumnToTarget = CopyFBColumnToTarget_Anaglyph;
+#else
+         CopyFBColumnToTarget = CopyFBColumnToTarget_AnaglyphStaged;
+#endif
          if(((Anaglyph_Colors[0] & 0xFF) && (Anaglyph_Colors[1] & 0xFF)) ||
                ((Anaglyph_Colors[0] & 0xFF00) && (Anaglyph_Colors[1] & 0xFF00)) ||
                ((Anaglyph_Colors[0] & 0xFF0000) && (Anaglyph_Colors[1] & 0xFF0000)) ||
@@ -398,6 +407,9 @@ bool VIP_Init(void)
 
 void VIP_Power(void)
 {
+#if !defined(WANT_8BPP)
+   AnaglyphReset();
+#endif
    unsigned i;
 
    Repeat = 0;
@@ -940,6 +952,203 @@ static void CopyFBColumnToTarget_Anaglyph(void)
       CopyFBColumnToTarget_Anaglyph_BASE(DisplayActive, 0);
    else
       CopyFBColumnToTarget_Anaglyph_BASE(DisplayActive, 1);
+}
+
+#if !defined(WANT_8BPP)
+/* Anaglyph output, staged.
+ *
+ * The display scan hands over one 224-pixel column at a time; writing it
+ * straight into the row-major surface strides a full row per pixel, and the
+ * right eye then read-modify-writes the left eye's pixels (22 % of a frame on
+ * a Cortex-A7). Instead each column's source bytes (2 bits per pixel), its
+ * four brightness colours and whether the display was active are staged, and
+ * AnaglyphFlush() writes the surface row by row, each pixel once. The result
+ * is bit-identical: "left =, right |=" per column, columns not displayed keep
+ * the surface's previous pixels, an inactive left column is black, an inactive
+ * right column adds nothing. A column staged twice for the same eye in one
+ * frame flushes first, so its OR is kept. */
+#if defined(WANT_32BPP)
+typedef uint32 ana_pix;
+#define ANA_PIXELS(s) ((s)->pixels)
+#else
+typedef uint16 ana_pix;
+#define ANA_PIXELS(s) ((s)->pixels16)
+#endif
+
+enum { ANA_NONE = 0, ANA_ACTIVE = 1, ANA_INACTIVE = 2 };
+static uint8  AnaSrc[2][56][384];	/* [eye][row block][column]: 4 rows, 2 bits each */
+static uint32 AnaCLUT[2][384][4];
+static uint8  AnaState[2][384];
+static bool   AnaPending;
+
+static void AnaglyphReset(void)
+{
+   memset(AnaState, ANA_NONE, sizeof(AnaState));
+   AnaPending = false;
+}
+
+static void CopyFBColumnToTarget_AnaglyphStaged(void)
+{
+   const int lr = (DisplayRegion & 2) >> 1;
+   const uint8 *fb_source = &FB[DisplayFB][lr][64 * Column];
+   int yb;
+
+   if (AnaState[lr][Column] != ANA_NONE)
+      AnaglyphFlush();
+
+   /* An eye whose colours are all black (2D presets) adds nothing: the
+    * same as an inactive column, without copying its pixels. */
+   if (DisplayActive && (BrightCLUT[lr][0] | BrightCLUT[lr][1] | BrightCLUT[lr][2] | BrightCLUT[lr][3]))
+   {
+      for (yb = 0; yb < 56; yb++)
+         AnaSrc[lr][yb][Column] = fb_source[yb];
+      memcpy(AnaCLUT[lr][Column], BrightCLUT[lr], sizeof(BrightCLUT[lr]));
+      AnaState[lr][Column] = ANA_ACTIVE;
+   }
+   else
+   {
+      AnaState[lr][Column] = ANA_INACTIVE;
+      if (DisplayActive)	/* black eye, still shown */
+         memset(AnaCLUT[lr][Column], 0, sizeof(AnaCLUT[lr][Column]));
+   }
+   AnaPending = true;
+}
+
+/* The common cases, done without per-column lookups: all 384 left columns
+ * active with one colour table, and the right eye either the same (2 eyes)
+ * or adding nothing in every column (1 eye: inactive, or a black preset).
+ * Returns 2, 1, or 0 for the general path. */
+static int AnaglyphUniform(void)
+{
+   int x, eyes = AnaState[1][0] == ANA_ACTIVE ? 2 : 1;
+   for (x = 0; x < 384; x++)
+      if (AnaState[0][x] != ANA_ACTIVE ||
+          memcmp(AnaCLUT[0][x], AnaCLUT[0][0], sizeof(AnaCLUT[0][0])) ||
+          (eyes == 2 ? AnaState[1][x] != ANA_ACTIVE || memcmp(AnaCLUT[1][x], AnaCLUT[1][0], sizeof(AnaCLUT[1][0]))
+                     : AnaState[1][x] != ANA_INACTIVE))
+         return 0;
+   return eyes;
+}
+
+#if defined(WANT_32BPP) && defined(__ARM_NEON)
+#include <arm_neon.h>
+/* 8 pixels per step: the 2-bit indices select bytes of the four colours
+ * with vtbl, one table per output byte, and vst4 interleaves the four byte
+ * planes into 32-bit pixels. */
+static void AnaglyphFlushUniformNEON(const int32 pitch, const int eyes)
+{
+   uint8 tab[2][4][8];
+   uint8x8_t tl[4], tr[4];
+   int lr, k, i, yb, x, sub;
+
+   for (lr = 0; lr < 2; lr++)
+      for (k = 0; k < 4; k++)
+         for (i = 0; i < 8; i++)
+            tab[lr][k][i] = i < 4 ? (uint8)(AnaCLUT[lr][0][i] >> (8 * k)) : 0;
+   for (k = 0; k < 4; k++)
+   {
+      tl[k] = vld1_u8(tab[0][k]);
+      tr[k] = vld1_u8(tab[1][k]);
+   }
+   for (yb = 0; yb < 56; yb++)
+      for (x = 0; x < 384; x += 8)
+      {
+         const uint8x8_t l = vld1_u8(&AnaSrc[0][yb][x]);
+         const uint8x8_t r = eyes == 2 ? vld1_u8(&AnaSrc[1][yb][x]) : vdup_n_u8(0);
+         for (sub = 0; sub < 4; sub++)
+         {
+            const int8x8_t sh = vdup_n_s8((int8)(-2 * sub));
+            const uint8x8_t il = vand_u8(vshl_u8(l, sh), vdup_n_u8(3));
+            uint8x8x4_t px;
+            if (eyes == 2)
+            {
+               const uint8x8_t ir = vand_u8(vshl_u8(r, sh), vdup_n_u8(3));
+               for (k = 0; k < 4; k++)
+                  px.val[k] = vorr_u8(vtbl1_u8(tl[k], il), vtbl1_u8(tr[k], ir));
+            }
+            else
+               for (k = 0; k < 4; k++)
+                  px.val[k] = vtbl1_u8(tl[k], il);
+            vst4_u8((uint8 *)(surface->pixels + (yb * 4 + sub) * pitch + x), px);
+         }
+      }
+}
+#endif
+
+static void AnaglyphFlushUniform(const int32 pitch, const int eyes)
+{
+   const uint32 *cl = AnaCLUT[0][0], *cr = AnaCLUT[1][0];
+   int yb, x, sub;
+
+   for (yb = 0; yb < 56; yb++)
+      for (sub = 0; sub < 4; sub++)
+      {
+         ana_pix *row = ANA_PIXELS(surface) + (yb * 4 + sub) * pitch;
+         const uint8 *l = AnaSrc[0][yb], *r = AnaSrc[1][yb];
+         const int shift = 2 * sub;
+         if (eyes == 2)
+            for (x = 0; x < 384; x++)
+               row[x] = (ana_pix)(cl[(l[x] >> shift) & 3] | cr[(r[x] >> shift) & 3]);
+         else
+            for (x = 0; x < 384; x++)
+               row[x] = (ana_pix)cl[(l[x] >> shift) & 3];
+      }
+}
+
+static void AnaglyphFlushGeneral(const int32 pitch)
+{
+   int y, x;
+
+   for (y = 0; y < 224; y++)
+   {
+      ana_pix *row = ANA_PIXELS(surface) + y * pitch;
+      const int yb = y >> 2, shift = 2 * (y & 3);
+      for (x = 0; x < 384; x++)
+      {
+         const uint8 ls = AnaState[0][x], rs = AnaState[1][x];
+         ana_pix px;
+         if (ls == ANA_NONE && rs != ANA_ACTIVE)
+            continue;
+         px = ls == ANA_NONE ? row[x] :
+              ls == ANA_ACTIVE ? (ana_pix)AnaCLUT[0][x][(AnaSrc[0][yb][x] >> shift) & 3] : 0;
+         if (rs == ANA_ACTIVE)
+            px |= (ana_pix)AnaCLUT[1][x][(AnaSrc[1][yb][x] >> shift) & 3];
+         row[x] = px;
+      }
+   }
+}
+
+static void AnaglyphFlush(void)
+{
+   const int32 pitch = surface->pitchinpix;
+   int eyes;
+
+   if (!AnaPending)
+      return;
+   eyes = AnaglyphUniform();
+
+   if (eyes)
+   {
+#if defined(WANT_32BPP) && defined(__ARM_NEON)
+      AnaglyphFlushUniformNEON(pitch, eyes);
+#else
+      AnaglyphFlushUniform(pitch, eyes);
+#endif
+   }
+   else
+      AnaglyphFlushGeneral(pitch);
+   memset(AnaState, ANA_NONE, sizeof(AnaState));
+   AnaPending = false;
+}
+#endif
+
+/* Finish the frame's output before it is presented (staged anaglyph). */
+void VIP_FlushOutput(void)
+{
+#if !defined(WANT_8BPP)
+   if (surface)
+      AnaglyphFlush();
+#endif
 }
 
 static uint32 AnaSlowBuf[384][224];

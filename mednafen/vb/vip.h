@@ -54,6 +54,7 @@ v810_timestamp_t MDFN_FASTCALL VIP_Update(const v810_timestamp_t timestamp);
 void VIP_ResetTS(void);
 
 void VIP_StartFrame(EmulateSpecStruct *espec);
+void VIP_FlushOutput(void);
 
 uint8 VIP_Read8(v810_timestamp_t timestamp, uint32 A);
 uint16 VIP_Read16(v810_timestamp_t timestamp, uint32 A);

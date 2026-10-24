@@ -1292,6 +1292,8 @@ void retro_run(void)
    if (resolution_changed && vb_vr_mode() != VB_PRESENT_VR)
       update_geometry(width, height);
 
+   VIP_FlushOutput();
+
    if (vb_vr_mode() != VB_PRESENT_SOFTWARE)
       vb_vr_present(video_cb, surf.pixels, surf.pitchinpix, surf.h, width, height);
    else
