@@ -589,6 +589,15 @@ static int Load(const uint8_t *data, size_t size)
 
    VB_Power();
 
+   /* Loads and stores of WRAM, cartridge RAM and ROM go straight to memory
+    * (the handlers do nothing else for these regions). */
+   for (unsigned r = 0; r < 8; r++)
+      VB_V810->SetDataFast(r, NULL, 0, false);
+   VB_V810->SetDataFast(5, WRAM, 0xFFFF, true);
+   VB_V810->SetDataFast(7, GPROM, GPROM_Mask, false);
+   if (GPRAM)
+      VB_V810->SetDataFast(6, GPRAM, GPRAM_Mask, true);
+
    MDFNMP_Init(32768, ((uint64)1 << 27) / 32768);
    MDFNMP_AddRAM(65536, 5 << 24, WRAM);
    if((GPRAM_Mask + 1) >= 32768)

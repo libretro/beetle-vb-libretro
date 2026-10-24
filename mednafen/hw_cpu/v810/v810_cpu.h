@@ -205,6 +205,15 @@ class V810
  void SetPC(uint32);
 
  uint32 GetPR(const unsigned int which);
+ /* Direct data access for plain memory regions (address bits 24-26), so
+  * loads and stores of RAM and ROM skip the handler call. base is NULL for
+  * regions that need the handler. */
+ struct { uint8 *base; uint32 mask; } DataFastR[8], DataFastW[8];
+ void SetDataFast(unsigned region, uint8 *base, uint32 mask, bool writable)
+ {
+  DataFastR[region & 7].base = base; DataFastR[region & 7].mask = mask;
+  DataFastW[region & 7].base = writable ? base : NULL; DataFastW[region & 7].mask = mask;
+ }
  void SetPR(const unsigned int which, uint32 value);
 
  uint32 GetSR(const unsigned int which);

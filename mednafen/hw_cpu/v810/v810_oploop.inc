@@ -1,3 +1,9 @@
+/* Fast mode: plain-memory loads and stores (DataFastR/DataFastW in v810_cpu.h). */
+#define FAST_REGION(A) (((A) >> 24) & 7)
+#define FAST_RD8(A) (!RB_AccurateMode && DataFastR[FAST_REGION(A)].base ? DataFastR[FAST_REGION(A)].base[(A) & DataFastR[FAST_REGION(A)].mask] : MemRead8(timestamp, (A)))
+#define FAST_RD16(A) (!RB_AccurateMode && DataFastR[FAST_REGION(A)].base ? LoadU16_LE((uint16 *)&DataFastR[FAST_REGION(A)].base[(A) & DataFastR[FAST_REGION(A)].mask]) : MemRead16(timestamp, (A)))
+#define FAST_WR8(A, V) do { const uint32 fa_ = (A); if (!RB_AccurateMode && DataFastW[FAST_REGION(fa_)].base) { DataFastW[FAST_REGION(fa_)].base[fa_ & DataFastW[FAST_REGION(fa_)].mask] = (V); } else MemWrite8(timestamp, fa_, (V)); } while (0)
+#define FAST_WR16(A, V) do { const uint32 fa_ = (A); if (!RB_AccurateMode && DataFastW[FAST_REGION(fa_)].base) { StoreU16_LE((uint16 *)&DataFastW[FAST_REGION(fa_)].base[fa_ & DataFastW[FAST_REGION(fa_)].mask], (V)); } else MemWrite16(timestamp, fa_, (V)); } while (0)
 /* V810 Emulator
  *
  * Copyright (C) 2006 David Tucker
@@ -560,7 +566,7 @@
 		        ADDCLOCK(1);
 			tmp2 = (sign_16(arg1)+P_REG[arg2])&0xFFFFFFFF;
 			
-			SetPREG(arg3, sign_8(MemRead8(timestamp, tmp2)));
+			SetPREG(arg3, sign_8(FAST_RD8(tmp2)));
 
 			/*should be 3 clocks when executed alone, 2 when precedes another LD, or 1
 			 *when precedes an instruction with many clocks (I'm guessing FP, MUL, DIV, etc) */
@@ -582,7 +588,7 @@
 	BEGIN_OP(LD_H);
                         ADDCLOCK(1);
 			tmp2 = (sign_16(arg1)+P_REG[arg2]) & 0xFFFFFFFE;
-		        SetPREG(arg3, sign_16(MemRead16(timestamp, tmp2)));
+		        SetPREG(arg3, sign_16(FAST_RD16(tmp2)));
 
 		        if(lastop >= 0)
 			{
@@ -623,7 +629,7 @@
 			}
 			else
 			{
-                         SetPREG(arg3, MemRead16(timestamp, tmp2) | (MemRead16(timestamp, tmp2 | 2) << 16));
+                         SetPREG(arg3, FAST_RD16(tmp2) | (FAST_RD16(tmp2 | 2) << 16));
 
                          if(lastop >= 0)
                          {
@@ -643,7 +649,7 @@
 	/* ST.B */
 	BEGIN_OP(ST_B);
              ADDCLOCK(1);
-             MemWrite8(timestamp, sign_16(arg2)+P_REG[arg3], P_REG[arg1] & 0xFF);
+             FAST_WR8(sign_16(arg2)+P_REG[arg3], P_REG[arg1] & 0xFF);
 
              if(lastop == LASTOP_ST)
 	     {
@@ -656,7 +662,7 @@
 	BEGIN_OP(ST_H);
              ADDCLOCK(1);
 
-             MemWrite16(timestamp, (sign_16(arg2)+P_REG[arg3])&0xFFFFFFFE, P_REG[arg1] & 0xFFFF);
+             FAST_WR16((sign_16(arg2)+P_REG[arg3])&0xFFFFFFFE, P_REG[arg1] & 0xFFFF);
 
              if(lastop == LASTOP_ST)
 	     {
@@ -681,8 +687,8 @@
 	     }
 	     else
 	     {
-              MemWrite16(timestamp, tmp2, P_REG[arg1] & 0xFFFF);
-              MemWrite16(timestamp, tmp2 | 2, P_REG[arg1] >> 16);
+              FAST_WR16(tmp2, P_REG[arg1] & 0xFFFF);
+              FAST_WR16(tmp2 | 2, P_REG[arg1] >> 16);
 
               if(lastop == LASTOP_ST)
 	      {
